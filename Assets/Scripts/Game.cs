@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class Game {
 
-	public List<Player> Players;
+	public List<PlayerModel> Players;
 	private List<HouseToBuild> _houseHeap1;
 	private List<HouseToBuild> _houseHeap2;
 	private List<HouseToBuild> _houseHeap3;
