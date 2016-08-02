@@ -20,7 +20,7 @@ public enum TopCardFeature {
 public enum BottomCardFeature {
 	InstrumentsMultiplier,
 	HouseMultiplier,
-	PeopleMultiplier,
+	HumanMultiplier,
 	FieldMultiplier,
 	Science
 }
@@ -35,17 +35,24 @@ public enum Science {
 	Clock = 7
 }
 public class CardToBuild {
-	TopCardFeature TopFeature;
-	int TopFeatureParam;
-	BottomCardFeature BottomFeature;
-	int BottomFeatureParam;
+	public readonly TopCardFeature TopFeature;
+	public readonly int TopFeatureParam;
+	public readonly BottomCardFeature BottomFeature;
+	public readonly int BottomFeatureParam;
+	public bool TopUsed { get; private set; }
 	public CardToBuild(TopCardFeature topFeature, int topFeatureParam, BottomCardFeature bottomFeature, int bottomFeatureParam) {
 		this.TopFeature = topFeature;
 		this.TopFeatureParam = topFeatureParam;
 		this.BottomFeature = bottomFeature;
 		this.BottomFeatureParam = bottomFeatureParam;
+		this.TopUsed = true;
+		if (TopFeature == TopCardFeature.InstrumentsOnce || TopFeature == TopCardFeature.ResourceAny)
+			TopUsed = false;
 	}
 	public CardToBuild(TopCardFeature topFeature, int topFeatureParam, BottomCardFeature bottomFeature, Science science):
 	this( topFeature, topFeatureParam, bottomFeature, (int)science) {
+	}
+	public void UseTop() {
+		TopUsed = true;
 	}
 }
