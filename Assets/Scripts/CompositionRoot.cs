@@ -1,15 +1,27 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class CompositionRoot : MonoBehaviour {
 
+	[SerializeField] GameView _view;
+	Game _game;
+	public static CompositionRoot Instance { get; private set; }
+	void Awake() {
+		Instance = this;
+	}
+
 	// Use this for initialization
 	void Start () {
-	
+		List<Player> players = new List<Player> () {
+			new HumanPlayer (),
+			new HumanPlayer (),
+			new HumanPlayer (),
+			new HumanPlayer ()
+		};
+		_game = new Game (players);
+		StartCoroutine (_game.Play ());
+		_view.Init (_game);
 	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
+
 }

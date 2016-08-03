@@ -1,0 +1,159 @@
+fileFormatVersion: 2
+guid: 40d3d5552f33582449b3720ef325620a
+timeCreated: 1470266894
+licenseType: Free
+TextureImporter:
+  fileIDToRecycleName:
+    21300000: human_gray
+    21300002: human_red
+    21300004: human_blue
+    21300006: human_yellow
+    21300008: human_green
+  serializedVersion: 2
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    linearTexture: 0
+    correctGamma: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 0
+  cubemapConvolution: 0
+  cubemapConvolutionSteps: 7
+  cubemapConvolutionExponent: 1.5
+  seamlessCubemap: 0
+  textureFormat: -1
+  maxTextureSize: 2048
+  textureSettings:
+    filterMode: -1
+    aniso: 16
+    mipBias: -1
+    wrapMode: 1
+  nPOTScale: 0
+  lightmap: 0
+  rGBM: 0
+  compressionQuality: 50
+  allowsAlphaSplitting: 0
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spritePixelsToUnits: 100
+  alphaIsTransparency: 1
+  textureType: 8
+  buildTargetSettings: []
+  spriteSheet:
+    sprites:
+    - name: human_gray
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 48
+        height: 63
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 8, y: 30.5}
+        - {x: -10, y: 30.5}
+        - {x: -23, y: 17.5}
+        - {x: -23, y: -26.5}
+        - {x: -21, y: -31.5}
+        - {x: 16, y: -31.5}
+        - {x: 23, y: -19.5}
+        - {x: 23, y: 14.5}
+        - {x: 21, y: 16.5}
+    - name: human_red
+      rect:
+        serializedVersion: 2
+        x: 57
+        y: 0
+        width: 46
+        height: 63
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 6, y: 30.5}
+        - {x: -19, y: 30.5}
+        - {x: -23, y: 29.5}
+        - {x: -23, y: -31.5}
+        - {x: 16, y: -31.5}
+        - {x: 23, y: -18.5}
+        - {x: 23, y: 14.5}
+        - {x: 21, y: 16.5}
+    - name: human_blue
+      rect:
+        serializedVersion: 2
+        x: 108
+        y: 0
+        width: 51
+        height: 63
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -17.5, y: 30.5}
+        - {x: -23.5, y: 25.5}
+        - {x: -23.5, y: -30.5}
+        - {x: -18.5, y: -31.5}
+        - {x: 7.5, y: -31.5}
+        - {x: 19.5, y: -24.5}
+        - {x: 22.5, y: -18.5}
+        - {x: 22.5, y: 14.5}
+        - {x: 9.5, y: 30.5}
+    - name: human_yellow
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 0
+        width: 47
+        height: 63
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 8.5, y: 31.5}
+        - {x: -9.5, y: 31.5}
+        - {x: -22.5, y: 18.5}
+        - {x: -22.5, y: -25.5}
+        - {x: -20.5, y: -30.5}
+        - {x: 16.5, y: -30.5}
+        - {x: 23.5, y: -18.5}
+        - {x: 23.5, y: 15.5}
+        - {x: 21.5, y: 17.5}
+    - name: human_green
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 0
+        width: 49
+        height: 63
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -8.5, y: 31.5}
+        - {x: -21.5, y: 27.5}
+        - {x: -21.5, y: -30.5}
+        - {x: 18.5, y: -30.5}
+        - {x: 24.5, y: -15.5}
+        - {x: 24.5, y: 15.5}
+        - {x: 14.5, y: 31.5}
+    outline: []
+  spritePackingTag: 
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

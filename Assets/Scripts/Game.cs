@@ -4,7 +4,8 @@ using System.Collections.Generic;
 
 public class Game {
 
-	public List<PlayerModel> Players;
+	public List<PlayerModel> PlayerModels;
+	List<Player> Players;
 	private List<HouseToBuild> _houseHeap1;
 	private List<HouseToBuild> _houseHeap2;
 	private List<HouseToBuild> _houseHeap3;
@@ -40,9 +41,24 @@ public class Game {
 	public int AvaialbleBuilding3Places;
 	public int AvaialbleBuilding4Places;
 
-	public int TurnInd;
+	public event System.Action OnChanged;
+	private void SetChanged() {
+		if (OnChanged != null)
+			OnChanged ();
+	}
 
-	public void NewGame() {
+	public int TurnInd;
+	public int FirstPlayerInd { get { return TurnInd % Players.Count; } }
+
+	public Game(List<Player> players) {
+		PlayerModels = new List<PlayerModel> ();
+		this.Players = players;
+		foreach (var player in Players) {
+			PlayerModel model = new PlayerModel ();
+			player.Init (model);
+			PlayerModels.Add (model);
+		}
+			
 		TurnInd = 0;
 		// Init buildings.
 		List<HouseToBuild> allHouses = new List<HouseToBuild>();
@@ -75,6 +91,10 @@ public class Game {
 		allHouses.Add (new HouseToBuild (1, 7, 1));
 		allHouses.Add (new HouseToBuild (new List<Resource> () { Resource.Forest, Resource.Stone, Resource.Gold }));
 		Utils.Shuffle<HouseToBuild> (allHouses);
+		_houseHeap1 = new List<HouseToBuild> ();
+		_houseHeap2 = new List<HouseToBuild> ();
+		_houseHeap3 = new List<HouseToBuild> ();
+		_houseHeap4 = new List<HouseToBuild> ();
 		for (int i = 0; i < allHouses.Count; i++) {
 			int heapInd = i % 4;
 			switch (heapInd) {
@@ -123,6 +143,7 @@ public class Game {
 		_cardsInHeap.Add (new CardToBuild(TopCardFeature.Score, 3, BottomCardFeature.HouseMultiplier, 3));
 		_cardsInHeap.Add (new CardToBuild(TopCardFeature.ResourceConstFood, 2, BottomCardFeature.HouseMultiplier, 2));
 		Utils.Shuffle<CardToBuild> (_cardsInHeap);
+		SetChanged ();
 	}
 	public void NewTurn() {
 		TurnInd++;
@@ -180,6 +201,84 @@ public class Game {
 		if (AvailableCardFor4Resource == null) {
 			AvailableCardFor4Resource = _cardsInHeap [0];
 			_cardsInHeap.RemoveAt (0);
+		}
+		SetChanged ();
+	}
+	public bool GetEnded() {
+		// Condition 1 - cant prepare new card set.
+		int requiredCards = 0;
+		if (AvailableCardFor1Resource == null)
+			requiredCards++;
+		if (AvailableCardFor2Resource == null)
+			requiredCards++;
+		if (AvailableCardFor3Resource == null)
+			requiredCards++;
+		if (AvailableCardFor4Resource == null)
+			requiredCards++;
+		if (requiredCards > _cardsInHeap.Count)
+			return true;
+		// Condition 2 - no houses in any heap.
+		if (_houseHeap1.Count == 0)
+			return true;
+		if (_houseHeap2.Count == 0)
+			return true;
+		if (_houseHeap3.Count == 0)
+			return true;
+		if (_houseHeap4.Count == 0)
+			return true;
+		// Otherwise game continues.
+		return false;
+	}
+	private int UnspentHumanCount {
+		get {
+			int count = 0;
+			foreach (var player in PlayerModels)
+				count += player.UnspentHumanCount;
+			return count;
+		}
+	}
+	public IEnumerator Play() {
+		
+		while (!GetEnded ()) {
+			NewTurn ();
+			while (UnspentHumanCount>0) {
+				for (int i = 0; i < Players.Count; i++) {
+					int currPlayerInd = (FirstPlayerInd + i) % Players.Count;
+					Player currPlayer = Players [currPlayerInd];
+					PlayerModel model = PlayerModels [currPlayerInd];
+					WhereToGo target = WhereToGo.None;
+					yield return CompositionRoot.Instance.StartCoroutine(currPlayer.SelectWhereToGo(this, (WhereToGo tgt)=>{
+						target = tgt;
+					}));
+
+					int count = -1;
+					yield return CompositionRoot.Instance.StartCoroutine(currPlayer.SelectUsedHumans(this, target, (int cnt)=>{
+						count = cnt;
+					}));
+
+					Debug.LogFormat("go to {0} with {1}", target.ToString(), count.ToString());
+					switch (target) {
+						case WhereToGo.Card1: model.GoToCard1 (); break;
+						case WhereToGo.Card2: model.GoToCard2 (); break;
+						case WhereToGo.Card3: model.GoToCard3 (); break;
+						case WhereToGo.Card4: model.GoToCard4 (); break;
+						case WhereToGo.House1: model.GoToBuilding1 (); break;
+						case WhereToGo.House2: model.GoToBuilding2 (); break;
+						case WhereToGo.House3: model.GoToBuilding3 (); break;
+						case WhereToGo.House4: model.GoToBuilding4 (); break;
+						case WhereToGo.Food: model.GoToFood (count); break;
+						case WhereToGo.Forest: model.GoToForest (count); break;
+						case WhereToGo.Clay: model.GoToClay (count); break;
+						case WhereToGo.Stone: model.GoToStone (count); break;
+						case WhereToGo.Gold: model.GoToGold (count); break;
+						case WhereToGo.Field: model.GoToFields (); break;
+						case WhereToGo.Instrument: model.GoToInstruments (); break;
+						case WhereToGo.Housing: model.GoToHousing (); break;
+					}
+					SetChanged ();
+					yield break;
+				}
+			}
 		}
 	}
 }

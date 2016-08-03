@@ -22,7 +22,7 @@ public class PlayerModel {
 	public int SpentOnCard3 { get; private set; }
 	public int SpentOnCard4 { get; private set; }
 
-	public int FreeHumanCount {
+	public int UnspentHumanCount {
 		get {
 			return HumansCount - SpentOnHousing - SpentOnFields - SpentOnInstruments - SpentOnFood - SpentOnForest
 			- SpentOnClay - SpentOnStone - SpentOnGold - SpentOnBuilding1 - SpentOnBuilding2 - SpentOnBuilding3
@@ -96,20 +96,20 @@ public class PlayerModel {
 	public void GoToInstruments() {
 		SpentOnInstruments = 1;
 	}
-	public void GoToFood() {
-		SpentOnFood++;
+	public void GoToFood(int count) {
+		SpentOnFood+=count;
 	}
-	public void GoToForest() {
-		SpentOnForest++;
+	public void GoToForest(int count) {
+		SpentOnForest+=count;
 	}
-	public void GoToClay() {
-		SpentOnClay++;
+	public void GoToClay(int count) {
+		SpentOnClay+=count;
 	}
-	public void GoToStone() {
-		SpentOnStone++;
+	public void GoToStone(int count) {
+		SpentOnStone+=count;
 	}
-	public void GoToGold() {
-		SpentOnGold++;
+	public void GoToGold(int count) {
+		SpentOnGold+=count;
 	}
 	public void GoToBuilding1() {
 		SpentOnBuilding1++;

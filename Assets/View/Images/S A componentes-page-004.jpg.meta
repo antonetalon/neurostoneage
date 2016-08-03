@@ -1,0 +1,313 @@
+fileFormatVersion: 2
+guid: cafea982e4701f749801162ee178bb37
+timeCreated: 1470265911
+licenseType: Free
+TextureImporter:
+  fileIDToRecycleName:
+    21300000: house17
+    21300002: house18
+    21300004: house19
+    21300006: house20
+    21300008: house21
+    21300010: house22
+    21300012: house23
+    21300014: house24
+    21300016: house25
+    21300018: house26
+    21300020: house27
+    21300022: house28
+    21300024: instrument1
+    21300026: instrument2
+    21300028: instrument3
+    21300030: instrument4
+  serializedVersion: 2
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    linearTexture: 0
+    correctGamma: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 0
+  cubemapConvolution: 0
+  cubemapConvolutionSteps: 7
+  cubemapConvolutionExponent: 1.5
+  seamlessCubemap: 0
+  textureFormat: -1
+  maxTextureSize: 2048
+  textureSettings:
+    filterMode: -1
+    aniso: 16
+    mipBias: -1
+    wrapMode: 1
+  nPOTScale: 0
+  lightmap: 0
+  rGBM: 0
+  compressionQuality: 50
+  allowsAlphaSplitting: 0
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spritePixelsToUnits: 100
+  alphaIsTransparency: 1
+  textureType: 8
+  buildTargetSettings: []
+  spriteSheet:
+    sprites:
+    - name: house17
+      rect:
+        serializedVersion: 2
+        x: 195
+        y: 1407
+        width: 215
+        height: 259
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -107.5, y: 129.5}
+        - {x: -107.5, y: -129.5}
+        - {x: 107.5, y: -129.5}
+        - {x: 107.5, y: 129.5}
+    - name: house18
+      rect:
+        serializedVersion: 2
+        x: 405
+        y: 1409
+        width: 213
+        height: 257
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -106.5, y: 128.5}
+        - {x: -106.5, y: -128.5}
+        - {x: 106.5, y: -128.5}
+        - {x: 106.5, y: 128.5}
+    - name: house19
+      rect:
+        serializedVersion: 2
+        x: 616
+        y: 1414
+        width: 214
+        height: 259
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -107, y: 129.5}
+        - {x: -107, y: -129.5}
+        - {x: 107, y: -129.5}
+        - {x: 107, y: 129.5}
+    - name: house20
+      rect:
+        serializedVersion: 2
+        x: 826
+        y: 1418
+        width: 212
+        height: 258
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -106, y: 129}
+        - {x: -106, y: -129}
+        - {x: 106, y: -129}
+        - {x: 106, y: 129}
+    - name: house21
+      rect:
+        serializedVersion: 2
+        x: 198
+        y: 1149
+        width: 213
+        height: 259
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -106.5, y: 129.5}
+        - {x: -106.5, y: -129.5}
+        - {x: 106.5, y: -129.5}
+        - {x: 106.5, y: 129.5}
+    - name: house22
+      rect:
+        serializedVersion: 2
+        x: 408
+        y: 1151
+        width: 216
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -108, y: 128}
+        - {x: -108, y: -128}
+        - {x: 108, y: -128}
+        - {x: 108, y: 128}
+    - name: house23
+      rect:
+        serializedVersion: 2
+        x: 616
+        y: 1154
+        width: 215
+        height: 260
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -107.5, y: 130}
+        - {x: -107.5, y: -130}
+        - {x: 107.5, y: -130}
+        - {x: 107.5, y: 130}
+    - name: house24
+      rect:
+        serializedVersion: 2
+        x: 828
+        y: 1157
+        width: 212
+        height: 259
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -106, y: 129.5}
+        - {x: -106, y: -129.5}
+        - {x: 106, y: -129.5}
+        - {x: 106, y: 129.5}
+    - name: house25
+      rect:
+        serializedVersion: 2
+        x: 196
+        y: 890
+        width: 216
+        height: 257
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -108, y: 128.5}
+        - {x: -108, y: -128.5}
+        - {x: 108, y: -128.5}
+        - {x: 108, y: 128.5}
+    - name: house26
+      rect:
+        serializedVersion: 2
+        x: 407
+        y: 891
+        width: 215
+        height: 255
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -107.5, y: 127.5}
+        - {x: -107.5, y: -127.5}
+        - {x: 107.5, y: -127.5}
+        - {x: 107.5, y: 127.5}
+    - name: house27
+      rect:
+        serializedVersion: 2
+        x: 618
+        y: 900
+        width: 215
+        height: 255
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -107.5, y: 127.5}
+        - {x: -107.5, y: -127.5}
+        - {x: 107.5, y: -127.5}
+        - {x: 107.5, y: 127.5}
+    - name: house28
+      rect:
+        serializedVersion: 2
+        x: 829
+        y: 898
+        width: 211
+        height: 259
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -105.5, y: 129.5}
+        - {x: -105.5, y: -129.5}
+        - {x: 105.5, y: -129.5}
+        - {x: 105.5, y: 129.5}
+    - name: instrument1
+      rect:
+        serializedVersion: 2
+        x: 117
+        y: 684
+        width: 110
+        height: 111
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -55, y: 55.5}
+        - {x: -55, y: -55.5}
+        - {x: 55, y: -55.5}
+        - {x: 55, y: 55.5}
+    - name: instrument2
+      rect:
+        serializedVersion: 2
+        x: 113
+        y: 372
+        width: 111
+        height: 112
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -55.5, y: 56}
+        - {x: -55.5, y: -56}
+        - {x: 55.5, y: -56}
+        - {x: 55.5, y: 56}
+    - name: instrument3
+      rect:
+        serializedVersion: 2
+        x: 452
+        y: 572
+        width: 112
+        height: 112
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -56, y: 56}
+        - {x: -56, y: -56}
+        - {x: 56, y: -56}
+        - {x: 56, y: 56}
+    - name: instrument4
+      rect:
+        serializedVersion: 2
+        x: 451
+        y: 259
+        width: 112
+        height: 113
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -56, y: 56.5}
+        - {x: -56, y: -56.5}
+        - {x: 56, y: -56.5}
+        - {x: 56, y: 56.5}
+    outline: []
+  spritePackingTag: 
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

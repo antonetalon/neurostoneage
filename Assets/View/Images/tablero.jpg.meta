@@ -1,0 +1,218 @@
+fileFormatVersion: 2
+guid: 43c2de187726545469e55339d3672e85
+timeCreated: 1470264620
+licenseType: Free
+TextureImporter:
+  fileIDToRecycleName:
+    21300000: food
+    21300002: forest
+    21300004: clay
+    21300006: stone
+    21300008: gold
+    21300010: instruments
+    21300012: housing
+    21300014: fields
+    21300016: cards
+    21300018: houses
+    21300020: df
+  serializedVersion: 2
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    linearTexture: 0
+    correctGamma: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 0
+  cubemapConvolution: 0
+  cubemapConvolutionSteps: 7
+  cubemapConvolutionExponent: 1.5
+  seamlessCubemap: 0
+  textureFormat: -1
+  maxTextureSize: 2048
+  textureSettings:
+    filterMode: -1
+    aniso: 16
+    mipBias: -1
+    wrapMode: 1
+  nPOTScale: 0
+  lightmap: 0
+  rGBM: 0
+  compressionQuality: 50
+  allowsAlphaSplitting: 0
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spritePixelsToUnits: 100
+  alphaIsTransparency: 1
+  textureType: 8
+  buildTargetSettings: []
+  spriteSheet:
+    sprites:
+    - name: food
+      rect:
+        serializedVersion: 2
+        x: 434
+        y: 1188
+        width: 483
+        height: 727
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 4}
+      outline:
+      - - {x: -140.15341, y: 211.01782}
+        - {x: -140.15341, y: -210.98218}
+        - {x: 140.84659, y: -210.98218}
+        - {x: 140.84659, y: 211.01782}
+    - name: forest
+      rect:
+        serializedVersion: 2
+        x: 1054
+        y: 1564
+        width: 432
+        height: 679
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -125.08685, y: 198.27429}
+        - {x: -125.08685, y: -196.72571}
+        - {x: 125.91315, y: -196.72571}
+        - {x: 125.91315, y: 198.27429}
+    - name: clay
+      rect:
+        serializedVersion: 2
+        x: 1615
+        y: 1701
+        width: 705
+        height: 579
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -204.18958, y: 168.11646}
+        - {x: -204.18958, y: -167.88354}
+        - {x: 204.81042, y: -167.88354}
+        - {x: 204.81042, y: 168.11646}
+    - name: stone
+      rect:
+        serializedVersion: 2
+        x: 2847
+        y: 1579
+        width: 480
+        height: 623
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -138.68958, y: 181.46143}
+        - {x: -138.68958, y: -180.53857}
+        - {x: 140.31042, y: -180.53857}
+        - {x: 140.31042, y: 181.46143}
+    - name: gold
+      rect:
+        serializedVersion: 2
+        x: 2489
+        y: 1166
+        width: 797
+        height: 413
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -231.0216, y: 120.27673}
+        - {x: -231.0216, y: -119.72327}
+        - {x: 231.9784, y: -119.72327}
+        - {x: 231.9784, y: 120.27673}
+    - name: instruments
+      rect:
+        serializedVersion: 2
+        x: 1644
+        y: 926
+        width: 602
+        height: 546
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -174.39453, y: 158.78326}
+        - {x: -174.39453, y: -158.21674}
+        - {x: 174.60547, y: -158.21674}
+        - {x: 174.60547, y: 158.78326}
+    - name: housing
+      rect:
+        serializedVersion: 2
+        x: 1235
+        y: 664
+        width: 372
+        height: 336
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -107.762634, y: 98.548676}
+        - {x: -107.762634, y: -97.451324}
+        - {x: 108.237366, y: -97.451324}
+        - {x: 108.237366, y: 98.548676}
+    - name: fields
+      rect:
+        serializedVersion: 2
+        x: 685
+        y: 837
+        width: 782
+        height: 498
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -226.28937, y: 145.73984}
+        - {x: -226.28937, y: -144.26016}
+        - {x: 227.71063, y: -144.26016}
+        - {x: 227.71063, y: 145.73984}
+    - name: cards
+      rect:
+        serializedVersion: 2
+        x: 1792
+        y: 166
+        width: 1575
+        height: 708
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -455.6819, y: 205.63718}
+        - {x: -455.6819, y: -205.36282}
+        - {x: 457.3181, y: -205.36282}
+        - {x: 457.3181, y: 205.63718}
+    - name: houses
+      rect:
+        serializedVersion: 2
+        x: 327
+        y: 162
+        width: 1417
+        height: 446
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -410.62134, y: 130.82062}
+        - {x: -410.62134, y: -129.17938}
+        - {x: 411.37866, y: -129.17938}
+        - {x: 411.37866, y: 130.82062}
+    outline: []
+  spritePackingTag: 
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
