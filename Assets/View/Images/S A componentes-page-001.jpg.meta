@@ -1,6 +1,6 @@
 fileFormatVersion: 2
 guid: b5740a6151a18bd428a3f06373291067
-timeCreated: 1470265363
+timeCreated: 1470348937
 licenseType: Free
 TextureImporter:
   fileIDToRecycleName:
@@ -20,6 +20,13 @@ TextureImporter:
     21300026: card014
     21300028: card015
     21300030: card016
+    21300032: instruments4
+    21300034: instruments3
+    21300036: sci_pot
+    21300038: sci_book
+    21300040: sci_car
+    21300042: sci_grass
+    21300044: sci_statue
   serializedVersion: 2
   mipmaps:
     mipMapMode: 0
@@ -294,7 +301,7 @@ TextureImporter:
     - name: card016
       rect:
         serializedVersion: 2
-        x: 876
+        x: 877
         y: 161
         width: 255
         height: 373
@@ -306,6 +313,111 @@ TextureImporter:
         - {x: -127.5, y: -186.5}
         - {x: 127.5, y: -186.5}
         - {x: 127.5, y: 186.5}
+    - name: instruments4
+      rect:
+        serializedVersion: 2
+        x: 446
+        y: 1540
+        width: 92
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -46, y: 43.5}
+        - {x: -46, y: -43.5}
+        - {x: 46, y: -43.5}
+        - {x: 46, y: 43.5}
+    - name: instruments3
+      rect:
+        serializedVersion: 2
+        x: 957
+        y: 421
+        width: 90
+        height: 84
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -45, y: 42}
+        - {x: -45, y: -42}
+        - {x: 45, y: -42}
+        - {x: 45, y: 42}
+    - name: sci_pot
+      rect:
+        serializedVersion: 2
+        x: 677
+        y: 1305
+        width: 146
+        height: 122
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -73, y: 61}
+        - {x: -73, y: -61}
+        - {x: 73, y: -61}
+        - {x: 73, y: 61}
+    - name: sci_book
+      rect:
+        serializedVersion: 2
+        x: 166
+        y: 938
+        width: 145
+        height: 136
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -72.5, y: 68}
+        - {x: -72.5, y: -68}
+        - {x: 72.5, y: -68}
+        - {x: 72.5, y: 68}
+    - name: sci_car
+      rect:
+        serializedVersion: 2
+        x: 676
+        y: 943
+        width: 167
+        height: 107
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -83.5, y: 53.5}
+        - {x: -83.5, y: -53.5}
+        - {x: 83.5, y: -53.5}
+        - {x: 83.5, y: 53.5}
+    - name: sci_grass
+      rect:
+        serializedVersion: 2
+        x: 656
+        y: 564
+        width: 192
+        height: 129
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -96, y: 64.5}
+        - {x: -96, y: -64.5}
+        - {x: 96, y: -64.5}
+        - {x: 96, y: 64.5}
+    - name: sci_statue
+      rect:
+        serializedVersion: 2
+        x: 447
+        y: 183
+        width: 92
+        height: 153
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -46, y: 76.5}
+        - {x: -46, y: -76.5}
+        - {x: 46, y: -76.5}
+        - {x: 46, y: 76.5}
     outline: []
   spritePackingTag: 
   userData: 

@@ -1,6 +1,6 @@
 fileFormatVersion: 2
 guid: 367fd17c0ff8c2647a79b0d0764a3a77
-timeCreated: 1470266449
+timeCreated: 1470349566
 licenseType: Free
 TextureImporter:
   fileIDToRecycleName:
@@ -9,11 +9,12 @@ TextureImporter:
     21300004: resource_stone
     21300006: resource_gold
     21300008: resource_food
-    21300010: science
+    21300010: score
     21300012: instruments
     21300014: houses
     21300016: human
     21300018: field
+    21300020: multiplier
   serializedVersion: 2
   mipmaps:
     mipMapMode: 0
@@ -135,7 +136,7 @@ TextureImporter:
         - {x: -35.5, y: -35}
         - {x: 35.5, y: -35}
         - {x: 35.5, y: 35}
-    - name: science
+    - name: score
       rect:
         serializedVersion: 2
         x: 950
@@ -210,6 +211,21 @@ TextureImporter:
         - {x: -22, y: -30.5}
         - {x: 22, y: -30.5}
         - {x: 22, y: 30.5}
+    - name: multiplier
+      rect:
+        serializedVersion: 2
+        x: 1033
+        y: 591
+        width: 57
+        height: 72
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -28.5, y: 36}
+        - {x: -28.5, y: -36}
+        - {x: 28.5, y: -36}
+        - {x: 28.5, y: 36}
     outline: []
   spritePackingTag: 
   userData: 

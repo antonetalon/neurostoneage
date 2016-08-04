@@ -1,6 +1,6 @@
 fileFormatVersion: 2
 guid: e60e44e309c82994284c65f72a1b1a17
-timeCreated: 1470265522
+timeCreated: 1470348990
 licenseType: Free
 TextureImporter:
   fileIDToRecycleName:
@@ -20,6 +20,11 @@ TextureImporter:
     21300026: card030
     21300028: card031
     21300030: card032
+    21300032: instruments2
+    21300034: anyresource
+    21300036: sci_loom
+    21300038: sci_music
+    21300040: sci_clock
   serializedVersion: 2
   mipmaps:
     mipMapMode: 0
@@ -69,7 +74,7 @@ TextureImporter:
     - name: card017
       rect:
         serializedVersion: 2
-        x: 109
+        x: 111
         y: 1280
         width: 256
         height: 374
@@ -279,8 +284,8 @@ TextureImporter:
     - name: card031
       rect:
         serializedVersion: 2
-        x: 619
-        y: 162
+        x: 621
+        y: 160
         width: 255
         height: 373
       alignment: 0
@@ -306,6 +311,81 @@ TextureImporter:
         - {x: -128, y: -187.5}
         - {x: 128, y: -187.5}
         - {x: 128, y: 187.5}
+    - name: instruments2
+      rect:
+        serializedVersion: 2
+        x: 191
+        y: 1542
+        width: 92
+        height: 86
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -46, y: 43}
+        - {x: -46, y: -43}
+        - {x: 46, y: -43}
+        - {x: 46, y: 43}
+    - name: anyresource
+      rect:
+        serializedVersion: 2
+        x: 647
+        y: 417
+        width: 97
+        height: 95
+      alignment: 9
+      pivot: {x: 0.49499196, y: 0.5076692}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -48.01422, y: 46.771423}
+        - {x: -48.01422, y: -48.228577}
+        - {x: 48.98578, y: -48.228577}
+        - {x: 48.98578, y: 46.771423}
+    - name: sci_loom
+      rect:
+        serializedVersion: 2
+        x: 665
+        y: 1303
+        width: 174
+        height: 134
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -87, y: 67}
+        - {x: -87, y: -67}
+        - {x: 87, y: -67}
+        - {x: 87, y: 67}
+    - name: sci_music
+      rect:
+        serializedVersion: 2
+        x: 446
+        y: 938
+        width: 98
+        height: 141
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -49, y: 70.5}
+        - {x: -49, y: -70.5}
+        - {x: 49, y: -70.5}
+        - {x: 49, y: 70.5}
+    - name: sci_clock
+      rect:
+        serializedVersion: 2
+        x: 652
+        y: 938
+        width: 196
+        height: 136
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -98, y: 68}
+        - {x: -98, y: -68}
+        - {x: 98, y: -68}
+        - {x: 98, y: 68}
     outline: []
   spritePackingTag: 
   userData: 
