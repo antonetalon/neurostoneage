@@ -7,5 +7,6 @@ public enum Resource {
 	Clay,
 	Stone,
 	Gold,
-	Any // Except food.
+	Any, // Except food.
+	None
 }

@@ -1,6 +1,6 @@
 fileFormatVersion: 2
 guid: 43c2de187726545469e55339d3672e85
-timeCreated: 1470264620
+timeCreated: 1470430054
 licenseType: Free
 TextureImporter:
   fileIDToRecycleName:
@@ -15,6 +15,7 @@ TextureImporter:
     21300016: cards
     21300018: houses
     21300020: df
+    21300022: firstPlayer
   serializedVersion: 2
   mipmaps:
     mipMapMode: 0
@@ -211,6 +212,21 @@ TextureImporter:
         - {x: -410.62134, y: -129.17938}
         - {x: 411.37866, y: -129.17938}
         - {x: 411.37866, y: 130.82062}
+    - name: firstPlayer
+      rect:
+        serializedVersion: 2
+        x: 1519
+        y: 1003
+        width: 152
+        height: 122
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -43.786987, y: 36.877014}
+        - {x: -43.786987, y: -35.122986}
+        - {x: 45.213013, y: -35.122986}
+        - {x: 45.213013, y: 36.877014}
     outline: []
   spritePackingTag: 
   userData: 

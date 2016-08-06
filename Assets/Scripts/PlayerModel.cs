@@ -3,6 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class PlayerModel {
+	public enum Color
+	{
+		Blue,
+		Red,
+		Yellow,
+		Green
+	}
 	public int HumansCount { get; private set; }
 
 	public int SpentOnHousing { get; private set; }
@@ -54,8 +61,58 @@ public class PlayerModel {
 	public int Score { get; private set; }
 
 	private Dictionary<Science, int> _sciencesCount;
+	public bool ScienceExists(Science sci, int row) {
+		return _sciencesCount [sci] >= row;
+	}
+	public int GetScienceScore(int row) {
+		int sum = 0;
+		foreach (var count in _sciencesCount.Values) {
+			if (count <= row + 1)
+				sum++;
+		}
+		return sum * sum;
+	}
 
-	public PlayerModel() {
+	public BuiltCard Top4Instruments { 
+		get {
+			foreach (BuiltCard card in _cards) {
+				if (card.Card.TopFeature == TopCardFeature.InstrumentsOnce && card.Card.TopFeatureParam == 4 && !card.Card.TopUsed)
+					return card;
+			}
+			return null;
+		}
+	}
+	public BuiltCard Top3Instruments { 
+		get {
+			foreach (BuiltCard card in _cards) {
+				if (card.Card.TopFeature == TopCardFeature.InstrumentsOnce && card.Card.TopFeatureParam == 3 && !card.Card.TopUsed)
+					return card;
+			}
+			return null;
+		}
+	}
+	public BuiltCard Top2Instruments { 
+		get {
+			foreach (BuiltCard card in _cards) {
+				if (card.Card.TopFeature == TopCardFeature.InstrumentsOnce && card.Card.TopFeatureParam == 2 && !card.Card.TopUsed)
+					return card;
+			}
+			return null;
+		}
+	}
+	public BuiltCard Top2Resources { 
+		get {
+			foreach (BuiltCard card in _cards) {
+				if (card.Card.TopFeature == TopCardFeature.ResourceAny && !card.Card.TopUsed)
+					return card;
+			}
+			return null;
+		}
+	}
+
+	public Color CurrColor { get; private set; }
+	public PlayerModel(Color color) {
+		CurrColor = color;
 		HumansCount = 5;
 		FieldsCount = 0;
 		InstrumentsCountSlot1 = 0;

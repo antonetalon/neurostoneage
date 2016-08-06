@@ -1,6 +1,6 @@
 fileFormatVersion: 2
 guid: 367fd17c0ff8c2647a79b0d0764a3a77
-timeCreated: 1470349566
+timeCreated: 1470351313
 licenseType: Free
 TextureImporter:
   fileIDToRecycleName:
@@ -15,6 +15,7 @@ TextureImporter:
     21300016: human
     21300018: field
     21300020: multiplier
+    21300022: card
   serializedVersion: 2
   mipmaps:
     mipMapMode: 0
@@ -226,6 +227,21 @@ TextureImporter:
         - {x: -28.5, y: -36}
         - {x: 28.5, y: -36}
         - {x: 28.5, y: 36}
+    - name: card
+      rect:
+        serializedVersion: 2
+        x: 886
+        y: 1537
+        width: 48
+        height: 64
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -24, y: 32}
+        - {x: -24, y: -32}
+        - {x: 24, y: -32}
+        - {x: 24, y: 32}
     outline: []
   spritePackingTag: 
   userData: 

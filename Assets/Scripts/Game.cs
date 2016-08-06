@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public class Game {
 
 	public List<PlayerModel> PlayerModels;
-	List<Player> Players;
+	public List<Player> Players;
 	private List<HouseToBuild> _houseHeap1;
 	private List<HouseToBuild> _houseHeap2;
 	private List<HouseToBuild> _houseHeap3;
@@ -54,7 +54,7 @@ public class Game {
 		PlayerModels = new List<PlayerModel> ();
 		this.Players = players;
 		foreach (var player in Players) {
-			PlayerModel model = new PlayerModel ();
+			PlayerModel model = new PlayerModel ((PlayerModel.Color)PlayerModels.Count);
 			player.Init (model);
 			PlayerModels.Add (model);
 		}

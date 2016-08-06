@@ -32,7 +32,7 @@ public abstract class Player {
 	public abstract IEnumerator SelectWhereToGo (Game game, Action<WhereToGo> onComplete);
 	public abstract IEnumerator SelectUsedHumans (Game game, WhereToGo whereToGo, Action<int> onComplete);
 	public abstract IEnumerator UseGetAnyResourceFromTopCard (Game game, Action<bool> onComplete);
-	public abstract IEnumerator ChooseResourceToReceive (Game game, Action<Resource> onComplete);
+	public abstract IEnumerator ChooseResourceToReceiveFromTopCard (Game game, Action<Resource> onComplete);
 	public abstract IEnumerator GetUsedInstrumentSlotInd (Game game, Resource receivedReceource, int points, Action<int> onComplete); // -1 if not using any.
 	public abstract IEnumerator UseInstrumentOnce (Game game, Resource receivedReceource, int points, BuiltCard card, Action<bool> onComplete);
 	public abstract IEnumerator BuildCard (Game game, int cardInd, Action<bool> onComplete);
@@ -56,7 +56,7 @@ public class HumanPlayer:Player {
 	{
 		throw new NotImplementedException ();
 	}
-	public override IEnumerator ChooseResourceToReceive (Game game, Action<Resource> onComplete)
+	public override IEnumerator ChooseResourceToReceiveFromTopCard (Game game, Action<Resource> onComplete)
 	{
 		throw new NotImplementedException ();
 	}
