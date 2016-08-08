@@ -32,14 +32,14 @@ public class Game {
 	public int AvailableClayPlaces;
 	public int AvailableStonePlaces;
 	public int AvailableGoldPlaces;
-	public int AvaialbleCard1Places;
-	public int AvaialbleCard2Places;
-	public int AvaialbleCard3Places;
-	public int AvaialbleCard4Places;
-	public int AvaialbleBuilding1Places;
-	public int AvaialbleBuilding2Places;
-	public int AvaialbleBuilding3Places;
-	public int AvaialbleBuilding4Places;
+	public int AvailableCard1Places;
+	public int AvailableCard2Places;
+	public int AvailableCard3Places;
+	public int AvailableCard4Places;
+	public int AvailableHouse1Places;
+	public int AvailableHouse2Places;
+	public int AvailableHouse3Places;
+	public int AvailableHouse4Places;
 
 	public event System.Action OnChanged;
 	private void SetChanged() {
@@ -154,14 +154,14 @@ public class Game {
 		AvailableClayPlaces = 7;
 		AvailableStonePlaces = 7;
 		AvailableGoldPlaces = 7;
-		AvaialbleCard1Places = 1;
-		AvaialbleCard2Places = 1;
-		AvaialbleCard3Places = 1;
-		AvaialbleCard4Places = 1;
-		AvaialbleBuilding1Places = 1;
-		AvaialbleBuilding2Places = 1;
-		AvaialbleBuilding3Places = 1;
-		AvaialbleBuilding4Places = 1;
+		AvailableCard1Places = 1;
+		AvailableCard2Places = 1;
+		AvailableCard3Places = 1;
+		AvailableCard4Places = 1;
+		AvailableHouse1Places = 1;
+		AvailableHouse2Places = 1;
+		AvailableHouse3Places = 1;
+		AvailableHouse4Places = 1;
 		if (AvailableCardFor1Resource == null) {
 			if (AvailableCardFor2Resource != null) {
 				AvailableCardFor1Resource = AvailableCardFor2Resource;

@@ -14,10 +14,10 @@ public class CompositionRoot : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		List<Player> players = new List<Player> () {
-			new HumanPlayer (),
-			new HumanPlayer (),
-			new HumanPlayer (),
-			new HumanPlayer ()
+			new HumanPlayer (_view.TurnView),
+			new HumanPlayer (_view.TurnView),
+			new HumanPlayer (_view.TurnView),
+			new HumanPlayer (_view.TurnView)
 		};
 		_game = new Game (players);
 		StartCoroutine (_game.Play ());

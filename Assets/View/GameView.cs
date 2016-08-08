@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public class GameView : MonoBehaviour {
 	[SerializeField] BoardView _board;
 	[SerializeField] List<PlayerView> _players;
+	public HumanTurnView TurnView;
 	Game _game;
 	public void Init(Game game) {
 		_game = game;

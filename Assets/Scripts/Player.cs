@@ -42,10 +42,53 @@ public abstract class Player {
 	public abstract IEnumerator LeaveHungry (Game game, Action<bool> onComplete);
 }
 public class HumanPlayer:Player {
+	HumanTurnView _turnView;
+	public HumanPlayer(HumanTurnView turnView) {
+		_turnView = turnView;
+	}
 	public override IEnumerator SelectWhereToGo (Game game, Action<WhereToGo> onComplete)
 	{
-		onComplete (WhereToGo.Food);
-		yield break;
+		_turnView.ShowWhereToGo (game);
+		while (true) {
+			yield return new WaitForEndOfFrame ();
+			WhereToGo res = WhereToGo.None;
+			if (_turnView.FieldPressed)
+				res = WhereToGo.Field;
+			if (_turnView.HousingPressed)
+				res = WhereToGo.Housing;
+			if (_turnView.InstrumentPressed)
+				res = WhereToGo.Instrument;
+			if (_turnView.FoodPressed)
+				res = WhereToGo.Food;
+			if (_turnView.ForestPressed)
+				res = WhereToGo.Forest;
+			if (_turnView.ClayPressed)
+				res = WhereToGo.Clay;
+			if (_turnView.StonePressed)
+				res = WhereToGo.Stone;
+			if (_turnView.GoldPressed)
+				res = WhereToGo.Gold;
+			if (_turnView.House1Pressed)
+				res = WhereToGo.House1;
+			if (_turnView.House2Pressed)
+				res = WhereToGo.House2;
+			if (_turnView.House3Pressed)
+				res = WhereToGo.House3;
+			if (_turnView.House4Pressed)
+				res = WhereToGo.House4;
+			if (_turnView.Card1Pressed)
+				res = WhereToGo.Card1;
+			if (_turnView.Card2Pressed)
+				res = WhereToGo.Card2;
+			if (_turnView.Card3Pressed)
+				res = WhereToGo.Card3;
+			if (_turnView.Card4Pressed)
+				res = WhereToGo.Card4;
+			if (res != WhereToGo.None) {
+				onComplete (res);
+				yield break;
+			}
+		}
 	}
 	public override IEnumerator SelectUsedHumans (Game game, WhereToGo whereToGo, Action<int> onComplete)
 	{
