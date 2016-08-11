@@ -237,6 +237,41 @@ public class Game {
 			return count;
 		}
 	}
+	public int GetMaxHumansCountFor(WhereToGo target) {
+		switch (target) {
+			default: 
+				return 0;
+			case WhereToGo.Card1: 
+			case WhereToGo.Card2: 
+			case WhereToGo.Card3: 
+			case WhereToGo.Card4: 
+			case WhereToGo.Field:
+			case WhereToGo.House1:
+			case WhereToGo.House2:
+			case WhereToGo.House3:
+			case WhereToGo.House4:
+			case WhereToGo.Instrument:
+				return 1;
+			case WhereToGo.Clay:
+			case WhereToGo.Forest:
+			case WhereToGo.Gold:
+			case WhereToGo.Stone:
+				return 7;
+			case WhereToGo.Food:
+				return 40;
+			case WhereToGo.Housing:
+				return 2;
+		}
+	}
+	public int GetSpentHumansCountFor(WhereToGo target) {
+		int count = 0;
+		foreach (var player in PlayerModels)
+			count += player.GetSpentHumansCountFor(target);
+		return count;
+	}
+	public int GetAvailableHumansCountFor(WhereToGo target) {
+		return GetMaxHumansCountFor (target) - GetSpentHumansCountFor (target);
+	}
 	public IEnumerator Play() {
 		
 		while (!GetEnded ()) {
@@ -253,7 +288,7 @@ public class Game {
 
 					int count = -1;
 					yield return CompositionRoot.Instance.StartCoroutine(currPlayer.SelectUsedHumans(this, target, (int cnt)=>{
-						count = cnt;
+						count = cnt+1;
 					}));
 
 					Debug.LogFormat("go to {0} with {1}", target.ToString(), count.ToString());

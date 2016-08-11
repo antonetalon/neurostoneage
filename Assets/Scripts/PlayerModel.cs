@@ -29,6 +29,28 @@ public class PlayerModel {
 	public int SpentOnCard3 { get; private set; }
 	public int SpentOnCard4 { get; private set; }
 
+	public int GetSpentHumansCountFor(WhereToGo target) {
+		switch (target) {
+			default: return 0;
+			case WhereToGo.Card1: return SpentOnCard1;
+			case WhereToGo.Card2: return SpentOnCard2;
+			case WhereToGo.Card3: return SpentOnCard3;
+			case WhereToGo.Card4: return SpentOnCard4;
+			case WhereToGo.Field: return SpentOnFields;
+			case WhereToGo.House1: return SpentOnBuilding1;
+			case WhereToGo.House2: return SpentOnBuilding2;
+			case WhereToGo.House3: return SpentOnBuilding3;
+			case WhereToGo.House4: return SpentOnBuilding4;
+			case WhereToGo.Instrument: return SpentOnInstruments;
+			case WhereToGo.Clay: return SpentOnClay;
+			case WhereToGo.Forest: return SpentOnForest;
+			case WhereToGo.Gold: return SpentOnGold;
+			case WhereToGo.Stone: return SpentOnStone;
+			case WhereToGo.Food: return SpentOnFood;
+			case WhereToGo.Housing: return SpentOnHousing;
+		}
+	}
+
 	public int UnspentHumanCount {
 		get {
 			return HumansCount - SpentOnHousing - SpentOnFields - SpentOnInstruments - SpentOnFood - SpentOnForest

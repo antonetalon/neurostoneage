@@ -24,6 +24,7 @@ public enum WhereToGo {
 }
 public abstract class Player {
 	protected PlayerModel _model;
+	public PlayerModel.Color Color { get { return _model.CurrColor; } }
 	public Player() {
 	}
 	public void Init(PlayerModel model) {
@@ -92,8 +93,14 @@ public class HumanPlayer:Player {
 	}
 	public override IEnumerator SelectUsedHumans (Game game, WhereToGo whereToGo, Action<int> onComplete)
 	{
-		onComplete (7);
-		yield break;
+		_turnView.ShowHumansCount (game, whereToGo, Color);
+		while (true) {
+			yield return new WaitForEndOfFrame ();
+			if (_turnView.SelectedHumansCount != -1) {
+				onComplete (_turnView.SelectedHumansCount);
+				yield break;
+			}
+		}
 	}
 	public override IEnumerator UseGetAnyResourceFromTopCard (Game game, Action<bool> onComplete)
 	{

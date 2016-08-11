@@ -1,7 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using UnityEngine.UI;
 
 public class HumanTurnView : MonoBehaviour {
+
+	#region Where to go
 	[SerializeField] GameObject _whereToGo;
 	[SerializeField] GameObject _field;
 	[SerializeField] GameObject _housing;
@@ -136,5 +140,31 @@ public class HumanTurnView : MonoBehaviour {
 		Card4Pressed = true;
 		_whereToGo.SetActive (false);
 	}
+	#endregion
 
+	#region Select used human
+	[SerializeField] GameObject _selectHumansCount;
+	[SerializeField] List<Image> _humans;
+	[SerializeField] List<Sprite> _playerSprites;
+	public int SelectedHumansCount { get; private set; }
+	public void ShowHumansCount(Game game, WhereToGo target, PlayerModel.Color color) {
+		SelectedHumansCount = -1;
+		_selectHumansCount.SetActive (true);
+		int maxHumans = game.GetAvailableHumansCountFor (target);
+		for (int i = 0; i < _humans.Count; i++) {
+			_humans [i].gameObject.SetActive (i < maxHumans);
+			_humans[i].sprite = _playerSprites[(int)color];
+		}
+	}
+	public void OnHumansCountPressed(GameObject sender) {
+		SelectedHumansCount = -1;
+		for (int i = 0; i < _humans.Count; i++) {
+			if (sender == _humans [i].gameObject) {
+				SelectedHumansCount = i;
+				break;
+			}
+		}
+		_selectHumansCount.SetActive (false);
+	}
+	#endregion
 }
