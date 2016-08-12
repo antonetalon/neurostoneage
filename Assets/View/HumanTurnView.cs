@@ -168,4 +168,23 @@ public class HumanTurnView : MonoBehaviour {
 		_selectHumansCount.SetActive (false);
 	}
 	#endregion
+
+	#region Select use any resource
+	[SerializeField] GameObject _selectAnyResource;
+	public bool SelectedAnyResourceUse { get; private set; }
+	public bool SelectedAnyResourceDontUse { get; private set; }
+	public void ShowSelectAnyResource() {
+		SelectedAnyResourceUse = false;
+		SelectedAnyResourceDontUse = false;
+		_selectAnyResource.SetActive (true);
+	}
+	public void OnAnyResourceUse() {
+		SelectedAnyResourceUse = true;
+		_selectHumansCount.SetActive (false);
+	}
+	public void OnAnyResourceDontUse() {
+		SelectedAnyResourceDontUse = true;
+		_selectHumansCount.SetActive (false);
+	}
+	#endregion
 }

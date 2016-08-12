@@ -104,7 +104,14 @@ public class HumanPlayer:Player {
 	}
 	public override IEnumerator UseGetAnyResourceFromTopCard (Game game, Action<bool> onComplete)
 	{
-		throw new NotImplementedException ();
+		_turnView.ShowSelectAnyResource ();
+		while (true) {
+			yield return new WaitForEndOfFrame ();
+			if (_turnView.SelectedAnyResourceDontUse || _turnView.SelectedAnyResourceUse) {
+				onComplete (_turnView.SelectedAnyResourceUse);
+				yield break;
+			}
+		}
 	}
 	public override IEnumerator ChooseResourceToReceiveFromTopCard (Game game, Action<Resource> onComplete)
 	{

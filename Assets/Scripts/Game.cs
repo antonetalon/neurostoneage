@@ -367,6 +367,8 @@ public class Game {
 						case WhereToGo.Housing: model.GoToHousing (); break;
 					}
 					SetChanged ();
+
+
 					yield break;
 				}
 			}
