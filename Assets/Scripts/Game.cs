@@ -237,6 +237,29 @@ public class Game {
 			return count;
 		}
 	}
+	public List<WhereToGo> GetAvailableTargets() {
+		List<WhereToGo> targets = new List<WhereToGo> ();
+		AddTargetIfAvailable (targets, WhereToGo.Card1);
+		AddTargetIfAvailable (targets, WhereToGo.Card2);
+		AddTargetIfAvailable (targets, WhereToGo.Card3);
+		AddTargetIfAvailable (targets, WhereToGo.Card4);
+		AddTargetIfAvailable (targets, WhereToGo.Clay);
+		AddTargetIfAvailable (targets, WhereToGo.Field);
+		AddTargetIfAvailable (targets, WhereToGo.Food);
+		AddTargetIfAvailable (targets, WhereToGo.Forest);
+		AddTargetIfAvailable (targets, WhereToGo.Gold);
+		AddTargetIfAvailable (targets, WhereToGo.House1);
+		AddTargetIfAvailable (targets, WhereToGo.House2);
+		AddTargetIfAvailable (targets, WhereToGo.House3);
+		AddTargetIfAvailable (targets, WhereToGo.House4);
+		AddTargetIfAvailable (targets, WhereToGo.Housing);
+		AddTargetIfAvailable (targets, WhereToGo.Instrument);
+		return targets;
+	}
+	private void AddTargetIfAvailable(List<WhereToGo> targets, WhereToGo target) {
+		if (GetMaxHumansCountFor (target) - GetMinHumansCountFor (target) > 0)
+			targets.Add (target);
+	}
 	public int GetMaxHumansCountFor(WhereToGo target) {
 		switch (target) {
 			default: 
@@ -263,6 +286,30 @@ public class Game {
 				return 2;
 		}
 	}
+	public int GetMinHumansCountFor(WhereToGo target) {
+		switch (target) {
+		default: 
+			return 1;
+		case WhereToGo.Card1: 
+		case WhereToGo.Card2: 
+		case WhereToGo.Card3: 
+		case WhereToGo.Card4: 
+		case WhereToGo.Field:
+		case WhereToGo.House1:
+		case WhereToGo.House2:
+		case WhereToGo.House3:
+		case WhereToGo.House4:
+		case WhereToGo.Instrument:
+		case WhereToGo.Clay:
+		case WhereToGo.Forest:
+		case WhereToGo.Gold:
+		case WhereToGo.Stone:
+		case WhereToGo.Food:
+			return 1;
+		case WhereToGo.Housing:
+			return 2;
+		}
+	}
 	public int GetSpentHumansCountFor(WhereToGo target) {
 		int count = 0;
 		foreach (var player in PlayerModels)
@@ -282,14 +329,23 @@ public class Game {
 					Player currPlayer = Players [currPlayerInd];
 					PlayerModel model = PlayerModels [currPlayerInd];
 					WhereToGo target = WhereToGo.None;
-					yield return CompositionRoot.Instance.StartCoroutine(currPlayer.SelectWhereToGo(this, (WhereToGo tgt)=>{
-						target = tgt;
-					}));
+					List<WhereToGo> availableTargets = GetAvailableTargets ();
+					if (availableTargets.Count > 0) {
+						yield return CompositionRoot.Instance.StartCoroutine (currPlayer.SelectWhereToGo (this, (WhereToGo tgt) => {
+							target = tgt;
+						}));
+					} else
+						target = availableTargets [0];
 
 					int count = -1;
-					yield return CompositionRoot.Instance.StartCoroutine(currPlayer.SelectUsedHumans(this, target, (int cnt)=>{
-						count = cnt+1;
-					}));
+					int minCount = GetMinHumansCountFor (target);
+					int maxCount = GetMaxHumansCountFor (target);
+					if (maxCount - minCount > 0) {
+						yield return CompositionRoot.Instance.StartCoroutine (currPlayer.SelectUsedHumans (this, target, (int cnt) => {
+							count = cnt + 1;
+						}));
+					} else
+						count = maxCount;
 
 					Debug.LogFormat("go to {0} with {1}", target.ToString(), count.ToString());
 					switch (target) {
