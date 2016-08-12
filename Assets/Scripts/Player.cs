@@ -115,7 +115,14 @@ public class HumanPlayer:Player {
 	}
 	public override IEnumerator ChooseResourceToReceiveFromTopCard (Game game, Action<Resource> onComplete)
 	{
-		throw new NotImplementedException ();
+		_turnView.ShowSelectResource ();
+		while (true) {
+			yield return new WaitForEndOfFrame ();
+			if (_turnView.SelectedResource != Resource.None) {
+				onComplete (_turnView.SelectedResource);
+				yield break;
+			}
+		}
 	}
 	public override IEnumerator GetUsedInstrumentSlotInd (Game game, Resource receivedReceource, int points, Action<int> onComplete)
 	{

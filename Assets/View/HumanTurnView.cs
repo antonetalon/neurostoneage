@@ -187,4 +187,21 @@ public class HumanTurnView : MonoBehaviour {
 		_selectHumansCount.SetActive (false);
 	}
 	#endregion
+
+	#region Select resource
+	[SerializeField] GameObject _selectResource;
+	[SerializeField] List<Image> _resourceImages;
+	public Resource SelectedResource { get; private set; }
+	public void ShowSelectResource() {
+		SelectedResource = Resource.None;
+		_selectResource.SetActive (true);
+	}
+	public void OnResourceSelectionPressed(GameObject sender) {
+		_selectResource.SetActive (false);
+		for (int i = 0; i < _resourceImages.Count; i++) {
+			if (_resourceImages [i].gameObject == sender)
+				SelectedResource = (Resource)i;
+		}
+	}
+	#endregion
 }

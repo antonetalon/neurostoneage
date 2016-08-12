@@ -368,6 +368,27 @@ public class Game {
 					}
 					SetChanged ();
 
+					bool hasAnyResourceFromCard = model.GetHasAnyResourceFromCard ();
+					if (hasAnyResourceFromCard) {
+						bool selectedToUse = false;
+						yield return CompositionRoot.Instance.StartCoroutine (currPlayer.UseGetAnyResourceFromTopCard (this, (bool use) => {
+							selectedToUse = use;
+						}));
+
+						if (selectedToUse) {
+							Resource resource = Resource.None;
+							yield return CompositionRoot.Instance.StartCoroutine (currPlayer.ChooseResourceToReceiveFromTopCard (this, (Resource res) => {
+								resource = res;
+							}));
+							model.AddResource (resource);
+							resource = Resource.None;
+							yield return CompositionRoot.Instance.StartCoroutine (currPlayer.ChooseResourceToReceiveFromTopCard (this, (Resource res) => {
+								resource = res;
+							}));
+							model.AddResource (resource);
+							model.ApplyAnyResourceFromTopCard ();
+						}
+					}
 
 					yield break;
 				}

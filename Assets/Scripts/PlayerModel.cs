@@ -407,6 +407,25 @@ public class PlayerModel {
 			case 6: AddField(); break;
 		}
 	}
+	public bool GetHasAnyResourceFromCard() {
+		foreach (BuiltCard card in _cards) {
+			if (card.Card.TopFeature == TopCardFeature.ResourceAny && !card.Card.TopUsed)
+				return true;
+		}
+		return false;
+	}
+	public void ApplyAnyResourceFromTopCard() {
+		Top2Resources.Card.UseTop ();
+	}
+	public void AddResource(Resource res) {
+		switch (res) {
+			case Resource.Food: Food++; break;
+			case Resource.Forest: Forest++; break;
+			case Resource.Clay: Clay++; break;
+			case Resource.Stone: Stone++; break;
+			case Resource.Gold: Gold++; break;
+		}
+	}
 	#endregion
 
 	#region Feeding - turn phase 3.
