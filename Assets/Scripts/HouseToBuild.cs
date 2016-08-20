@@ -7,22 +7,26 @@ public class HouseToBuild {
 	public int MinResourcesCount;
 	public int MaxResourcesCount;
 	public int DifferentResourcesCount;
-	public HouseToBuild(List<Resource> cost) {
+	public readonly int Ind;
+	public HouseToBuild(int ind, List<Resource> cost) {
 		StaticCost = cost;
 		MinResourcesCount = -1;
 		MaxResourcesCount = -1;
 		DifferentResourcesCount = -1;
+		this.Ind = ind;
 	}
-	public HouseToBuild(int count, int differentCount) {
+	public HouseToBuild(int ind, int count, int differentCount) {
 		StaticCost = null;
 		MinResourcesCount = count;
 		MaxResourcesCount = count;
 		DifferentResourcesCount = differentCount;
+		this.Ind = ind;
 	}
-	public HouseToBuild(int minCount, int maxCount, int differentCount) {
+	public HouseToBuild(int ind, int minCount, int maxCount, int differentCount) {
 		StaticCost = null;
 		MinResourcesCount = minCount;
 		MaxResourcesCount = maxCount;
 		DifferentResourcesCount = differentCount;
+		this.Ind = ind;
 	}
 }

@@ -40,7 +40,8 @@ public class CardToBuild {
 	public readonly BottomCardFeature BottomFeature;
 	public readonly int BottomFeatureParam;
 	public bool TopUsed { get; private set; }
-	public CardToBuild(TopCardFeature topFeature, int topFeatureParam, BottomCardFeature bottomFeature, int bottomFeatureParam) {
+	public readonly int Ind;
+	public CardToBuild(int ind, TopCardFeature topFeature, int topFeatureParam, BottomCardFeature bottomFeature, int bottomFeatureParam) {
 		this.TopFeature = topFeature;
 		this.TopFeatureParam = topFeatureParam;
 		this.BottomFeature = bottomFeature;
@@ -48,9 +49,10 @@ public class CardToBuild {
 		this.TopUsed = true;
 		if (TopFeature == TopCardFeature.InstrumentsOnce || TopFeature == TopCardFeature.ResourceAny)
 			TopUsed = false;
+		this.Ind = ind;
 	}
-	public CardToBuild(TopCardFeature topFeature, int topFeatureParam, BottomCardFeature bottomFeature, Science science):
-	this( topFeature, topFeatureParam, bottomFeature, (int)science) {
+	public CardToBuild(int ind, TopCardFeature topFeature, int topFeatureParam, BottomCardFeature bottomFeature, Science science):
+	this( ind, topFeature, topFeatureParam, bottomFeature, (int)science) {
 	}
 	public void UseTop() {
 		TopUsed = true;

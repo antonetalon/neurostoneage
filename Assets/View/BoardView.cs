@@ -20,6 +20,11 @@ public class BoardView : MonoBehaviour {
 	[SerializeField] Text _turnCount;
 	[SerializeField] List<Sprite> _playerSprites;
 
+	[SerializeField] List<Image> _availableCards;
+	[SerializeField] List<Image> _availableHouses;
+	[SerializeField] List<Sprite> _cardSpriteByInd;
+	[SerializeField] List<Sprite> _houseSpriteByInd;
+
 	int _foodMinersCount;
 	int _forestMinersCount;
 	int _clayMinersCount;
@@ -88,6 +93,49 @@ public class BoardView : MonoBehaviour {
 		for (int i = 0; i < _firstPlayerMarks.Count; i++)
 			_firstPlayerMarks [i].SetActive (i==game.FirstPlayerInd);
 		_turnCount.text = (game.TurnInd+1).ToString ();
+
+		if (game.AvailableCardFor1Resource != null) {
+			_availableCards [0].sprite = _cardSpriteByInd [game.AvailableCardFor1Resource.Ind];
+			_availableCards [0].gameObject.SetActive (true);
+		} else 
+			_availableCards [0].gameObject.SetActive (false);
+		if (game.AvailableCardFor2Resource != null) {
+			_availableCards [1].sprite = _cardSpriteByInd [game.AvailableCardFor2Resource.Ind];
+			_availableCards [1].gameObject.SetActive (true);
+		} else 
+			_availableCards [1].gameObject.SetActive (false);
+		if (game.AvailableCardFor3Resource != null) {
+			_availableCards [2].sprite = _cardSpriteByInd [game.AvailableCardFor3Resource.Ind];
+			_availableCards [2].gameObject.SetActive (true);
+		} else 
+			_availableCards [2].gameObject.SetActive (false);
+		if (game.AvailableCardFor4Resource != null) {
+			_availableCards [3].sprite = _cardSpriteByInd [game.AvailableCardFor4Resource.Ind];
+			_availableCards [3].gameObject.SetActive (true);
+		} else 
+			_availableCards [3].gameObject.SetActive (false);
+
+		if (game.AvailableHouse1 != null) {
+			_availableHouses [0].sprite = _houseSpriteByInd [game.AvailableHouse1.Ind];
+			_availableHouses [0].gameObject.SetActive (true);
+		} else 
+			_availableHouses [0].gameObject.SetActive (false);
+		if (game.AvailableHouse2 != null) {
+			_availableHouses [1].sprite = _houseSpriteByInd [game.AvailableHouse2.Ind];
+			_availableHouses [1].gameObject.SetActive (true);
+		} else 
+			_availableHouses [1].gameObject.SetActive (false);
+		if (game.AvailableHouse3 != null) {
+			_availableHouses [2].sprite = _houseSpriteByInd [game.AvailableHouse3.Ind];
+			_availableHouses [2].gameObject.SetActive (true);
+		} else 
+			_availableHouses [2].gameObject.SetActive (false);
+		if (game.AvailableHouse4 != null) {
+			_availableHouses [3].sprite = _houseSpriteByInd [game.AvailableHouse4.Ind];
+			_availableHouses [3].gameObject.SetActive (true);
+		} else 
+			_availableHouses [3].gameObject.SetActive (false);
+
 	}
 	private void ShowPlayer(PlayerModel player) {
 		ShowPlayerOnResource (player, player.SpentOnFood, _foodMiners, ref _foodMinersCount);

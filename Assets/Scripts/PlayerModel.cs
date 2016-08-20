@@ -140,8 +140,8 @@ public class PlayerModel {
 		CurrColor = color;
 		HumansCount = 5;
 		FieldsCount = 0;
-		InstrumentsCountSlot1 = 0;
-		InstrumentsCountSlot2 = 0;
+		InstrumentsCountSlot1 =  2; // debug.
+		InstrumentsCountSlot2 = 1; // debug.
 		InstrumentsCountSlot3 = 0;
 		Food = 12;
 		Forest = 0;
@@ -171,6 +171,22 @@ public class PlayerModel {
 		InstrumentsSlot1Used = false;
 		InstrumentsSlot2Used = false;
 		InstrumentsSlot3Used = false;
+		SpentOnHousing = 0;
+		SpentOnFields = 0;
+		SpentOnInstruments = 0;
+		SpentOnFood = 0;
+		SpentOnForest = 0;
+		SpentOnClay = 0;
+		SpentOnStone = 0;
+		SpentOnGold = 0;
+		SpentOnBuilding1 = 0;
+		SpentOnBuilding2 = 0;
+		SpentOnBuilding3 = 0;
+		SpentOnBuilding4 = 0;
+		SpentOnCard1 = 0;
+		SpentOnCard2 = 0;
+		SpentOnCard3 = 0;
+		SpentOnCard4 = 0;
 	}
 
 	#region Selecting where to go - turn phase 1.

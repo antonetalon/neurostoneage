@@ -5,6 +5,15 @@ using UnityEngine.UI;
 
 public class HumanTurnView : MonoBehaviour {
 
+	#region Player selection
+	[SerializeField] List<GameObject> _playerSelections;
+	public void SelectPlayer(Game game, PlayerModel player) {
+		int ind = game.PlayerModels.IndexOf (player);
+		for (int i = 0; i < _playerSelections.Count; i++)
+			_playerSelections [i].SetActive (i == ind);
+	}
+	#endregion
+
 	#region Where to go
 	[SerializeField] GameObject _whereToGo;
 	[SerializeField] GameObject _field;
@@ -214,9 +223,13 @@ public class HumanTurnView : MonoBehaviour {
 	[SerializeField] Text _points;
 	[SerializeField] Text _cost;
 	public bool SelectingInstrumentsDone { get; private set; }
+	private int _pointsCount;
+	PlayerModel _player;
 	public void ShowSelectInstruments(PlayerModel player, Resource receivedReceource, int points) {
 		_selectInstruments.SetActive (true);
 		SelectingInstrumentsDone = false;
+		_player = player;
+		_pointsCount = points;
 		_points.text = points.ToString();
 		_receivedResource.sprite = _resourceSprites [(int)receivedReceource];
 		_cost.text = Game.GetResourceCost (receivedReceource).ToString ();
@@ -237,7 +250,7 @@ public class HumanTurnView : MonoBehaviour {
 		_instrumentsImages[4].gameObject.SetActive(player.Top3Instruments!=null && !player.Top3Instruments.Card.TopUsed);
 		//_instrumentsCounts [4].text = 3.ToString ();
 		Instrument3OnceUsed = false;
-		_instrumentsImages[2].gameObject.SetActive(player.Top2Instruments!=null && !player.Top2Instruments.Card.TopUsed);
+		_instrumentsImages[5].gameObject.SetActive(player.Top2Instruments!=null && !player.Top2Instruments.Card.TopUsed);
 		//_instrumentsCounts [2].text = 2.ToString ();
 		Instrument2OnceUsed = false;
 	}
@@ -248,18 +261,37 @@ public class HumanTurnView : MonoBehaviour {
 	public bool Instrument3OnceUsed { get; private set; }
 	public bool Instrument2OnceUsed { get; private set; }
 	public void OnInstrumentUsed(GameObject sender) {
-		if (_instrumentsImages [0].gameObject == sender)
+		if (_instrumentsImages [0].gameObject == sender) {
 			InstrumentSlot0Used = true;
-		if (_instrumentsImages [1].gameObject == sender)
+			_pointsCount += _player.InstrumentsCountSlot1;
+			_instrumentsImages [0].gameObject.SetActive (false);
+		}
+		if (_instrumentsImages [1].gameObject == sender) {
 			InstrumentSlot1Used = true;
-		if (_instrumentsImages [2].gameObject == sender)
+			_pointsCount += _player.InstrumentsCountSlot2;
+			_instrumentsImages [1].gameObject.SetActive (false);
+		}
+		if (_instrumentsImages [2].gameObject == sender) {
 			InstrumentSlot2Used = true;
-		if (_instrumentsImages [3].gameObject == sender)
+			_pointsCount += _player.InstrumentsCountSlot3;
+			_instrumentsImages [2].gameObject.SetActive (false);
+		}
+		if (_instrumentsImages [3].gameObject == sender){
 			Instrument4OnceUsed = true;
-		if (_instrumentsImages [4].gameObject == sender)
+			_pointsCount += 4;
+			_instrumentsImages [3].gameObject.SetActive (false);
+		}
+		if (_instrumentsImages [4].gameObject == sender){
 			Instrument3OnceUsed = true;
-		if (_instrumentsImages [5].gameObject == sender)
+			_pointsCount += 3;
+			_instrumentsImages [4].gameObject.SetActive (false);
+		}
+		if (_instrumentsImages [5].gameObject == sender){
 			Instrument2OnceUsed = true;
+			_pointsCount += 2;
+			_instrumentsImages [5].gameObject.SetActive (false);
+		}
+		_points.text = _pointsCount.ToString();
 	}
 	public void OnInstrumentsUsingDone() {
 		_selectInstruments.SetActive (false);

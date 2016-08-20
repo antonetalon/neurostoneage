@@ -49,6 +49,7 @@ public class HumanPlayer:Player {
 	}
 	public override IEnumerator SelectWhereToGo (Game game, Action<WhereToGo> onComplete)
 	{
+		_turnView.SelectPlayer (game, _model);
 		_turnView.ShowWhereToGo (game, _model);
 		while (true) {
 			yield return new WaitForEndOfFrame ();
@@ -93,6 +94,7 @@ public class HumanPlayer:Player {
 	}
 	public override IEnumerator SelectUsedHumans (Game game, WhereToGo whereToGo, Action<int> onComplete)
 	{
+		_turnView.SelectPlayer (game, _model);
 		_turnView.ShowHumansCount (game, _model, whereToGo, Color);
 		while (true) {
 			yield return new WaitForEndOfFrame ();
@@ -104,6 +106,7 @@ public class HumanPlayer:Player {
 	}
 	public override IEnumerator UseGetAnyResourceFromTopCard (Game game, Action<bool> onComplete)
 	{
+		_turnView.SelectPlayer (game, _model);
 		_turnView.ShowSelectAnyResource ();
 		while (true) {
 			yield return new WaitForEndOfFrame ();
@@ -115,6 +118,7 @@ public class HumanPlayer:Player {
 	}
 	public override IEnumerator ChooseResourceToReceiveFromTopCard (Game game, Action<Resource> onComplete)
 	{
+		_turnView.SelectPlayer (game, _model);
 		_turnView.ShowSelectResource ();
 		while (true) {
 			yield return new WaitForEndOfFrame ();
@@ -127,6 +131,7 @@ public class HumanPlayer:Player {
 
 	public override IEnumerator GetUsedInstrumentSlotInd (Game game, Resource receivedReceource, int points, OnInstrumentsToUseSelected onComplete)
 	{
+		_turnView.SelectPlayer (game, _model);
 		_turnView.ShowSelectInstruments(_model, receivedReceource, points);
 		while (true) {
 			yield return new WaitForEndOfFrame ();
@@ -139,22 +144,27 @@ public class HumanPlayer:Player {
 	}
 	public override IEnumerator BuildCard (Game game, int cardInd, Action<bool> onComplete)
 	{
+		_turnView.SelectPlayer (game, _model);
 		throw new NotImplementedException ();
 	}
 	public override IEnumerator GetUsedResourceForCardBuilding (Game game, Action<Resource> onComplete)
 	{
+		_turnView.SelectPlayer (game, _model);
 		throw new NotImplementedException ();
 	}
 	public override IEnumerator BuildHouse (Game game, int houseInd, Action<bool> onComplete)
 	{
+		_turnView.SelectPlayer (game, _model);
 		throw new NotImplementedException ();
 	}
 	public override IEnumerator GetUsedResourceForHouseBuilding (Game game, HouseToBuild house, List<Resource> spendResources, Action<Resource> onComplete)
 	{
+		_turnView.SelectPlayer (game, _model);
 		throw new NotImplementedException ();
 	}
 	public override IEnumerator LeaveHungry (Game game, Action<bool> onComplete)
 	{
+		_turnView.SelectPlayer (game, _model);
 		throw new NotImplementedException ();
 	}
 }
