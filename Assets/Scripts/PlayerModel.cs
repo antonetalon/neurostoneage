@@ -63,6 +63,9 @@ public class PlayerModel {
 	public int InstrumentsCountSlot1 { get; private set; }
 	public int InstrumentsCountSlot2 { get; private set; }
 	public int InstrumentsCountSlot3 { get; private set; }
+	public bool InstrumentsSlot1Used { get; private set; }
+	public bool InstrumentsSlot2Used { get; private set; }
+	public bool InstrumentsSlot3Used { get; private set; }
 
 	public int Food { get; private set; }
 	public int Forest { get; private set; }
@@ -163,6 +166,11 @@ public class PlayerModel {
 		_sciencesCount.Add (Science.Music, 0);
 		_sciencesCount.Add (Science.Pot, 0);
 		_sciencesCount.Add (Science.Statue, 0);
+	}
+	public void NewTurn() {
+		InstrumentsSlot1Used = false;
+		InstrumentsSlot2Used = false;
+		InstrumentsSlot3Used = false;
 	}
 
 	#region Selecting where to go - turn phase 1.
@@ -417,13 +425,11 @@ public class PlayerModel {
 	public void ApplyAnyResourceFromTopCard() {
 		Top2Resources.Card.UseTop ();
 	}
-	public void AddResource(Resource res) {
-		switch (res) {
-			case Resource.Food: Food++; break;
-			case Resource.Forest: Forest++; break;
-			case Resource.Clay: Clay++; break;
-			case Resource.Stone: Stone++; break;
-			case Resource.Gold: Gold++; break;
+	public void ApplyUseInstrumentSlot(int slotInd) {
+		switch (slotInd) {
+		case 0: InstrumentsSlot1Used = true; break;
+		case 1: InstrumentsSlot2Used = true; break;
+		case 2: InstrumentsSlot3Used = true; break;
 		}
 	}
 	#endregion
@@ -453,7 +459,7 @@ public class PlayerModel {
 			AddResource (res, -1);
 	}
 
-	void AddResource(Resource res, int delta) {
+	public void AddResource(Resource res, int delta) {
 		if (res!=Resource.Food)
 			Score += delta;
 		switch (res) {

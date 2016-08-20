@@ -30,12 +30,12 @@ public abstract class Player {
 	public void Init(PlayerModel model) {
 		_model = model;
 	}
+	public delegate void OnInstrumentsToUseSelected(bool useSlot0, bool useSlot1, bool useSlot2, bool useOnce4Slot, bool useOnce3Slot, bool useOnce2Slot);
 	public abstract IEnumerator SelectWhereToGo (Game game, Action<WhereToGo> onComplete);
 	public abstract IEnumerator SelectUsedHumans (Game game, WhereToGo whereToGo, Action<int> onComplete);
 	public abstract IEnumerator UseGetAnyResourceFromTopCard (Game game, Action<bool> onComplete);
 	public abstract IEnumerator ChooseResourceToReceiveFromTopCard (Game game, Action<Resource> onComplete);
-	public abstract IEnumerator GetUsedInstrumentSlotInd (Game game, Resource receivedReceource, int points, Action<int> onComplete); // -1 if not using any.
-	public abstract IEnumerator UseInstrumentOnce (Game game, Resource receivedReceource, int points, BuiltCard card, Action<bool> onComplete);
+	public abstract IEnumerator GetUsedInstrumentSlotInd (Game game, Resource receivedReceource, int points, OnInstrumentsToUseSelected onComplete); // -1 if not using any.
 	public abstract IEnumerator BuildCard (Game game, int cardInd, Action<bool> onComplete);
 	public abstract IEnumerator GetUsedResourceForCardBuilding(Game game, Action<Resource> onComplete);
 	public abstract IEnumerator BuildHouse (Game game, int houseInd, Action<bool> onComplete);
@@ -49,7 +49,7 @@ public class HumanPlayer:Player {
 	}
 	public override IEnumerator SelectWhereToGo (Game game, Action<WhereToGo> onComplete)
 	{
-		_turnView.ShowWhereToGo (game);
+		_turnView.ShowWhereToGo (game, _model);
 		while (true) {
 			yield return new WaitForEndOfFrame ();
 			WhereToGo res = WhereToGo.None;
@@ -93,7 +93,7 @@ public class HumanPlayer:Player {
 	}
 	public override IEnumerator SelectUsedHumans (Game game, WhereToGo whereToGo, Action<int> onComplete)
 	{
-		_turnView.ShowHumansCount (game, whereToGo, Color);
+		_turnView.ShowHumansCount (game, _model, whereToGo, Color);
 		while (true) {
 			yield return new WaitForEndOfFrame ();
 			if (_turnView.SelectedHumansCount != -1) {
@@ -124,13 +124,18 @@ public class HumanPlayer:Player {
 			}
 		}
 	}
-	public override IEnumerator GetUsedInstrumentSlotInd (Game game, Resource receivedReceource, int points, Action<int> onComplete)
+
+	public override IEnumerator GetUsedInstrumentSlotInd (Game game, Resource receivedReceource, int points, OnInstrumentsToUseSelected onComplete)
 	{
-		throw new NotImplementedException ();
-	}
-	public override IEnumerator UseInstrumentOnce (Game game, Resource receivedReceource, int points, BuiltCard card, Action<bool> onComplete)
-	{
-		throw new NotImplementedException ();
+		_turnView.ShowSelectInstruments(_model, receivedReceource, points);
+		while (true) {
+			yield return new WaitForEndOfFrame ();
+			if (_turnView.SelectingInstrumentsDone) {
+				onComplete (_turnView.InstrumentSlot0Used, _turnView.InstrumentSlot1Used, _turnView.InstrumentSlot2Used, 
+					_turnView.Instrument4OnceUsed, _turnView.Instrument3OnceUsed, _turnView.Instrument2OnceUsed);
+				yield break;
+			}
+		}
 	}
 	public override IEnumerator BuildCard (Game game, int cardInd, Action<bool> onComplete)
 	{

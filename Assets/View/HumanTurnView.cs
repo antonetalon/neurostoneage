@@ -24,9 +24,9 @@ public class HumanTurnView : MonoBehaviour {
 	[SerializeField] GameObject _card3;
 	[SerializeField] GameObject _card4;
 
-	public void ShowWhereToGo(Game game) {
+	public void ShowWhereToGo(Game game, PlayerModel player) {
 		_whereToGo.SetActive (true);
-		List<WhereToGo> availableTargets = game.GetAvailableTargets ();
+		List<WhereToGo> availableTargets = game.GetAvailableTargets (player);
 		_field.SetActive (availableTargets.Contains(WhereToGo.Field));
 		_housing.SetActive (availableTargets.Contains(WhereToGo.Housing));
 		_instrument.SetActive (availableTargets.Contains(WhereToGo.Instrument));
@@ -148,10 +148,10 @@ public class HumanTurnView : MonoBehaviour {
 	[SerializeField] List<Image> _humans;
 	[SerializeField] List<Sprite> _playerSprites;
 	public int SelectedHumansCount { get; private set; }
-	public void ShowHumansCount(Game game, WhereToGo target, PlayerModel.Color color) {
+	public void ShowHumansCount(Game game, PlayerModel player, WhereToGo target, PlayerModel.Color color) {
 		SelectedHumansCount = -1;
 		_selectHumansCount.SetActive (true);
-		int maxHumans = game.GetAvailableHumansCountFor (target);
+		int maxHumans = Mathf.Min( game.GetAvailableHumansCountFor (target), player.UnspentHumanCount );
 		for (int i = 0; i < _humans.Count; i++) {
 			_humans [i].gameObject.SetActive (i < maxHumans);
 			_humans[i].sprite = _playerSprites[(int)color];
@@ -202,6 +202,68 @@ public class HumanTurnView : MonoBehaviour {
 			if (_resourceImages [i].gameObject == sender)
 				SelectedResource = (Resource)i;
 		}
+	}
+	#endregion
+
+	#region Select instruments to use
+	[SerializeField] GameObject _selectInstruments;
+	[SerializeField] List<Image> _instrumentsImages;
+	[SerializeField] List<Text> _instrumentsCounts;
+	[SerializeField] Image _receivedResource;
+	[SerializeField] List<Sprite> _resourceSprites;
+	[SerializeField] Text _points;
+	[SerializeField] Text _cost;
+	public bool SelectingInstrumentsDone { get; private set; }
+	public void ShowSelectInstruments(PlayerModel player, Resource receivedReceource, int points) {
+		_selectInstruments.SetActive (true);
+		SelectingInstrumentsDone = false;
+		_points.text = points.ToString();
+		_receivedResource.sprite = _resourceSprites [(int)receivedReceource];
+		_cost.text = Game.GetResourceCost (receivedReceource).ToString ();
+
+		_instrumentsImages[0].gameObject.SetActive(!player.InstrumentsSlot1Used && player.InstrumentsCountSlot1>0);
+		_instrumentsCounts [0].text = player.InstrumentsCountSlot1.ToString ();
+		InstrumentSlot0Used = false;
+		_instrumentsImages[1].gameObject.SetActive(!player.InstrumentsSlot2Used && player.InstrumentsCountSlot2>0);
+		_instrumentsCounts [1].text = player.InstrumentsCountSlot2.ToString ();
+		InstrumentSlot1Used = false;
+		_instrumentsImages[2].gameObject.SetActive(!player.InstrumentsSlot3Used && player.InstrumentsCountSlot3>0);
+		_instrumentsCounts [2].text = player.InstrumentsCountSlot3.ToString ();
+		InstrumentSlot2Used = false;
+
+		_instrumentsImages[3].gameObject.SetActive(player.Top4Instruments!=null && !player.Top4Instruments.Card.TopUsed);
+		//_instrumentsCounts [3].text = 4.ToString ();
+		Instrument4OnceUsed = false;
+		_instrumentsImages[4].gameObject.SetActive(player.Top3Instruments!=null && !player.Top3Instruments.Card.TopUsed);
+		//_instrumentsCounts [4].text = 3.ToString ();
+		Instrument3OnceUsed = false;
+		_instrumentsImages[2].gameObject.SetActive(player.Top2Instruments!=null && !player.Top2Instruments.Card.TopUsed);
+		//_instrumentsCounts [2].text = 2.ToString ();
+		Instrument2OnceUsed = false;
+	}
+	public bool InstrumentSlot0Used { get; private set; }
+	public bool InstrumentSlot1Used { get; private set; }
+	public bool InstrumentSlot2Used { get; private set; }
+	public bool Instrument4OnceUsed { get; private set; }
+	public bool Instrument3OnceUsed { get; private set; }
+	public bool Instrument2OnceUsed { get; private set; }
+	public void OnInstrumentUsed(GameObject sender) {
+		if (_instrumentsImages [0].gameObject == sender)
+			InstrumentSlot0Used = true;
+		if (_instrumentsImages [1].gameObject == sender)
+			InstrumentSlot1Used = true;
+		if (_instrumentsImages [2].gameObject == sender)
+			InstrumentSlot2Used = true;
+		if (_instrumentsImages [3].gameObject == sender)
+			Instrument4OnceUsed = true;
+		if (_instrumentsImages [4].gameObject == sender)
+			Instrument3OnceUsed = true;
+		if (_instrumentsImages [5].gameObject == sender)
+			Instrument2OnceUsed = true;
+	}
+	public void OnInstrumentsUsingDone() {
+		_selectInstruments.SetActive (false);
+		SelectingInstrumentsDone = true;
 	}
 	#endregion
 }

@@ -1,6 +1,6 @@
 fileFormatVersion: 2
 guid: 367fd17c0ff8c2647a79b0d0764a3a77
-timeCreated: 1470351313
+timeCreated: 1471476046
 licenseType: Free
 TextureImporter:
   fileIDToRecycleName:
@@ -16,6 +16,7 @@ TextureImporter:
     21300018: field
     21300020: multiplier
     21300022: card
+    21300024: instrumentslots
   serializedVersion: 2
   mipmaps:
     mipMapMode: 0
@@ -242,6 +243,21 @@ TextureImporter:
         - {x: -24, y: -32}
         - {x: 24, y: -32}
         - {x: 24, y: 32}
+    - name: instrumentslots
+      rect:
+        serializedVersion: 2
+        x: 79
+        y: 1173
+        width: 169
+        height: 466
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -84.5, y: 233}
+        - {x: -84.5, y: -233}
+        - {x: 84.5, y: -233}
+        - {x: 84.5, y: 233}
     outline: []
   spritePackingTag: 
   userData: 

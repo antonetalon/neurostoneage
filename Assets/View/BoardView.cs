@@ -25,6 +25,17 @@ public class BoardView : MonoBehaviour {
 	int _clayMinersCount;
 	int _stoneMinersCount;
 	int _goldMinersCount;
+	int _housingMinersCount;
+	int _instrumentsMinersCount;
+	int _fieldMinersCount;
+	int _house1MinersCount;
+	int _house2MinersCount;
+	int _house3MinersCount;
+	int _house4MinersCount;
+	int _card1MinersCount;
+	int _card2MinersCount;
+	int _card3MinersCount;
+	int _card4MinersCount;
 
 	public void UpdateView(Game game) {
 		_foodMinersCount = 0;
@@ -32,6 +43,17 @@ public class BoardView : MonoBehaviour {
 		_clayMinersCount = 0;
 		_stoneMinersCount = 0;
 		_goldMinersCount = 0;
+		_housingMinersCount = 0;
+		_instrumentsMinersCount = 0;
+		_fieldMinersCount = 0;
+		_house1MinersCount = 0;
+		_house2MinersCount = 0;
+		_house3MinersCount = 0;
+		_house4MinersCount = 0;
+		_card1MinersCount = 0;
+		_card2MinersCount = 0;
+		_card3MinersCount = 0;
+		_card4MinersCount = 0;
 		for (int i=0;i<game.PlayerModels.Count;i++)
 			ShowPlayer (game.PlayerModels[i]);
 		for (int i = 0; i < _foodMiners.Count; i++)
@@ -44,6 +66,20 @@ public class BoardView : MonoBehaviour {
 			_stoneMiners [i].gameObject.SetActive (i < _stoneMinersCount);
 		for (int i = 0; i < _goldMiners.Count; i++)
 			_goldMiners [i].gameObject.SetActive (i < _goldMinersCount);
+		for (int i = 0; i < _housingMiners.Count; i++)
+			_housingMiners [i].gameObject.SetActive (i < _housingMinersCount);
+		_instrumentMiner.gameObject.SetActive (0 < _instrumentsMinersCount);
+		_fieldMiner.gameObject.SetActive (0 < _fieldMinersCount);
+		_instrumentMiner.gameObject.SetActive (0 < _instrumentsMinersCount);
+		_houseMiners[0].gameObject.SetActive (0 < _house1MinersCount);
+		_houseMiners[1].gameObject.SetActive (0 < _house2MinersCount);
+		_houseMiners[2].gameObject.SetActive (0 < _house3MinersCount);
+		_houseMiners[3].gameObject.SetActive (0 < _house4MinersCount);
+		_cardMiners[0].gameObject.SetActive (0 < _card1MinersCount);
+		_cardMiners[1].gameObject.SetActive (0 < _card2MinersCount);
+		_cardMiners[2].gameObject.SetActive (0 < _card3MinersCount);
+		_cardMiners[3].gameObject.SetActive (0 < _card4MinersCount);
+
 		_houseHeapCounts [0].text = game.HousesHeapCount1.ToString ();
 		_houseHeapCounts [1].text = game.HousesHeapCount2.ToString ();
 		_houseHeapCounts [2].text = game.HousesHeapCount3.ToString ();
@@ -59,40 +95,74 @@ public class BoardView : MonoBehaviour {
 		ShowPlayerOnResource (player, player.SpentOnClay, _clayMiners, ref _clayMinersCount);
 		ShowPlayerOnResource (player, player.SpentOnStone, _stoneMiners, ref _stoneMinersCount);
 		ShowPlayerOnResource (player, player.SpentOnGold, _goldMiners, ref _goldMinersCount);
-		ShowPlayer (_instrumentMiner, player.CurrColor);
-		_instrumentMiner.gameObject.SetActive (player.SpentOnInstruments > 0);
-		ShowPlayer (_fieldMiner, player.CurrColor);
+		if (player.SpentOnInstruments > 0) {
+			_instrumentMiner.gameObject.SetActive (true);
+			_instrumentsMinersCount = 1;
+			ShowPlayer (_instrumentMiner, player);
+		}
+		if (player.SpentOnFields > 0) {
+			_fieldMiner.gameObject.SetActive (true);
+			_fieldMinersCount = 1;
+			ShowPlayer (_fieldMiner, player);
+		}
+		if (player.SpentOnHousing > 0) {
+			_housingMiners[0].gameObject.SetActive (true);
+			_housingMiners[1].gameObject.SetActive (true);
+			_housingMinersCount = 2;
+			ShowPlayer (_housingMiners[0], player);
+			ShowPlayer (_housingMiners[1], player);
+		}
 
-		_fieldMiner.gameObject.SetActive (player.SpentOnFields > 0);
-		ShowPlayer (_housingMiners[0], player.CurrColor);
+		if (player.SpentOnBuilding1 > 0) {
+			ShowPlayer (_houseMiners [0], player);
+			_houseMiners [0].gameObject.SetActive (true);
+			_house1MinersCount = 1;
+		}
+		if (player.SpentOnBuilding2 > 0) {
+			ShowPlayer (_houseMiners [1], player);
+			_houseMiners [1].gameObject.SetActive (true);
+			_house2MinersCount = 1;
+		}
+		if (player.SpentOnBuilding3 > 0) {
+			ShowPlayer (_houseMiners [2], player);
+			_houseMiners [2].gameObject.SetActive (true);
+			_house3MinersCount = 1;
+		}
+		if (player.SpentOnBuilding4 > 0) {
+			ShowPlayer (_houseMiners [3], player);
+			_houseMiners [3].gameObject.SetActive (true);
+			_house4MinersCount = 1;
+		}
 
-		_housingMiners[0].gameObject.SetActive (player.SpentOnHousing > 0);
-		ShowPlayer (_housingMiners[1], player.CurrColor);
-		_housingMiners[1].gameObject.SetActive (player.SpentOnHousing > 0);
-
-		ShowPlayer (_houseMiners[0], player.CurrColor);
-		_houseMiners[0].gameObject.SetActive (player.SpentOnBuilding1 > 0);
-		ShowPlayer (_houseMiners[1], player.CurrColor);
-		_houseMiners[1].gameObject.SetActive (player.SpentOnBuilding2 > 0);
-		ShowPlayer (_houseMiners[2], player.CurrColor);
-		_houseMiners[2].gameObject.SetActive (player.SpentOnBuilding3 > 0);
-		ShowPlayer (_houseMiners[3], player.CurrColor);
-		_houseMiners[3].gameObject.SetActive (player.SpentOnBuilding4 > 0);
-
-		ShowPlayer (_cardMiners[0], player.CurrColor);
-		_cardMiners[0].gameObject.SetActive (player.SpentOnCard1 > 0);
-		ShowPlayer (_cardMiners[1], player.CurrColor);
-		_cardMiners[1].gameObject.SetActive (player.SpentOnCard2 > 0);
-		ShowPlayer (_cardMiners[2], player.CurrColor);
-		_cardMiners[2].gameObject.SetActive (player.SpentOnCard3 > 0);
-		ShowPlayer (_cardMiners[3], player.CurrColor);
-		_cardMiners[3].gameObject.SetActive (player.SpentOnCard4 > 0);
+		if (player.SpentOnCard1 > 0) {
+			ShowPlayer (_cardMiners [0], player);
+			_cardMiners [0].gameObject.SetActive (true);
+			_card1MinersCount = 1;
+		}
+		if (player.SpentOnCard2 > 0) {
+			ShowPlayer (_cardMiners [1], player);
+			_cardMiners [1].gameObject.SetActive (true);
+			_card2MinersCount = 1;
+		}
+		if (player.SpentOnCard3 > 0) {
+			ShowPlayer (_cardMiners [2], player);
+			_cardMiners [2].gameObject.SetActive (true);
+			_card3MinersCount = 1;
+		}
+		if (player.SpentOnCard4 > 0) {
+			ShowPlayer (_cardMiners [3], player);
+			_cardMiners [3].gameObject.SetActive (true);
+			_card4MinersCount = 1;
+		}
 	}
 	private void ShowPlayerOnResource(PlayerModel player, int count, List<Image> views, ref int usedCounts) {
 		for (int i = 0; i < count; i++) {
-			ShowPlayer (views[usedCounts], player.CurrColor);
+			ShowPlayer (views[usedCounts], player);
 			usedCounts++;
 		}
+	}
+	private void ShowPlayer(Image pic, PlayerModel player) {
+		pic.sprite = _playerSprites [(int)player.CurrColor];
 	}
 	private void ShowPlayer(Image pic, PlayerModel.Color color) {
 		pic.sprite = _playerSprites [(int)color];

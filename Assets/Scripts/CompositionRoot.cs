@@ -20,8 +20,9 @@ public class CompositionRoot : MonoBehaviour {
 			new HumanPlayer (_view.TurnView)
 		};
 		_game = new Game (players);
-		StartCoroutine (_game.Play ());
 		_view.Init (_game);
+		StartCoroutine (_game.Play ());
+
 	}
 
 }

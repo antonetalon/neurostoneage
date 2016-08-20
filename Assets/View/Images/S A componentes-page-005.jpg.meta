@@ -1,10 +1,11 @@
 fileFormatVersion: 2
 guid: 126a53619ffedd148a3467bf10a48d2d
-timeCreated: 1470265955
+timeCreated: 1471476189
 licenseType: Free
 TextureImporter:
   fileIDToRecycleName:
     21300000: food5
+    21300002: white
   serializedVersion: 2
   mipmaps:
     mipMapMode: 0
@@ -66,6 +67,21 @@ TextureImporter:
         - {x: -72.5, y: -74.5}
         - {x: 72.5, y: -74.5}
         - {x: 72.5, y: 74.5}
+    - name: white
+      rect:
+        serializedVersion: 2
+        x: 917
+        y: 158
+        width: 242
+        height: 126
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -121, y: 63}
+        - {x: -121, y: -63}
+        - {x: 121, y: -63}
+        - {x: 121, y: 63}
     outline: []
   spritePackingTag: 
   userData: 

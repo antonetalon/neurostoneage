@@ -59,7 +59,7 @@ public class Game {
 			PlayerModels.Add (model);
 		}
 			
-		TurnInd = 0;
+		TurnInd = -1;
 		// Init buildings.
 		List<HouseToBuild> allHouses = new List<HouseToBuild>();
 		allHouses.Add (new HouseToBuild (new List<Resource> () { Resource.Forest, Resource.Forest, Resource.Clay }));
@@ -202,6 +202,8 @@ public class Game {
 			AvailableCardFor4Resource = _cardsInHeap [0];
 			_cardsInHeap.RemoveAt (0);
 		}
+		foreach (PlayerModel player in PlayerModels)
+			player.NewTurn ();
 		SetChanged ();
 	}
 	public bool GetEnded() {
@@ -237,27 +239,28 @@ public class Game {
 			return count;
 		}
 	}
-	public List<WhereToGo> GetAvailableTargets() {
+	public List<WhereToGo> GetAvailableTargets(PlayerModel player) {
 		List<WhereToGo> targets = new List<WhereToGo> ();
-		AddTargetIfAvailable (targets, WhereToGo.Card1);
-		AddTargetIfAvailable (targets, WhereToGo.Card2);
-		AddTargetIfAvailable (targets, WhereToGo.Card3);
-		AddTargetIfAvailable (targets, WhereToGo.Card4);
-		AddTargetIfAvailable (targets, WhereToGo.Clay);
-		AddTargetIfAvailable (targets, WhereToGo.Field);
-		AddTargetIfAvailable (targets, WhereToGo.Food);
-		AddTargetIfAvailable (targets, WhereToGo.Forest);
-		AddTargetIfAvailable (targets, WhereToGo.Gold);
-		AddTargetIfAvailable (targets, WhereToGo.House1);
-		AddTargetIfAvailable (targets, WhereToGo.House2);
-		AddTargetIfAvailable (targets, WhereToGo.House3);
-		AddTargetIfAvailable (targets, WhereToGo.House4);
-		AddTargetIfAvailable (targets, WhereToGo.Housing);
-		AddTargetIfAvailable (targets, WhereToGo.Instrument);
+		AddTargetIfAvailable (targets, WhereToGo.Card1, player);
+		AddTargetIfAvailable (targets, WhereToGo.Card2, player);
+		AddTargetIfAvailable (targets, WhereToGo.Card3, player);
+		AddTargetIfAvailable (targets, WhereToGo.Card4, player);
+		AddTargetIfAvailable (targets, WhereToGo.Clay, player);
+		AddTargetIfAvailable (targets, WhereToGo.Field, player);
+		AddTargetIfAvailable (targets, WhereToGo.Food, player);
+		AddTargetIfAvailable (targets, WhereToGo.Forest, player);
+		AddTargetIfAvailable (targets, WhereToGo.Gold, player);
+		AddTargetIfAvailable (targets, WhereToGo.House1, player);
+		AddTargetIfAvailable (targets, WhereToGo.House2, player);
+		AddTargetIfAvailable (targets, WhereToGo.House3, player);
+		AddTargetIfAvailable (targets, WhereToGo.House4, player);
+		AddTargetIfAvailable (targets, WhereToGo.Housing, player);
+		AddTargetIfAvailable (targets, WhereToGo.Instrument, player);
+		AddTargetIfAvailable (targets, WhereToGo.Stone, player);
 		return targets;
 	}
-	private void AddTargetIfAvailable(List<WhereToGo> targets, WhereToGo target) {
-		if (GetMaxHumansCountFor (target) - GetMinHumansCountFor (target) > 0)
+	private void AddTargetIfAvailable(List<WhereToGo> targets, WhereToGo target, PlayerModel player) {
+		if (GetAvailableHumansCountFor (target) > 0 && GetMinHumansCountFor (target) <= player.UnspentHumanCount)
 			targets.Add (target);
 	}
 	public int GetMaxHumansCountFor(WhereToGo target) {
@@ -310,6 +313,26 @@ public class Game {
 			return 2;
 		}
 	}
+	public static Resource GetResourceFromTarget(WhereToGo target) {
+		switch (target) {
+			default: return Resource.None;
+			case WhereToGo.Food: return Resource.Food;
+			case WhereToGo.Forest: return Resource.Forest;
+			case WhereToGo.Clay: return Resource.Clay;
+			case WhereToGo.Stone: return Resource.Stone;
+			case WhereToGo.Gold: return Resource.Gold;
+		}
+	}
+	public static int GetResourceCost(Resource res) {
+		switch (res) {
+			default: return int.MaxValue;
+			case Resource.Food: return 2;
+			case Resource.Forest: return 3;
+			case Resource.Clay: return 4;
+			case Resource.Stone: return 5;
+			case Resource.Gold: return 6;
+		}
+	}
 	public int GetSpentHumansCountFor(WhereToGo target) {
 		int count = 0;
 		foreach (var player in PlayerModels)
@@ -323,19 +346,25 @@ public class Game {
 		
 		while (!GetEnded ()) {
 			NewTurn ();
+
+			// First phase - selecting where to go.
 			while (UnspentHumanCount>0) {
 				for (int i = 0; i < Players.Count; i++) {
 					int currPlayerInd = (FirstPlayerInd + i) % Players.Count;
 					Player currPlayer = Players [currPlayerInd];
 					PlayerModel model = PlayerModels [currPlayerInd];
 					WhereToGo target = WhereToGo.None;
-					List<WhereToGo> availableTargets = GetAvailableTargets ();
+					List<WhereToGo> availableTargets = GetAvailableTargets (model);
 					if (availableTargets.Count > 0) {
 						yield return CompositionRoot.Instance.StartCoroutine (currPlayer.SelectWhereToGo (this, (WhereToGo tgt) => {
 							target = tgt;
 						}));
-					} else
+					} else {
+						if (availableTargets.Count == 0)
+							continue; // player finished spending humans.
 						target = availableTargets [0];
+					}
+					SetChanged ();
 
 					int count = -1;
 					int minCount = GetMinHumansCountFor (target);
@@ -367,32 +396,83 @@ public class Game {
 						case WhereToGo.Housing: model.GoToHousing (); break;
 					}
 					SetChanged ();
-
-					bool hasAnyResourceFromCard = model.GetHasAnyResourceFromCard ();
-					if (hasAnyResourceFromCard) {
-						bool selectedToUse = false;
-						yield return CompositionRoot.Instance.StartCoroutine (currPlayer.UseGetAnyResourceFromTopCard (this, (bool use) => {
-							selectedToUse = use;
-						}));
-
-						if (selectedToUse) {
-							Resource resource = Resource.None;
-							yield return CompositionRoot.Instance.StartCoroutine (currPlayer.ChooseResourceToReceiveFromTopCard (this, (Resource res) => {
-								resource = res;
-							}));
-							model.AddResource (resource);
-							resource = Resource.None;
-							yield return CompositionRoot.Instance.StartCoroutine (currPlayer.ChooseResourceToReceiveFromTopCard (this, (Resource res) => {
-								resource = res;
-							}));
-							model.AddResource (resource);
-							model.ApplyAnyResourceFromTopCard ();
-						}
-					}
-
-					yield break;
 				}
 			}
+
+			// Second phase - using cards and applying where to go.
+			for (int i = 0; i < Players.Count; i++) {
+				int currPlayerInd = (FirstPlayerInd + i) % Players.Count;
+				Player currPlayer = Players [currPlayerInd];
+				PlayerModel model = PlayerModels [currPlayerInd];
+
+				// Select resource from card.
+				bool hasAnyResourceFromCard = model.GetHasAnyResourceFromCard ();
+				if (hasAnyResourceFromCard) {
+					bool selectedToUse = false;
+					yield return CompositionRoot.Instance.StartCoroutine (currPlayer.UseGetAnyResourceFromTopCard (this, (bool use) => {
+						selectedToUse = use;
+					}));
+
+					if (selectedToUse) {
+						Resource resource = Resource.None;
+						yield return CompositionRoot.Instance.StartCoroutine (currPlayer.ChooseResourceToReceiveFromTopCard (this, (Resource res) => {
+							resource = res;
+						}));
+						model.AddResource (resource, 1);
+						resource = Resource.None;
+						yield return CompositionRoot.Instance.StartCoroutine (currPlayer.ChooseResourceToReceiveFromTopCard (this, (Resource res) => {
+							resource = res;
+						}));
+						model.AddResource (resource, 1);
+						model.ApplyAnyResourceFromTopCard ();
+					}
+				}
+
+				// Receiving resources.
+				List<WhereToGo> resourcesReceivingList = new List<WhereToGo>();
+				foreach (WhereToGo target in resourcesReceivingList) {
+					int spentHumans = model.GetSpentHumansCountFor (target);
+					if (spentHumans == 0)
+						continue;
+					int rand = 0;
+					for (int j=0;j<spentHumans;j++)
+						rand += Random.Range(0, 6);
+					Resource resource = GetResourceFromTarget (target);
+					yield return CompositionRoot.Instance.StartCoroutine (currPlayer.GetUsedInstrumentSlotInd (this, resource, rand,
+						(bool useSlot0, bool useSlot1, bool useSlot2, bool useOnce4Slot, bool useOnce3Slot, bool useOnce2Slot) => {
+							if (useSlot0 && !model.InstrumentsSlot1Used) {
+								model.ApplyUseInstrumentSlot(0);
+								rand += model.InstrumentsCountSlot1;
+							}
+							if (useSlot1 && !model.InstrumentsSlot2Used) {
+								model.ApplyUseInstrumentSlot(1);
+								rand += model.InstrumentsCountSlot2;
+							}
+							if (useSlot2 && !model.InstrumentsSlot3Used) {
+								model.ApplyUseInstrumentSlot(2);
+								rand += model.InstrumentsCountSlot3;
+							}
+							if (useOnce4Slot && !model.Top4Instruments.Card.TopUsed) {
+								model.Top4Instruments.Card.UseTop();
+								rand += 4;
+							}
+							if (useOnce3Slot && !model.Top3Instruments.Card.TopUsed) {
+								model.Top3Instruments.Card.UseTop();
+								rand += 3;
+							}
+							if (useOnce2Slot && !model.Top2Instruments.Card.TopUsed) {
+								model.Top2Instruments.Card.UseTop();
+								rand += 2;
+							}
+					}));
+					int cost = GetResourceCost (resource);
+					int resourceCount = rand / cost;
+					model.AddResource (resource, resourceCount);
+				}
+
+			}
+
+			// Third phase - feeding.
 		}
 	}
 }
