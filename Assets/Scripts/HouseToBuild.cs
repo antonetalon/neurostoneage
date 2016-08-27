@@ -3,13 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class HouseToBuild {
-	List<Resource> StaticCost;
+	public ReadonlyList<Resource> StaticCost;
 	public int MinResourcesCount;
 	public int MaxResourcesCount;
 	public int DifferentResourcesCount;
 	public readonly int Ind;
 	public HouseToBuild(int ind, List<Resource> cost) {
-		StaticCost = cost;
+		StaticCost = new ReadonlyList<Resource>(cost);
 		MinResourcesCount = -1;
 		MaxResourcesCount = -1;
 		DifferentResourcesCount = -1;

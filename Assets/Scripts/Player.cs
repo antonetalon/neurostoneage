@@ -38,8 +38,9 @@ public abstract class Player {
 	public abstract IEnumerator GetUsedInstrumentSlotInd (Game game, Resource receivedReceource, int points, OnInstrumentsToUseSelected onComplete); // -1 if not using any.
 	public abstract IEnumerator BuildCard (Game game, int cardInd, Action<bool> onComplete);
 	public abstract IEnumerator GetUsedResourceForCardBuilding(Game game, Action<Resource> onComplete);
+	public abstract IEnumerator ChooseItemToReceiveFromTopCard (Game game, List<int> randoms, Action<int> onComplete);
 	public abstract IEnumerator BuildHouse (Game game, int houseInd, Action<bool> onComplete);
-	public abstract IEnumerator GetUsedResourceForHouseBuilding(Game game, HouseToBuild house, List<Resource> spendResources, Action<Resource> onComplete);
+	public abstract IEnumerator GetUsedResourceForHouseBuilding(Game game, HouseToBuild house, List<Resource> options, List<Resource> spendResources, Action<Resource> onComplete);
 	public abstract IEnumerator LeaveHungry (Game game, Action<bool> onComplete);
 }
 public class HumanPlayer:Player {
@@ -104,6 +105,8 @@ public class HumanPlayer:Player {
 			}
 		}
 	}
+
+
 	public override IEnumerator UseGetAnyResourceFromTopCard (Game game, Action<bool> onComplete)
 	{
 		_turnView.SelectPlayer (game, _model);
@@ -116,8 +119,7 @@ public class HumanPlayer:Player {
 			}
 		}
 	}
-	public override IEnumerator ChooseResourceToReceiveFromTopCard (Game game, Action<Resource> onComplete)
-	{
+	public override IEnumerator ChooseResourceToReceiveFromTopCard (Game game, Action<Resource> onComplete) {
 		_turnView.SelectPlayer (game, _model);
 		_turnView.ShowSelectResource ();
 		while (true) {
@@ -127,6 +129,10 @@ public class HumanPlayer:Player {
 				yield break;
 			}
 		}
+	}
+	public override IEnumerator ChooseItemToReceiveFromTopCard (Game game, List<int> randoms, Action<int> onComplete)
+	{
+		throw new NotImplementedException ();
 	}
 
 	public override IEnumerator GetUsedInstrumentSlotInd (Game game, Resource receivedReceource, int points, OnInstrumentsToUseSelected onComplete)
@@ -157,7 +163,7 @@ public class HumanPlayer:Player {
 		_turnView.SelectPlayer (game, _model);
 		throw new NotImplementedException ();
 	}
-	public override IEnumerator GetUsedResourceForHouseBuilding (Game game, HouseToBuild house, List<Resource> spendResources, Action<Resource> onComplete)
+	public override IEnumerator GetUsedResourceForHouseBuilding (Game game, HouseToBuild house, List<Resource> options, List<Resource> spendResources, Action<Resource> onComplete)
 	{
 		_turnView.SelectPlayer (game, _model);
 		throw new NotImplementedException ();

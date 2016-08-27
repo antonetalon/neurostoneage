@@ -29,6 +29,25 @@ public class PlayerModel {
 	public int SpentOnCard3 { get; private set; }
 	public int SpentOnCard4 { get; private set; }
 
+	public int GetSpentOnCard(int cardInd) {
+		switch (cardInd) {
+			case 0: return SpentOnCard1;
+			case 1: return SpentOnCard2;
+			case 2: return SpentOnCard3;
+			case 3: return SpentOnCard4;
+			default: return -1;
+		}
+	}
+	public int GetSpentOnHouse(int houseInd) {
+		switch (houseInd) {
+			case 0: return SpentOnBuilding1;
+			case 1: return SpentOnBuilding2;
+			case 2: return SpentOnBuilding3;
+			case 3: return SpentOnBuilding4;
+			default: return -1;
+		}
+	}
+
 	public int GetSpentHumansCountFor(WhereToGo target) {
 		switch (target) {
 			default: return 0;
@@ -72,6 +91,17 @@ public class PlayerModel {
 	public int Clay { get; private set; }
 	public int Stone { get; private set; }
 	public int Gold { get; private set; }
+	public int GetResourceCount(Resource res) {
+		switch (res) {
+			default: return -1;
+			case Resource.Food: return Food;
+			case Resource.Forest: return Forest;
+			case Resource.Clay: return Clay;
+			case Resource.Stone: return Stone;
+			case Resource.Gold: return Gold;
+		}
+	}
+
 	public ReadonlyList<BuiltHouse> Houses { get; private set; }
 	List<BuiltHouse> _houses;
 	public ReadonlyList<BuiltCard> Cards { get; private set; }
@@ -140,13 +170,13 @@ public class PlayerModel {
 		CurrColor = color;
 		HumansCount = 5;
 		FieldsCount = 0;
-		InstrumentsCountSlot1 =  2; // debug.
-		InstrumentsCountSlot2 = 1; // debug.
+		InstrumentsCountSlot1 = 0;
+		InstrumentsCountSlot2 = 0;
 		InstrumentsCountSlot3 = 0;
 		Food = 12;
-		Forest = 0;
-		Clay = 0;
-		Stone = 0;
+		Forest = 10;
+		Clay = 10;
+		Stone = 10;
 		Gold = 0;
 		_houses = new List<BuiltHouse> ();
 		Houses = new ReadonlyList<BuiltHouse> (_houses);
@@ -293,61 +323,21 @@ public class PlayerModel {
 		int inc = pointsSum / Config.PointsPerGold;
 		Gold += inc;
 	}
-	public void ApplyGoToBuilding1(bool build, List<Resource> spentResources) {
-		if (SpentOnBuilding1 == 0)
+	public void ApplyGoToBuilding(int buildingInd, List<Resource> spentResources) {
+		if (GetSpentOnHouse(buildingInd) == 0)
 			return;
-		SpentOnBuilding1 = 0;
-		ApplyGoToBuilding (build, spentResources);
+		ApplyGoToBuilding (spentResources);
 	}
-	public void ApplyGoToBuilding2(bool build, List<Resource> spentResources) {
-		if (SpentOnBuilding2 == 0)
-			return;
-		SpentOnBuilding2 = 0;
-		ApplyGoToBuilding (build, spentResources);
-	}
-	public void ApplyGoToBuilding3(bool build, List<Resource> spentResources) {
-		if (SpentOnBuilding3 == 0)
-			return;
-		SpentOnBuilding3 = 0;
-		ApplyGoToBuilding (build, spentResources);
-	}
-	public void ApplyGoToBuilding4(bool build, List<Resource> spentResources) {
-		if (SpentOnBuilding4 == 0)
-			return;
-		SpentOnBuilding4 = 0;
-		ApplyGoToBuilding (build, spentResources);
-	}
-	private void ApplyGoToBuilding(bool build, List<Resource> spentResources) {
-		if (!build)
-			return;
+	private void ApplyGoToBuilding(List<Resource> spentResources) {
 		BuiltHouse house = new BuiltHouse (spentResources);
 		_houses.Add (house);
 		SubtractResources (spentResources);
 		Score += HouseMultiplier;
 		Score += house.Score;
 	}
-	public void ApplyGoToCard1(bool build, List<Resource> spentResources, CardToBuild card) {
-		if (SpentOnCard1 == 0)
+	public void ApplyGoToCard(bool build, int cardInd, List<Resource> spentResources, CardToBuild card) {
+		if (GetSpentOnCard(cardInd) == 0)
 			return;
-		SpentOnCard1 = 0;
-		ApplyGoToCard (build, spentResources, card);
-	}
-	public void ApplyGoToCard2(bool build, List<Resource> spentResources, CardToBuild card) {
-		if (SpentOnCard2 == 0)
-			return;
-		SpentOnCard2 = 0;
-		ApplyGoToCard (build, spentResources, card);
-	}
-	public void ApplyGoToCard3(bool build, List<Resource> spentResources, CardToBuild card) {
-		if (SpentOnCard3 == 0)
-			return;
-		SpentOnCard3 = 0;
-		ApplyGoToCard (build, spentResources, card);
-	}
-	public void ApplyGoToCard4(bool build, List<Resource> spentResources, CardToBuild card) {
-		if (SpentOnCard4 == 0)
-			return;
-		SpentOnCard4 = 0;
 		ApplyGoToCard (build, spentResources, card);
 	}
 	private void ApplyGoToCard(bool build, List<Resource> spentResources, CardToBuild card) {
@@ -486,7 +476,7 @@ public class PlayerModel {
 		case Resource.Gold:	Gold += delta; break;
 		}
 	}
-	void AddInstrument() {
+	public void AddInstrument() {
 		if (InstrumentsCountSlot3 < InstrumentsCountSlot2)
 			InstrumentsCountSlot3++;
 		else if (InstrumentsCountSlot2 < InstrumentsCountSlot1)
@@ -495,7 +485,7 @@ public class PlayerModel {
 			InstrumentsCountSlot1++;
 		Score += InstrumentsMultiplier;
 	}
-	private void AddField() {
+	public void AddField() {
 		FieldsCount++;
 		Score += FieldsMultiplier;
 	}
