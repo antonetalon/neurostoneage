@@ -516,7 +516,7 @@ public class Game {
 						continue; // Should have enough resources.
 					
 					bool selectedToBuy = false;
-					yield return CompositionRoot.Instance.StartCoroutine (currPlayer.BuildCard (this, cardInd, (bool use) => {
+					yield return CompositionRoot.Instance.StartCoroutine (currPlayer.BuildCard (this, GetAvailableCard(cardInd), (bool use) => {
 						selectedToBuy = use;
 					}));
 
@@ -526,7 +526,8 @@ public class Game {
 					// Define what resources to spend.
 					List<Resource> spendResources = new List<Resource>();
 					for (int resourceInd = 0; resourceInd < cardPrice; resourceInd++) {
-						yield return CompositionRoot.Instance.StartCoroutine (currPlayer.GetUsedResourceForCardBuilding (this, (Resource resource) => {
+						yield return CompositionRoot.Instance.StartCoroutine (currPlayer.GetUsedResourceForCardBuilding (
+							this, GetAvailableCard(cardInd), spendResources, (Resource resource) => {
 							spendResources.Add(resource);
 						}));
 					}
@@ -546,7 +547,7 @@ public class Game {
 							Player currPlayer2 = Players [playerInd];
 							PlayerModel model2 = PlayerModels [playerInd];
 							int selectedOption = -1;
-							yield return CompositionRoot.Instance.StartCoroutine (currPlayer.ChooseItemToReceiveFromTopCard(this, options, (int option) => {
+							yield return CompositionRoot.Instance.StartCoroutine (currPlayer.ChooseItemToReceiveFromCharityCard(this, options, (int option) => {
 								selectedOption = option;
 							}));
 
@@ -574,7 +575,7 @@ public class Game {
 
 
 					bool selectedToBuild = false;
-					yield return CompositionRoot.Instance.StartCoroutine (currPlayer.BuildHouse (this, houseInd, (bool build) => {
+					yield return CompositionRoot.Instance.StartCoroutine (currPlayer.BuildHouse (this, GetHouse(houseInd), (bool build) => {
 						selectedToBuild = build;
 					}));
 					if (!selectedToBuild)
@@ -614,11 +615,12 @@ public class Game {
 				bool enoughFood = neededFood >= model.Food;
 				bool selectedToLeaveHungry = false;
 				if (!enoughFood) {
-					bool enoughResources = model.Food + model.Forest + model.Clay + model.Stone + model.Gold >= neededFood;
+					int eatenResourcesCount = neededFood - model.Food;
+					bool enoughResources = model.Forest + model.Clay + model.Stone + model.Gold >= eatenResourcesCount;
 					if (!enoughResources)
 						selectedToLeaveHungry = true;
 					else {
-						yield return CompositionRoot.Instance.StartCoroutine (currPlayer.LeaveHungry (this, (bool leaveHungry) => {
+						yield return CompositionRoot.Instance.StartCoroutine (currPlayer.LeaveHungry (this, eatenResourcesCount, (bool leaveHungry) => {
 							selectedToLeaveHungry = leaveHungry;
 						}));
 					}

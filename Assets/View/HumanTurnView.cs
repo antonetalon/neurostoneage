@@ -298,4 +298,125 @@ public class HumanTurnView : MonoBehaviour {
 		SelectingInstrumentsDone = true;
 	}
 	#endregion
+
+	#region Charity card
+	[SerializeField] GameObject _charityCardSelectingParent;
+	[SerializeField] List<GameObject> _charityCardButtons;
+	public int SelectedItemFromCharityCard { get; private set; }
+	public void ShowSelectingItemFromCharityCard(PlayerModel model, List<int> randoms) {
+		SelectedItemFromCharityCard = -1;
+		_charityCardSelectingParent.SetActive (true);
+	}
+	public void OnItemFromCharityCardSelected(GameObject sender) {
+		int ind = _charityCardButtons.IndexOf (sender);
+		SelectedItemFromCharityCard = ind;
+		_charityCardSelectingParent.SetActive (false);
+	}
+	#endregion
+
+	#region Select whether to build card
+	[SerializeField] GameObject _buildCardSelectingParent;
+	[SerializeField] GameObject _buildCardSelectedFalse;
+	[SerializeField] GameObject _buildCardSelectedTrue;
+	public bool SelectingBuildCardDone { get; private set; }
+	public bool SelectedBuildCard { get; private set; }
+	public void ShowBuildCard(CardToBuild card) {
+		SelectingBuildCardDone = false;
+		_buildCardSelectingParent.SetActive (true);
+	}
+	public void OnBuildCardSelected(GameObject sender) {
+		SelectingBuildCardDone = true;
+		_buildCardSelectingParent.SetActive (false);
+		if (_buildCardSelectedTrue == sender)
+			SelectedBuildCard = true;
+		else
+			SelectedBuildCard = false;
+	}
+	#endregion
+
+	#region Selecting resource for card ind
+	[SerializeField] GameObject _selectingResourceForCardBuyingParent;
+	[SerializeField] List<GameObject> _selectedResourcesForCardBuildingButtons;
+	public Resource SelectedResourceForCardBuilding { get; private set; }
+	public void ShowSelectResourceForCard(PlayerModel model) {
+		SelectedResourceForCardBuilding = Resource.None;
+		_selectingResourceForCardBuyingParent.SetActive (true);
+		for (int ind = 0; ind < _selectedResourcesForCardBuildingButtons.Count; ind++) {
+			Resource res = (Resource)ind;
+			bool hasResource = model.GetResourceCount (res) > 0;
+			_selectedResourcesForCardBuildingButtons [ind].SetActive (hasResource);
+		}
+	}
+	public void OnResourceForBuyingCardSelected(GameObject sender) {
+		int ind = _selectedResourcesForCardBuildingButtons.IndexOf (sender);
+		SelectedResourceForCardBuilding = (Resource)ind;
+		_selectingResourceForCardBuyingParent.SetActive (false);
+	}
+	#endregion
+
+	#region Selecting whether to build house
+	[SerializeField] GameObject _buildingHouseSelectingParent;
+	[SerializeField] GameObject _selectedToBuildHouse;
+	public bool SelectingBuildHouseDone { get; private set; }
+	public bool SelectedToBuildHouse { get; private set; }
+	public void ShowSelectBuildingHouse(HouseToBuild house) {
+		SelectingBuildHouseDone = false;
+		_buildingHouseSelectingParent.SetActive (true);
+	}
+	public void OnBuildingCardSelected(GameObject sender) {
+		if (sender == _selectedToBuildHouse)
+			SelectedToBuildHouse = true;
+		else
+			SelectedToBuildHouse = false;
+		_buildingHouseSelectingParent.SetActive (false);
+	}
+	#endregion
+
+	#region Get resource for house building
+	[SerializeField] GameObject _gettingResourceForHouseBuildingParent;
+	[SerializeField] List<GameObject> _selectedResourceForHouseBuildingButtons;
+	[SerializeField] List<Image> _usedResources;
+	public Resource SelectedResourceForHouseBuilding { get; private set; }
+	public void ShowSelectResourceForBuildingHouse(HouseToBuild house, List<Resource> options, List<Resource> spentResources) {
+		SelectedResourceForHouseBuilding = Resource.None;
+		_gettingResourceForHouseBuildingParent.SetActive (true);
+		for (int ind = 0; ind < _selectedResourceForHouseBuildingButtons.Count; ind++) {
+			Resource res = (Resource)ind;
+			_selectedResourceForHouseBuildingButtons [ind].SetActive (options.Contains(res));
+		}
+		for (int ind = 0; ind < _usedResources.Count; ind++) {
+			if (ind >= spentResources.Count)
+				_usedResources [ind].gameObject.SetActive (false);
+			else {
+				_usedResources [ind].gameObject.SetActive (true);
+				_usedResources [ind].sprite = _resourceSprites [(int)spentResources [ind]];
+			}
+		}
+	}
+	public void OnResourceForHouseBuildingSelected(GameObject sender) {
+		SelectedResourceForHouseBuilding = (Resource)_selectedResourceForHouseBuildingButtons.IndexOf(sender);
+		_gettingResourceForHouseBuildingParent.SetActive (true);
+	}
+	#endregion
+
+	#region Selecting whether to leave hungry
+	[SerializeField] GameObject _leavingHungryParent;
+	[SerializeField] GameObject _selectedToLeaveHungry;
+	[SerializeField] Text _eatenResourcesCount;
+	public bool SelectingLeavingHungryDone { get; private set; }
+	public bool SelecedLeaveHungry { get; private set; }
+	public void ShowSelectingLeavingHungry(int eatenResources) {
+		SelectingBuildHouseDone = false;
+		_buildingHouseSelectingParent.SetActive (true);
+		_eatenResourcesCount.text = eatenResources.ToString ();
+	}
+	public void OnLeaveHungrySelected(GameObject sender) {
+		SelectingLeavingHungryDone = true;
+		if (sender == _selectedToLeaveHungry)
+			SelecedLeaveHungry = true;
+		else
+			SelecedLeaveHungry = false;
+		_leavingHungryParent.SetActive (false);
+	}
+	#endregion
 }

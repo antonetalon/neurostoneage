@@ -36,12 +36,12 @@ public abstract class Player {
 	public abstract IEnumerator UseGetAnyResourceFromTopCard (Game game, Action<bool> onComplete);
 	public abstract IEnumerator ChooseResourceToReceiveFromTopCard (Game game, Action<Resource> onComplete);
 	public abstract IEnumerator GetUsedInstrumentSlotInd (Game game, Resource receivedReceource, int points, OnInstrumentsToUseSelected onComplete); // -1 if not using any.
-	public abstract IEnumerator BuildCard (Game game, int cardInd, Action<bool> onComplete);
-	public abstract IEnumerator GetUsedResourceForCardBuilding(Game game, Action<Resource> onComplete);
-	public abstract IEnumerator ChooseItemToReceiveFromTopCard (Game game, List<int> randoms, Action<int> onComplete);
-	public abstract IEnumerator BuildHouse (Game game, int houseInd, Action<bool> onComplete);
+	public abstract IEnumerator BuildCard (Game game, CardToBuild card, Action<bool> onComplete);
+	public abstract IEnumerator GetUsedResourceForCardBuilding(Game game, CardToBuild card, List<Resource> alreadySelectedResources, Action<Resource> onComplete);
+	public abstract IEnumerator ChooseItemToReceiveFromCharityCard (Game game, List<int> randoms, Action<int> onComplete);
+	public abstract IEnumerator BuildHouse (Game game, HouseToBuild house, Action<bool> onComplete);
 	public abstract IEnumerator GetUsedResourceForHouseBuilding(Game game, HouseToBuild house, List<Resource> options, List<Resource> spendResources, Action<Resource> onComplete);
-	public abstract IEnumerator LeaveHungry (Game game, Action<bool> onComplete);
+	public abstract IEnumerator LeaveHungry (Game game, int eatenResources, Action<bool> onComplete);
 }
 public class HumanPlayer:Player {
 	HumanTurnView _turnView;
@@ -130,9 +130,17 @@ public class HumanPlayer:Player {
 			}
 		}
 	}
-	public override IEnumerator ChooseItemToReceiveFromTopCard (Game game, List<int> randoms, Action<int> onComplete)
+	public override IEnumerator ChooseItemToReceiveFromCharityCard (Game game, List<int> randoms, Action<int> onComplete)
 	{
-		throw new NotImplementedException ();
+		_turnView.SelectPlayer (game, _model);
+		_turnView.ShowSelectingItemFromCharityCard(_model, randoms);
+		while (true) {
+			yield return new WaitForEndOfFrame ();
+			if (_turnView.SelectedItemFromCharityCard!=-1) {
+				onComplete (_turnView.SelectedItemFromCharityCard);
+				yield break;
+			}
+		}
 	}
 
 	public override IEnumerator GetUsedInstrumentSlotInd (Game game, Resource receivedReceource, int points, OnInstrumentsToUseSelected onComplete)
@@ -148,29 +156,64 @@ public class HumanPlayer:Player {
 			}
 		}
 	}
-	public override IEnumerator BuildCard (Game game, int cardInd, Action<bool> onComplete)
+	public override IEnumerator BuildCard (Game game, CardToBuild card, Action<bool> onComplete)
 	{
 		_turnView.SelectPlayer (game, _model);
-		throw new NotImplementedException ();
+		_turnView.ShowBuildCard(card);
+		while (true) {
+			yield return new WaitForEndOfFrame ();
+			if (_turnView.SelectingBuildCardDone) {
+				onComplete (_turnView.SelectedBuildCard);
+				yield break;
+			}
+		}
 	}
-	public override IEnumerator GetUsedResourceForCardBuilding (Game game, Action<Resource> onComplete)
+	public override IEnumerator GetUsedResourceForCardBuilding (Game game, CardToBuild card, List<Resource> alreadySelectedResources, Action<Resource> onComplete)
 	{
 		_turnView.SelectPlayer (game, _model);
-		throw new NotImplementedException ();
+		_turnView.ShowSelectResourceForCard(_model);
+		while (true) {
+			yield return new WaitForEndOfFrame ();
+			if (_turnView.SelectedResourceForCardBuilding!=Resource.None) {
+				onComplete (_turnView.SelectedResourceForCardBuilding);
+				yield break;
+			}
+		}
 	}
-	public override IEnumerator BuildHouse (Game game, int houseInd, Action<bool> onComplete)
+	public override IEnumerator BuildHouse (Game game, HouseToBuild house, Action<bool> onComplete)
 	{
 		_turnView.SelectPlayer (game, _model);
-		throw new NotImplementedException ();
+		_turnView.ShowSelectBuildingHouse(house);
+		while (true) {
+			yield return new WaitForEndOfFrame ();
+			if (_turnView.SelectingBuildHouseDone) {
+				onComplete (_turnView.SelectedToBuildHouse);
+				yield break;
+			}
+		}
 	}
 	public override IEnumerator GetUsedResourceForHouseBuilding (Game game, HouseToBuild house, List<Resource> options, List<Resource> spendResources, Action<Resource> onComplete)
 	{
 		_turnView.SelectPlayer (game, _model);
-		throw new NotImplementedException ();
+		_turnView.ShowSelectResourceForBuildingHouse(house, options, spendResources);
+		while (true) {
+			yield return new WaitForEndOfFrame ();
+			if (_turnView.SelectedResourceForHouseBuilding!=Resource.None) {
+				onComplete (_turnView.SelectedResourceForHouseBuilding);
+				yield break;
+			}
+		}
 	}
-	public override IEnumerator LeaveHungry (Game game, Action<bool> onComplete)
+	public override IEnumerator LeaveHungry (Game game, int eatenResources, Action<bool> onComplete)
 	{
 		_turnView.SelectPlayer (game, _model);
-		throw new NotImplementedException ();
+		_turnView.ShowSelectingLeavingHungry(eatenResources);
+		while (true) {
+			yield return new WaitForEndOfFrame ();
+			if (_turnView.SelectingLeavingHungryDone) {
+				onComplete (_turnView.SelecedLeaveHungry);
+				yield break;
+			}
+		}
 	}
 }
