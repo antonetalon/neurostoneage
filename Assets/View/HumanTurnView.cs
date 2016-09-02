@@ -189,11 +189,11 @@ public class HumanTurnView : MonoBehaviour {
 	}
 	public void OnAnyResourceUse() {
 		SelectedAnyResourceUse = true;
-		_selectHumansCount.SetActive (false);
+		_selectAnyResource.SetActive (false);
 	}
 	public void OnAnyResourceDontUse() {
 		SelectedAnyResourceDontUse = true;
-		_selectHumansCount.SetActive (false);
+		_selectAnyResource.SetActive (false);
 	}
 	#endregion
 
@@ -301,15 +301,31 @@ public class HumanTurnView : MonoBehaviour {
 
 	#region Charity card
 	[SerializeField] GameObject _charityCardSelectingParent;
-	[SerializeField] List<GameObject> _charityCardButtons;
+	[SerializeField] List<Image> _charityCardButtons;
+	[SerializeField] List<Sprite> _charityCardSprites;
 	public int SelectedItemFromCharityCard { get; private set; }
+	List<int> _charityRandoms;
 	public void ShowSelectingItemFromCharityCard(PlayerModel model, List<int> randoms) {
+		_charityRandoms = randoms;
 		SelectedItemFromCharityCard = -1;
 		_charityCardSelectingParent.SetActive (true);
+		for (int i = 0; i < _charityCardButtons.Count; i++) {
+			_charityCardButtons [i].gameObject.SetActive (randoms.Count>i);
+			if (i < randoms.Count) {
+				_charityCardButtons [i].sprite = _charityCardSprites [randoms [i]];
+				_charityCardButtons [i].SetNativeSize ();
+			}
+		}
 	}
 	public void OnItemFromCharityCardSelected(GameObject sender) {
-		int ind = _charityCardButtons.IndexOf (sender);
-		SelectedItemFromCharityCard = ind;
+		int ind = -1;
+		for (int i = 0; i < _charityCardButtons.Count; i++) {
+			if (_charityCardButtons [i].gameObject == sender) {
+				ind = i;
+				break;
+			}
+		}
+		SelectedItemFromCharityCard = _charityRandoms[ind];
 		_charityCardSelectingParent.SetActive (false);
 	}
 	#endregion
@@ -318,11 +334,14 @@ public class HumanTurnView : MonoBehaviour {
 	[SerializeField] GameObject _buildCardSelectingParent;
 	[SerializeField] GameObject _buildCardSelectedFalse;
 	[SerializeField] GameObject _buildCardSelectedTrue;
+	[SerializeField] List<GameObject> _cardToBuildSelectionParent;
 	public bool SelectingBuildCardDone { get; private set; }
 	public bool SelectedBuildCard { get; private set; }
-	public void ShowBuildCard(CardToBuild card) {
+	public void ShowBuildCard(int cardInd) {
 		SelectingBuildCardDone = false;
 		_buildCardSelectingParent.SetActive (true);
+		for (int i = 0; i < _cardToBuildSelectionParent.Count; i++)
+			_cardToBuildSelectionParent [i].SetActive (i == cardInd);
 	}
 	public void OnBuildCardSelected(GameObject sender) {
 		SelectingBuildCardDone = true;
@@ -338,18 +357,25 @@ public class HumanTurnView : MonoBehaviour {
 	[SerializeField] GameObject _selectingResourceForCardBuyingParent;
 	[SerializeField] List<GameObject> _selectedResourcesForCardBuildingButtons;
 	public Resource SelectedResourceForCardBuilding { get; private set; }
-	public void ShowSelectResourceForCard(PlayerModel model) {
+	public void ShowSelectResourceForCard(PlayerModel model, List<Resource> alreadySelectedResources) {
 		SelectedResourceForCardBuilding = Resource.None;
 		_selectingResourceForCardBuyingParent.SetActive (true);
+		Dictionary<Resource, int> spentResourcesDict = new Dictionary<Resource, int> ();
+		spentResourcesDict.Add (Resource.Forest, 0);
+		spentResourcesDict.Add (Resource.Clay, 0);
+		spentResourcesDict.Add (Resource.Stone, 0);
+		spentResourcesDict.Add (Resource.Gold, 0);
+		foreach (var res in alreadySelectedResources)
+			spentResourcesDict [res]++;
 		for (int ind = 0; ind < _selectedResourcesForCardBuildingButtons.Count; ind++) {
-			Resource res = (Resource)ind;
-			bool hasResource = model.GetResourceCount (res) > 0;
+			Resource res = (Resource)(ind+1);
+			bool hasResource = model.GetResourceCount (res) > spentResourcesDict [res];
 			_selectedResourcesForCardBuildingButtons [ind].SetActive (hasResource);
 		}
 	}
 	public void OnResourceForBuyingCardSelected(GameObject sender) {
 		int ind = _selectedResourcesForCardBuildingButtons.IndexOf (sender);
-		SelectedResourceForCardBuilding = (Resource)ind;
+		SelectedResourceForCardBuilding = (Resource)(ind+1);
 		_selectingResourceForCardBuyingParent.SetActive (false);
 	}
 	#endregion
@@ -357,17 +383,21 @@ public class HumanTurnView : MonoBehaviour {
 	#region Selecting whether to build house
 	[SerializeField] GameObject _buildingHouseSelectingParent;
 	[SerializeField] GameObject _selectedToBuildHouse;
+	[SerializeField] List<GameObject> _houseToBuild;
 	public bool SelectingBuildHouseDone { get; private set; }
 	public bool SelectedToBuildHouse { get; private set; }
-	public void ShowSelectBuildingHouse(HouseToBuild house) {
+	public void ShowSelectBuildingHouse(int houseInd) {
 		SelectingBuildHouseDone = false;
 		_buildingHouseSelectingParent.SetActive (true);
+		for (int i = 0; i < _houseToBuild.Count; i++)
+			_houseToBuild [i].SetActive (i==houseInd);
 	}
-	public void OnBuildingCardSelected(GameObject sender) {
+	public void OnBuildHouseSelected(GameObject sender) {
 		if (sender == _selectedToBuildHouse)
 			SelectedToBuildHouse = true;
 		else
 			SelectedToBuildHouse = false;
+		SelectingBuildHouseDone = true;
 		_buildingHouseSelectingParent.SetActive (false);
 	}
 	#endregion
@@ -381,7 +411,7 @@ public class HumanTurnView : MonoBehaviour {
 		SelectedResourceForHouseBuilding = Resource.None;
 		_gettingResourceForHouseBuildingParent.SetActive (true);
 		for (int ind = 0; ind < _selectedResourceForHouseBuildingButtons.Count; ind++) {
-			Resource res = (Resource)ind;
+			Resource res = (Resource)(ind+1);
 			_selectedResourceForHouseBuildingButtons [ind].SetActive (options.Contains(res));
 		}
 		for (int ind = 0; ind < _usedResources.Count; ind++) {
@@ -394,8 +424,8 @@ public class HumanTurnView : MonoBehaviour {
 		}
 	}
 	public void OnResourceForHouseBuildingSelected(GameObject sender) {
-		SelectedResourceForHouseBuilding = (Resource)_selectedResourceForHouseBuildingButtons.IndexOf(sender);
-		_gettingResourceForHouseBuildingParent.SetActive (true);
+		SelectedResourceForHouseBuilding = (Resource)(_selectedResourceForHouseBuildingButtons.IndexOf(sender)+1);
+		_gettingResourceForHouseBuildingParent.SetActive (false);
 	}
 	#endregion
 
@@ -406,8 +436,8 @@ public class HumanTurnView : MonoBehaviour {
 	public bool SelectingLeavingHungryDone { get; private set; }
 	public bool SelecedLeaveHungry { get; private set; }
 	public void ShowSelectingLeavingHungry(int eatenResources) {
-		SelectingBuildHouseDone = false;
-		_buildingHouseSelectingParent.SetActive (true);
+		SelectingLeavingHungryDone = false;
+		_leavingHungryParent.SetActive (true);
 		_eatenResourcesCount.text = eatenResources.ToString ();
 	}
 	public void OnLeaveHungrySelected(GameObject sender) {

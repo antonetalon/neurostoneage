@@ -2,20 +2,20 @@
 using System.Collections;
 
 public enum TopCardFeature {
-	RandomForEveryone,
+	RandomForEveryone,//
 	InstrumentsOnce,
-	ResourceConstFood,
-	ResourceConstClay,
-	ResourceConstStone,
-	ResourceConstGold,
+	ResourceConstFood,//
+	ResourceConstClay,//
+	ResourceConstStone,//
+	ResourceConstGold,//
 	OneCardMore,
 	ResourceRandomForest,
 	ResourceRandomStone,
 	ResourceRandomGold,
-	InstrumentsForever,
-	Score,
-	Field,
-	ResourceAny
+	InstrumentsForever,//
+	Score,//
+	Field,//
+	ResourceAny//
 }
 public enum BottomCardFeature {
 	InstrumentsMultiplier,

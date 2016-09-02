@@ -38,6 +38,14 @@ public class PlayerModel {
 			default: return -1;
 		}
 	}
+	public void SetSpentOnCard(int cardInd, int val) {
+		switch (cardInd) {
+			case 0: SpentOnCard1 = val; break;
+			case 1: SpentOnCard2 = val; break;
+			case 2: SpentOnCard3 = val; break;
+			case 3: SpentOnCard4 = val; break;
+		}
+	}
 	public int GetSpentOnHouse(int houseInd) {
 		switch (houseInd) {
 			case 0: return SpentOnBuilding1;
@@ -45,6 +53,14 @@ public class PlayerModel {
 			case 2: return SpentOnBuilding3;
 			case 3: return SpentOnBuilding4;
 			default: return -1;
+		}
+	}
+	public void SetSpentOnHouse(int houseInd, int count) {
+		switch (houseInd) {
+			case 0:	SpentOnBuilding1 = count; break;
+			case 1: SpentOnBuilding2 = count; break;
+			case 2: SpentOnBuilding3 = count; break;
+			case 3: SpentOnBuilding4 = count; break;
 		}
 	}
 
@@ -117,12 +133,12 @@ public class PlayerModel {
 
 	private Dictionary<Science, int> _sciencesCount;
 	public bool ScienceExists(Science sci, int row) {
-		return _sciencesCount [sci] >= row;
+		return _sciencesCount [sci] > row;
 	}
 	public int GetScienceScore(int row) {
 		int sum = 0;
 		foreach (var count in _sciencesCount.Values) {
-			if (count <= row + 1)
+			if (count > row)
 				sum++;
 		}
 		return sum * sum;
@@ -173,7 +189,7 @@ public class PlayerModel {
 		InstrumentsCountSlot1 = 0;
 		InstrumentsCountSlot2 = 0;
 		InstrumentsCountSlot3 = 0;
-		Food = 12;
+		Food = 02;
 		Forest = 10;
 		Clay = 10;
 		Stone = 10;
@@ -326,7 +342,9 @@ public class PlayerModel {
 	public void ApplyGoToBuilding(int buildingInd, List<Resource> spentResources) {
 		if (GetSpentOnHouse(buildingInd) == 0)
 			return;
-		ApplyGoToBuilding (spentResources);
+		SetSpentOnHouse (buildingInd, 0); 
+		if (spentResources!=null)
+			ApplyGoToBuilding (spentResources);
 	}
 	private void ApplyGoToBuilding(List<Resource> spentResources) {
 		BuiltHouse house = new BuiltHouse (spentResources);
@@ -338,6 +356,7 @@ public class PlayerModel {
 	public void ApplyGoToCard(bool build, int cardInd, List<Resource> spentResources, CardToBuild card) {
 		if (GetSpentOnCard(cardInd) == 0)
 			return;
+		SetSpentOnCard (cardInd, 0);
 		ApplyGoToCard (build, spentResources, card);
 	}
 	private void ApplyGoToCard(bool build, List<Resource> spentResources, CardToBuild card) {

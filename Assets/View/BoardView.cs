@@ -135,7 +135,6 @@ public class BoardView : MonoBehaviour {
 			_availableHouses [3].gameObject.SetActive (true);
 		} else 
 			_availableHouses [3].gameObject.SetActive (false);
-
 	}
 	private void ShowPlayer(PlayerModel player) {
 		ShowPlayerOnResource (player, player.SpentOnFood, _foodMiners, ref _foodMinersCount);

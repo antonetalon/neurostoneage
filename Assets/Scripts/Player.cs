@@ -36,10 +36,10 @@ public abstract class Player {
 	public abstract IEnumerator UseGetAnyResourceFromTopCard (Game game, Action<bool> onComplete);
 	public abstract IEnumerator ChooseResourceToReceiveFromTopCard (Game game, Action<Resource> onComplete);
 	public abstract IEnumerator GetUsedInstrumentSlotInd (Game game, Resource receivedReceource, int points, OnInstrumentsToUseSelected onComplete); // -1 if not using any.
-	public abstract IEnumerator BuildCard (Game game, CardToBuild card, Action<bool> onComplete);
+	public abstract IEnumerator BuildCard (Game game, int cardInd, Action<bool> onComplete);
 	public abstract IEnumerator GetUsedResourceForCardBuilding(Game game, CardToBuild card, List<Resource> alreadySelectedResources, Action<Resource> onComplete);
 	public abstract IEnumerator ChooseItemToReceiveFromCharityCard (Game game, List<int> randoms, Action<int> onComplete);
-	public abstract IEnumerator BuildHouse (Game game, HouseToBuild house, Action<bool> onComplete);
+	public abstract IEnumerator BuildHouse (Game game, int houseInd, Action<bool> onComplete);
 	public abstract IEnumerator GetUsedResourceForHouseBuilding(Game game, HouseToBuild house, List<Resource> options, List<Resource> spendResources, Action<Resource> onComplete);
 	public abstract IEnumerator LeaveHungry (Game game, int eatenResources, Action<bool> onComplete);
 }
@@ -156,10 +156,10 @@ public class HumanPlayer:Player {
 			}
 		}
 	}
-	public override IEnumerator BuildCard (Game game, CardToBuild card, Action<bool> onComplete)
+	public override IEnumerator BuildCard (Game game, int cardInd, Action<bool> onComplete)
 	{
 		_turnView.SelectPlayer (game, _model);
-		_turnView.ShowBuildCard(card);
+		_turnView.ShowBuildCard(cardInd);
 		while (true) {
 			yield return new WaitForEndOfFrame ();
 			if (_turnView.SelectingBuildCardDone) {
@@ -171,7 +171,7 @@ public class HumanPlayer:Player {
 	public override IEnumerator GetUsedResourceForCardBuilding (Game game, CardToBuild card, List<Resource> alreadySelectedResources, Action<Resource> onComplete)
 	{
 		_turnView.SelectPlayer (game, _model);
-		_turnView.ShowSelectResourceForCard(_model);
+		_turnView.ShowSelectResourceForCard(_model, alreadySelectedResources);
 		while (true) {
 			yield return new WaitForEndOfFrame ();
 			if (_turnView.SelectedResourceForCardBuilding!=Resource.None) {
@@ -180,10 +180,10 @@ public class HumanPlayer:Player {
 			}
 		}
 	}
-	public override IEnumerator BuildHouse (Game game, HouseToBuild house, Action<bool> onComplete)
+	public override IEnumerator BuildHouse (Game game, int houseInd, Action<bool> onComplete)
 	{
 		_turnView.SelectPlayer (game, _model);
-		_turnView.ShowSelectBuildingHouse(house);
+		_turnView.ShowSelectBuildingHouse(houseInd);
 		while (true) {
 			yield return new WaitForEndOfFrame ();
 			if (_turnView.SelectingBuildHouseDone) {

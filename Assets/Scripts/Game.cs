@@ -51,9 +51,9 @@ public class Game {
 	private void RemoveAvailableHouse(int ind) {
 		switch (ind) {
 			case 0: _houseHeap1.RemoveAt(0); break;
-			case 1: _houseHeap1.RemoveAt(1); break;
-			case 2: _houseHeap1.RemoveAt(2); break;
-			case 3: _houseHeap1.RemoveAt(3); break;
+			case 1: _houseHeap2.RemoveAt(1); break;
+			case 2: _houseHeap3.RemoveAt(2); break;
+			case 3: _houseHeap4.RemoveAt(3); break;
 		}
 	}
 	private List<CardToBuild> _cardsInHeap;
@@ -76,6 +76,7 @@ public class Game {
 	public int AvailableHouse4Places;
 
 	public event System.Action OnChanged;
+	public event System.Action OnTurnEnded;
 	private void SetChanged() {
 		if (OnChanged != null)
 			OnChanged ();
@@ -239,6 +240,8 @@ public class Game {
 		foreach (PlayerModel player in PlayerModels)
 			player.NewTurn ();
 		SetChanged ();
+		if (OnChanged != null)
+			OnChanged ();
 	}
 	public bool GetEnded() {
 		// Condition 1 - cant prepare new card set.
@@ -294,6 +297,17 @@ public class Game {
 		return targets;
 	}
 	private void AddTargetIfAvailable(List<WhereToGo> targets, WhereToGo target, PlayerModel player) {
+		switch (target) {
+			case WhereToGo.Housing:
+				if (player.HumansCount >= 10)
+					return;
+				break;
+			case WhereToGo.Instrument:
+				if (player.InstrumentsCountSlot3 >= 4)
+					return;
+				break;
+		}
+
 		if (GetAvailableHumansCountFor (target) > 0 && GetMinHumansCountFor (target) <= player.UnspentHumanCount)
 			targets.Add (target);
 	}
@@ -380,6 +394,7 @@ public class Game {
 		
 		while (!GetEnded ()) {
 			NewTurn ();
+			Debug.Log ("New turn");
 
 			// First phase - selecting where to go.
 			while (UnspentHumanCount>0) {
@@ -446,6 +461,10 @@ public class Game {
 					yield return CompositionRoot.Instance.StartCoroutine (currPlayer.UseGetAnyResourceFromTopCard (this, (bool use) => {
 						selectedToUse = use;
 					}));
+					if (selectedToUse)
+						Debug.Log ("Selected to use any resource from card");
+					else
+						Debug.Log ("Not selected to use any resource from card");
 
 					if (selectedToUse) {
 						Resource resource = Resource.None;
@@ -457,8 +476,10 @@ public class Game {
 						yield return CompositionRoot.Instance.StartCoroutine (currPlayer.ChooseResourceToReceiveFromTopCard (this, (Resource res) => {
 							resource = res;
 						}));
+						Debug.Log ("Selected resource to receive = "+resource.ToString());
 						model.AddResource (resource, 1);
 						model.ApplyAnyResourceFromTopCard ();
+						SetChanged ();
 					}
 				}
 
@@ -470,38 +491,46 @@ public class Game {
 						continue;
 					int rand = 0;
 					for (int j=0;j<spentHumans;j++)
-						rand += Random.Range(0, 6);
+						rand += Random.Range(1, 6);
 					Resource resource = GetResourceFromTarget (target);
 					yield return CompositionRoot.Instance.StartCoroutine (currPlayer.GetUsedInstrumentSlotInd (this, resource, rand,
 						(bool useSlot0, bool useSlot1, bool useSlot2, bool useOnce4Slot, bool useOnce3Slot, bool useOnce2Slot) => {
 							if (useSlot0 && !model.InstrumentsSlot1Used) {
 								model.ApplyUseInstrumentSlot(0);
 								rand += model.InstrumentsCountSlot1;
+								Debug.LogFormat("Used instrument slot {0} with count {1}", 0, model.InstrumentsCountSlot1);
 							}
 							if (useSlot1 && !model.InstrumentsSlot2Used) {
 								model.ApplyUseInstrumentSlot(1);
 								rand += model.InstrumentsCountSlot2;
+								Debug.LogFormat("Used instrument slot {0} with count {1}", 1, model.InstrumentsCountSlot2);
 							}
 							if (useSlot2 && !model.InstrumentsSlot3Used) {
 								model.ApplyUseInstrumentSlot(2);
 								rand += model.InstrumentsCountSlot3;
+								Debug.LogFormat("Used instrument slot {0} with count {1}", 2, model.InstrumentsCountSlot3);
 							}
 							if (useOnce4Slot && !model.Top4Instruments.Card.TopUsed) {
 								model.Top4Instruments.Card.UseTop();
 								rand += 4;
+								Debug.LogFormat("Used instrument slot {0} with count {1}", "top4", 4);
 							}
 							if (useOnce3Slot && !model.Top3Instruments.Card.TopUsed) {
 								model.Top3Instruments.Card.UseTop();
 								rand += 3;
+								Debug.LogFormat("Used instrument slot {0} with count {1}", "top3", 3);
 							}
 							if (useOnce2Slot && !model.Top2Instruments.Card.TopUsed) {
 								model.Top2Instruments.Card.UseTop();
 								rand += 2;
+								Debug.LogFormat("Used instrument slot {0} with count {1}", "top2", 2);
 							}
 					}));
+					
 					int cost = GetResourceCost (resource);
 					int resourceCount = rand / cost;
 					model.AddResource (resource, resourceCount);
+					SetChanged ();
 				}
 
 
@@ -510,18 +539,30 @@ public class Game {
 					if (model.GetSpentOnCard (cardInd) < 1)
 						continue; // Should be spent on card.
 
+					CardToBuild card = GetAvailableCard (cardInd);
+
 					int cardPrice = 4 - cardInd;
 					int resourcesSum = model.Forest + model.Clay + model.Stone + model.Gold;
-					if (cardPrice > resourcesSum)
-						continue; // Should have enough resources.
+					if (cardPrice > resourcesSum) {
+						model.ApplyGoToCard (false, cardInd, null, card);
+						SetChanged ();
+						continue; //  Should have enough resources.
+					}
 					
 					bool selectedToBuy = false;
-					yield return CompositionRoot.Instance.StartCoroutine (currPlayer.BuildCard (this, GetAvailableCard(cardInd), (bool use) => {
+					yield return CompositionRoot.Instance.StartCoroutine (currPlayer.BuildCard (this, cardInd, (bool use) => {
 						selectedToBuy = use;
 					}));
+					if (selectedToBuy)
+						Debug.Log ("Selected build card");
+					else
+						Debug.Log ("Not selected to build card");
 
-					if (!selectedToBuy)
+					if (!selectedToBuy) {
+						model.ApplyGoToCard (false, cardInd, null, card);
+						SetChanged ();
 						continue; // Player should want to build card.
+					}
 
 					// Define what resources to spend.
 					List<Resource> spendResources = new List<Resource>();
@@ -532,35 +573,57 @@ public class Game {
 						}));
 					}
 
-					CardToBuild card = GetAvailableCard (cardInd);
+					string log = "Selected to buy card with selected cards ";
+					foreach (Resource res in spendResources)
+						log += res.ToString () + " ";
+					Debug.Log (log);
+
+					
 					model.ApplyGoToCard (true, cardInd, spendResources, card);
 					SetAvailableCard (cardInd);
+					SetChanged ();
 
-					// Get random bonuses from cards.
-					if (card.TopFeature == TopCardFeature.RandomForEveryone) {
+					// Get top bonuses from cards.
+					switch (card.TopFeature) {
+					case TopCardFeature.RandomForEveryone: 
 						List<int> options = new List<int> ();
-						for (int optionInd=0;optionInd<Players.Count;optionInd++)
-							options.Add (Random.Range(0,6));
+						for (int optionInd = 0; optionInd < Players.Count; optionInd++)
+							options.Add (Random.Range (0, 6));
 
 						for (int playerIndShift = 0; playerIndShift < Players.Count; playerIndShift++) {
-							int playerInd = (i + playerIndShift) % Players.Count;
-							Player currPlayer2 = Players [playerInd];
-							PlayerModel model2 = PlayerModels [playerInd];
+							int randomBonusPlayerInd = (currPlayerInd + playerIndShift) % Players.Count;
+							Player currPlayer2 = Players [randomBonusPlayerInd];
+							PlayerModel model2 = PlayerModels [randomBonusPlayerInd];
 							int selectedOption = -1;
-							yield return CompositionRoot.Instance.StartCoroutine (currPlayer.ChooseItemToReceiveFromCharityCard(this, options, (int option) => {
+							yield return CompositionRoot.Instance.StartCoroutine (currPlayer2.ChooseItemToReceiveFromCharityCard (this, options, (int option) => {
 								selectedOption = option;
 							}));
+							Debug.LogFormat ("Charity option {0} selected by player {1}", selectedOption, randomBonusPlayerInd);
 
-							options.Remove(selectedOption);
+							options.Remove (selectedOption);
 							switch (selectedOption) {
-								case 0:model2.AddResource(Resource.Forest, 1);break;
-								case 1:model2.AddResource(Resource.Clay, 1);break;
-								case 2:model2.AddResource(Resource.Stone, 1);break;
-								case 3:model2.AddResource(Resource.Gold, 1);break;
-								case 4:model2.AddInstrument();break;
-								case 5:model2.AddField();break;
+							case 0:model2.AddResource (Resource.Forest, 1);break;
+							case 1:model2.AddResource (Resource.Clay, 1);break;
+							case 2:model2.AddResource (Resource.Stone, 1);break;
+							case 3:model2.AddResource (Resource.Gold, 1);break;
+							case 4:model2.AddInstrument ();break;
+							case 5:model2.AddField ();break;
 							}
+							SetChanged ();
 						}
+						break;
+					case TopCardFeature.OneCardMore:
+						CardToBuild oneMoreCard = _cardsInHeap [0];
+						_cardsInHeap.RemoveAt (0);
+						model.ApplyCardTopOneCardMore (oneMoreCard);
+						Debug.LogFormat ("Added one more card to player ind={0} with bottom={1} and param={2}", currPlayerInd, oneMoreCard.BottomFeature, oneMoreCard.BottomFeatureParam);
+						SetChanged ();
+						break;
+					case TopCardFeature.ResourceRandomForest:
+					case TopCardFeature.ResourceRandomStone:
+					case TopCardFeature.ResourceRandomGold:
+						yield return CompositionRoot.Instance.StartCoroutine (AddRandomResourceFromTopCard (card, model, currPlayer));
+						break;
 					}
 				}
 
@@ -570,16 +633,25 @@ public class Game {
 						continue; // Should spend numan there.
 
 					HouseToBuild house = GetHouse (houseInd);
-					if (!EnoughResourcesForHouse (house, model))
+					if (!EnoughResourcesForHouse (house, model)) {
+						model.ApplyGoToBuilding(houseInd, null); 
+						SetChanged ();
 						continue; // Should be able to build.
-
+					}
 
 					bool selectedToBuild = false;
-					yield return CompositionRoot.Instance.StartCoroutine (currPlayer.BuildHouse (this, GetHouse(houseInd), (bool build) => {
+					yield return CompositionRoot.Instance.StartCoroutine (currPlayer.BuildHouse (this, houseInd, (bool build) => {
 						selectedToBuild = build;
 					}));
-					if (!selectedToBuild)
-						continue; // Should want to build.
+					if (selectedToBuild)
+						Debug.Log ("Selected build house");
+					else
+						Debug.Log ("Not selected to build house");
+					if (!selectedToBuild) {
+						model.ApplyGoToBuilding(houseInd, null); 
+						SetChanged ();
+						continue;
+					}// Should want to build. 
 
 					// Define resources to spend.
 					List<Resource> spentResources = new List<Resource>();
@@ -598,64 +670,143 @@ public class Game {
 							spentResources.Add(selectedRes);
 						}
 					}
+					string log = "Selected resources for house building ";
+					foreach (Resource res in spentResources)
+						log += res.ToString () + " ";
+					Debug.Log (log);
 
 					// Spend resources.
 					model.ApplyGoToBuilding(houseInd, spentResources);
 					RemoveAvailableHouse (houseInd);
+					SetChanged ();
+				}
+			
+				// Crafting instruments.
+				if (model.SpentOnInstruments > 0) {
+					model.ApplyGoToInstruments ();
+					SetChanged ();
+				}
+
+				// Seeding fields.
+				if (model.SpentOnFields > 0) {
+					model.ApplyGoToFields ();
+					SetChanged ();
+				}
+
+				// Housing.
+				if (model.SpentOnHousing > 0) {
+					model.ApplyGoToHousing ();
+					SetChanged ();
 				}
 			}
 
 			// Third phase - feeding.
-			for (int i = 0; i < Players.Count; i++) {
-				int currPlayerInd = (FirstPlayerInd + i) % Players.Count;
-				Player currPlayer = Players [currPlayerInd];
-				PlayerModel model = PlayerModels [currPlayerInd];
+			for (int feededPlayerInd = 0; feededPlayerInd < Players.Count; feededPlayerInd++) {
+				int currFedPlayerInd = (FirstPlayerInd + feededPlayerInd) % Players.Count;
+				Player currFedPlayer = Players [currFedPlayerInd];
+				PlayerModel modelForFeding = PlayerModels [currFedPlayerInd];
 
-				int neededFood = Mathf.Max( model.HumansCount - model.FieldsCount );
-				bool enoughFood = neededFood >= model.Food;
+				int neededFood = Mathf.Max( modelForFeding.HumansCount - modelForFeding.FieldsCount );
+				bool enoughFood = neededFood <= modelForFeding.Food;
 				bool selectedToLeaveHungry = false;
 				if (!enoughFood) {
-					int eatenResourcesCount = neededFood - model.Food;
-					bool enoughResources = model.Forest + model.Clay + model.Stone + model.Gold >= eatenResourcesCount;
+					int eatenResourcesCount = neededFood - modelForFeding.Food;
+					bool enoughResources = modelForFeding.Forest + modelForFeding.Clay + modelForFeding.Stone + modelForFeding.Gold >= eatenResourcesCount;
 					if (!enoughResources)
 						selectedToLeaveHungry = true;
 					else {
-						yield return CompositionRoot.Instance.StartCoroutine (currPlayer.LeaveHungry (this, eatenResourcesCount, (bool leaveHungry) => {
+						yield return CompositionRoot.Instance.StartCoroutine (currFedPlayer.LeaveHungry (this, eatenResourcesCount, (bool leaveHungry) => {
 							selectedToLeaveHungry = leaveHungry;
 						}));
 					}
 				}
+				if (selectedToLeaveHungry)
+					Debug.Log ("Selected to leave hungry");
+				else
+					Debug.Log ("Not selected to leave hungry");
 
 				List<Resource> eatenResources = new List<Resource> ();
-				int neededResourceCount = model.HumansCount - model.FieldsCount - model.Food;
-				for (int ind = 0; i < model.Forest; i++) {
+				int neededResourceCount = Mathf.Max(0, modelForFeding.HumansCount - modelForFeding.FieldsCount - modelForFeding.Food);
+				for (int ind = 0; ind < modelForFeding.Forest; ind++) {
 					if (neededResourceCount == 0)
 						break;
 					eatenResources.Add (Resource.Forest);
 					neededResourceCount--;
 				}
-				for (int ind = 0; i < model.Clay; i++) {
+				for (int ind = 0; ind < modelForFeding.Clay; ind++) {
 					if (neededResourceCount == 0)
 						break;
 					eatenResources.Add (Resource.Clay);
 					neededResourceCount--;
 				}
-				for (int ind = 0; i < model.Stone; i++) {
+				for (int ind = 0; ind < modelForFeding.Stone; ind++) {
 					if (neededResourceCount == 0)
 						break;
 					eatenResources.Add (Resource.Stone);
 					neededResourceCount--;
 				}
-				for (int ind = 0; i < model.Gold; i++) {
+				for (int ind = 0; ind < modelForFeding.Gold; ind++) {
 					if (neededResourceCount == 0)
 						break;
 					eatenResources.Add (Resource.Gold);
 					neededResourceCount--;
 				}
-				model.Feed (selectedToLeaveHungry, eatenResources);
+				modelForFeding.Feed (selectedToLeaveHungry, eatenResources);
+				SetChanged ();
 			}
+		
+			if (OnTurnEnded != null)
+				OnTurnEnded ();
 		}
 
+	}
+
+	private IEnumerator AddRandomResourceFromTopCard(CardToBuild card, PlayerModel model, Player player) {
+		Resource resource = Resource.None;
+		switch (card.TopFeature) {
+			case TopCardFeature.ResourceRandomForest: resource = Resource.Forest; break;
+			case TopCardFeature.ResourceRandomStone: resource = Resource.Stone; break;
+			case TopCardFeature.ResourceRandomGold: resource = Resource.Gold; break;
+		}
+		int rand = 0;
+		for (int i = 0; i < card.TopFeatureParam; i++)
+			rand += Random.Range (1, 6);
+		yield return CompositionRoot.Instance.StartCoroutine (player.GetUsedInstrumentSlotInd (this, resource, rand,
+			(bool useSlot0, bool useSlot1, bool useSlot2, bool useOnce4Slot, bool useOnce3Slot, bool useOnce2Slot) => {
+				if (useSlot0 && !model.InstrumentsSlot1Used) {
+					model.ApplyUseInstrumentSlot(0);
+					rand += model.InstrumentsCountSlot1;
+					Debug.LogFormat("Used instrument slot {0} with count {1}", 0, model.InstrumentsCountSlot1);
+				}
+				if (useSlot1 && !model.InstrumentsSlot2Used) {
+					model.ApplyUseInstrumentSlot(1);
+					rand += model.InstrumentsCountSlot2;
+					Debug.LogFormat("Used instrument slot {0} with count {1}", 1, model.InstrumentsCountSlot2);
+				}
+				if (useSlot2 && !model.InstrumentsSlot3Used) {
+					model.ApplyUseInstrumentSlot(2);
+					rand += model.InstrumentsCountSlot3;
+					Debug.LogFormat("Used instrument slot {0} with count {1}", 2, model.InstrumentsCountSlot3);
+				}
+				if (useOnce4Slot && !model.Top4Instruments.Card.TopUsed) {
+					model.Top4Instruments.Card.UseTop();
+					rand += 4;
+					Debug.LogFormat("Used instrument slot {0} with count {1}", "top4", 4);
+				}
+				if (useOnce3Slot && !model.Top3Instruments.Card.TopUsed) {
+					model.Top3Instruments.Card.UseTop();
+					rand += 3;
+					Debug.LogFormat("Used instrument slot {0} with count {1}", "top3", 3);
+				}
+				if (useOnce2Slot && !model.Top2Instruments.Card.TopUsed) {
+					model.Top2Instruments.Card.UseTop();
+					rand += 2;
+					Debug.LogFormat("Used instrument slot {0} with count {1}", "top2", 2);
+				}
+		}));
+		int resCount = rand / GetResourceCost (resource);
+		model.AddResource (resource, resCount);
+		SetChanged ();
 	}
 
 	private static List<Resource> GetSpendResourceOnHouseOptions(HouseToBuild house, List<Resource> spentResources, PlayerModel player) {
@@ -664,13 +815,14 @@ public class Game {
 
 		List<Resource> spentDifferentResources = new List<Resource> ();
 		Dictionary<Resource, int> spentCounts = new Dictionary<Resource, int> ();
+		spentCounts.Add (Resource.Forest, 0);
+		spentCounts.Add (Resource.Clay, 0);
+		spentCounts.Add (Resource.Stone, 0);
+		spentCounts.Add (Resource.Gold, 0);
 		foreach (var res in spentResources) {
 			if (!spentDifferentResources.Contains (res))
 				spentDifferentResources.Add (res);
-			if (spentCounts.ContainsKey (res))
-				spentCounts [res]++;
-			else
-				spentCounts [res] = 1;
+			spentCounts [res]++;
 		}
 
 		List<Resource> options = new List<Resource> ();
@@ -678,11 +830,11 @@ public class Game {
 		// Select available resource.
 		if (player.Forest > spentCounts [Resource.Forest] && (!shouldSelectNotUsedPreviously || !spentResources.Contains(Resource.Forest)))
 			options.Add (Resource.Forest);
-		if (player.Forest > spentCounts [Resource.Clay] && (!shouldSelectNotUsedPreviously || !spentResources.Contains(Resource.Clay)))
+		if (player.Clay > spentCounts [Resource.Clay] && (!shouldSelectNotUsedPreviously || !spentResources.Contains(Resource.Clay)))
 			options.Add (Resource.Clay);
-		if (player.Forest > spentCounts [Resource.Stone] && (!shouldSelectNotUsedPreviously || !spentResources.Contains(Resource.Stone)))
+		if (player.Stone > spentCounts [Resource.Stone] && (!shouldSelectNotUsedPreviously || !spentResources.Contains(Resource.Stone)))
 			options.Add (Resource.Stone);
-		if (player.Forest > spentCounts [Resource.Gold] && (!shouldSelectNotUsedPreviously || !spentResources.Contains(Resource.Gold)))
+		if (player.Gold > spentCounts [Resource.Gold] && (!shouldSelectNotUsedPreviously || !spentResources.Contains(Resource.Gold)))
 			options.Add (Resource.Gold);
 		return options;
 	}
