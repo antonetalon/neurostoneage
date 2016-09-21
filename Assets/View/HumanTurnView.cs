@@ -170,7 +170,7 @@ public class HumanTurnView : MonoBehaviour {
 		SelectedHumansCount = -1;
 		for (int i = 0; i < _humans.Count; i++) {
 			if (sender == _humans [i].gameObject) {
-				SelectedHumansCount = i;
+				SelectedHumansCount = i+1;
 				break;
 			}
 		}

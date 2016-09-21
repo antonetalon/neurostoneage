@@ -302,13 +302,17 @@ public class Game {
 				if (player.HumansCount >= 10)
 					return;
 				break;
+			case WhereToGo.Field:
+				if (player.FieldsCount >= 10)
+					return;
+				break;
 			case WhereToGo.Instrument:
 				if (player.InstrumentsCountSlot3 >= 4)
 					return;
 				break;
 		}
 
-		if (GetAvailableHumansCountFor (target) > 0 && GetMinHumansCountFor (target) <= player.UnspentHumanCount)
+		if (GetAvailableHumansCountFor (target) > 0 && GetMinHumansCountFor (target) <= player.UnspentHumanCount && player.GetSpentHumansCountFor(target)==0)
 			targets.Add (target);
 	}
 	public int GetMaxHumansCountFor(WhereToGo target) {
@@ -420,12 +424,12 @@ public class Game {
 					int maxCount = GetMaxHumansCountFor (target);
 					if (maxCount - minCount > 0) {
 						yield return CompositionRoot.Instance.StartCoroutine (currPlayer.SelectUsedHumans (this, target, (int cnt) => {
-							count = cnt + 1;
+							count = cnt;
 						}));
 					} else
 						count = maxCount;
 
-					Debug.LogFormat("go to {0} with {1}", target.ToString(), count.ToString());
+					Debug.LogFormat("{2} go to {0} with {1}", target.ToString(), count.ToString(), currPlayer.Color.ToString());
 					switch (target) {
 						case WhereToGo.Card1: model.GoToCard1 (); break;
 						case WhereToGo.Card2: model.GoToCard2 (); break;

@@ -189,10 +189,10 @@ public class PlayerModel {
 		InstrumentsCountSlot1 = 0;
 		InstrumentsCountSlot2 = 0;
 		InstrumentsCountSlot3 = 0;
-		Food = 02;
-		Forest = 10;
-		Clay = 10;
-		Stone = 10;
+		Food = 12;
+		Forest = 0;
+		Clay = 0;
+		Stone = 0;
 		Gold = 0;
 		_houses = new List<BuiltHouse> ();
 		Houses = new ReadonlyList<BuiltHouse> (_houses);
