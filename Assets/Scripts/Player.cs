@@ -24,6 +24,7 @@ public enum WhereToGo {
 }
 public abstract class Player {
 	protected PlayerModel _model;
+	public PlayerModel Model { get { return _model; } }
 	public PlayerModel.Color Color { get { return _model.CurrColor; } }
 	public Player() {
 	}

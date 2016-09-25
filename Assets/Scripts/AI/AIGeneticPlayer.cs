@@ -11,13 +11,13 @@ public class AIGeneticPlayer:Player {
 	}
 
 	public AIGeneticPlayer() {
-		_whereToGoDecider = new Decider (WhereToGoInputsCount, AdditionalNeuronsCount, 16);
-		_humansCountDecider = new Decider (GetUsedHumansInputsCount, AdditionalNeuronsCount, 9);
-		_useAnyResourceFromTopCardDecider = new Decider (GetAnyResourceFromTopCardInputsCount, AdditionalNeuronsCount, 2);
-		_resourceFromTopCardDecider = new Decider (GetResourceFromTopCardInputsCount, AdditionalNeuronsCount, 4);
-		_resourceFromCharityDecider = new Decider (GetResourceFromCharityInputsCount, AdditionalNeuronsCount, 6);
-		_resourceFromInstrumentsDecider = new Decider (GetResourceFromInstrumentsInputsCount, AdditionalNeuronsCount, 4);
-		_leaveHungryDecider = new Decider (GetLeaveHungryInputsCount, AdditionalNeuronsCount, 2);
+		_whereToGoDecider = new Decider (WhereToGoInputsCount, AdditionalNeuronsCount, 16);_whereToGoDecider.SetRandomValues ();
+		_humansCountDecider = new Decider (GetUsedHumansInputsCount, AdditionalNeuronsCount, 9);_humansCountDecider.SetRandomValues ();
+		_useAnyResourceFromTopCardDecider = new Decider (GetAnyResourceFromTopCardInputsCount, AdditionalNeuronsCount, 2);_useAnyResourceFromTopCardDecider.SetRandomValues ();
+		_resourceFromTopCardDecider = new Decider (GetResourceFromTopCardInputsCount, AdditionalNeuronsCount, 4);_resourceFromTopCardDecider.SetRandomValues ();
+		_resourceFromCharityDecider = new Decider (GetResourceFromCharityInputsCount, AdditionalNeuronsCount, 6);_resourceFromCharityDecider.SetRandomValues ();
+		_resourceFromInstrumentsDecider = new Decider (GetResourceFromInstrumentsInputsCount, AdditionalNeuronsCount, 4);_resourceFromInstrumentsDecider.SetRandomValues ();
+		_leaveHungryDecider = new Decider (GetLeaveHungryInputsCount, AdditionalNeuronsCount, 2);_leaveHungryDecider.SetRandomValues ();
 	}
 	const int WhereToGoInputsCount = 13;
 	private Decider _whereToGoDecider;
@@ -165,9 +165,9 @@ public class AIGeneticPlayer:Player {
 		int availableSlot1Instruments = _model.InstrumentsSlot1Used ? 0 : _model.InstrumentsCountSlot1;
 		int availableSlot2Instruments = _model.InstrumentsSlot2Used ? 0 : _model.InstrumentsCountSlot2;
 		int availableSlot3Instruments = _model.InstrumentsSlot3Used ? 0 : _model.InstrumentsCountSlot3;
-		int availableTop4Instruments =  (_model.Top4Instruments != null && !_model.Top4Instruments.Card.TopUsed) ? 0 : 4;
-		int availableTop3Instruments =  (_model.Top3Instruments != null && !_model.Top3Instruments.Card.TopUsed) ? 0 : 3;
-		int availableTop2Instruments =  (_model.Top2Instruments != null && !_model.Top2Instruments.Card.TopUsed) ? 0 : 2;
+		int availableTop4Instruments =  (_model.Top4Instruments != null && !_model.Top4Instruments.Card.TopUsed) ? 4 : 0;
+		int availableTop3Instruments =  (_model.Top3Instruments != null && !_model.Top3Instruments.Card.TopUsed) ? 3 : 0;
+		int availableTop2Instruments =  (_model.Top2Instruments != null && !_model.Top2Instruments.Card.TopUsed) ? 2 : 0;
 
 		bool useSlot1 = availableSlot1Instruments > 0;
 		bool useSlot2 = availableSlot2Instruments > 0;
