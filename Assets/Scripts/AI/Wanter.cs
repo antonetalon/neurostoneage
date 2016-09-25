@@ -25,7 +25,7 @@ public class Wanter {
 	private float GetRandomCoef() {
 		return Random.value - 0.5f;
 	}
-	public void GetValue(int[] inputs) {
+	public float GetValue(int[] inputs) {
 		float wanting = 0;
 		for (int j = 0; j < _additionalToOutCoefs.Length; j++)
 			_additionals [j] = 0;
@@ -35,7 +35,7 @@ public class Wanter {
 				_additionals [j] += _inToAdditionalCoefs [i, j] * inputs [i];
 		}
 		for (int j = 0; j < _additionalToOutCoefs.Length; j++)
-			wanting [j] += _additionalToOutCoefs [j] * _additionals [j];
+			wanting += _additionalToOutCoefs [j] * _additionals [j];
 		return wanting;
 	}
 }
