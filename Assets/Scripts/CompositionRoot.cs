@@ -15,9 +15,9 @@ public class CompositionRoot : MonoBehaviour {
 	void Start () {
 		List<Player> players = new List<Player> () {
 			new HumanPlayer (_view.TurnView),
-			new AIPlayer(),
-			new AIPlayer(),
-			new AIPlayer()
+			new AIGeneticPlayer(),
+			new AIGeneticPlayer(),
+			new AIRandomPlayer()
 		};
 		_game = new Game (players);
 		_view.Init (_game);

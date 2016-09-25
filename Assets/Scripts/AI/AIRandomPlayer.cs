@@ -4,8 +4,8 @@ using System;
 using System.Collections.Generic;
 
 
-public class AIPlayer:Player {
-	public AIPlayer() {
+public class AIRandomPlayer:Player {
+	public AIRandomPlayer() {
 	}
 	public override IEnumerator SelectWhereToGo (Game game, Action<WhereToGo> onComplete) {
 		List<WhereToGo> options = game.GetAvailableTargets (_model);

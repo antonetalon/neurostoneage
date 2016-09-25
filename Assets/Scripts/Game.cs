@@ -399,9 +399,11 @@ public class Game {
 		while (!GetEnded ()) {
 			NewTurn ();
 			Debug.Log ("New turn");
+			int finishedTurnPlayersCount = 0;
 
 			// First phase - selecting where to go.
-			while (UnspentHumanCount>0) {
+			while (finishedTurnPlayersCount<Players.Count) {
+				finishedTurnPlayersCount = 0;
 				for (int i = 0; i < Players.Count; i++) {
 					int currPlayerInd = (FirstPlayerInd + i) % Players.Count;
 					Player currPlayer = Players [currPlayerInd];
@@ -413,8 +415,10 @@ public class Game {
 							target = tgt;
 						}));
 					} else {
-						if (availableTargets.Count == 0)
+						if (availableTargets.Count == 0) {
+							finishedTurnPlayersCount++;
 							continue; // player finished spending humans.
+						}
 						target = availableTargets [0];
 					}
 					SetChanged ();
