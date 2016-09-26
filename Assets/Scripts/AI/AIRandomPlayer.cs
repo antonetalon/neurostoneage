@@ -5,15 +5,18 @@ using System.Collections.Generic;
 
 
 public class AIRandomPlayer:Player {
+	System.Random rand;
 	public AIRandomPlayer() {
+		rand = new System.Random ();
 	}
-	public override IEnumerator SelectWhereToGo (Game game, Action<WhereToGo> onComplete) {
+	private float RandomValue { get { return (float)rand.NextDouble (); } }
+	private int RandomRange(int min, int max) { return rand.Next()%(max-min)+min; }
+	public override void SelectWhereToGo (Game game, Action<WhereToGo> onComplete) {
 		List<WhereToGo> options = game.GetAvailableTargets (_model);
-		int ind = UnityEngine.Random.Range (0, options.Count);
+		int ind = RandomRange (0, options.Count);
 		onComplete (options [ind]);
-		yield break;
 	}
-	public override IEnumerator SelectUsedHumans (Game game, WhereToGo whereToGo, Action<int> onComplete) {
+	public override void SelectUsedHumans (Game game, WhereToGo whereToGo, Action<int> onComplete) {
 		int max = game.GetMaxHumansCountFor (whereToGo);
 		int min = game.GetMinHumansCountFor (whereToGo);
 		int freePlacesCount = game.GetAvailableHumansCountFor (whereToGo);
@@ -21,25 +24,23 @@ public class AIRandomPlayer:Player {
 		maxTotal = Mathf.Min (maxTotal, _model.UnspentHumanCount);
 		if (maxTotal < min) {
 			onComplete (0);
-			yield break;
+			return;
 		}
 			
-		int count = UnityEngine.Random.Range (min, maxTotal + 1);
+		int count = RandomRange (min, maxTotal + 1);
 		onComplete (count);
-		yield break;
 	}
-	public override IEnumerator UseGetAnyResourceFromTopCard (Game game, Action<bool> onComplete) {
+	public override void UseGetAnyResourceFromTopCard (Game game, Action<bool> onComplete) {
 		onComplete (GetRandomBool());
-		yield break;
 	}
-	private static bool GetRandomBool() {
-		if (UnityEngine.Random.value > 0.5f)
+	private bool GetRandomBool() {
+		if (RandomValue> 0.5f)
 			return true;
 		else
 			return false;
 	}
-	public override IEnumerator ChooseResourceToReceiveFromTopCard (Game game, Action<Resource> onComplete) {
-		int ind = UnityEngine.Random.Range (0, 4);
+	public override void ChooseResourceToReceiveFromTopCard (Game game, Action<Resource> onComplete) {
+		int ind = RandomRange (0, 4);
 		switch (ind) {
 			default:
 			case 0: onComplete (Resource.Forest); break;
@@ -47,14 +48,12 @@ public class AIRandomPlayer:Player {
 			case 2: onComplete (Resource.Stone); break;
 			case 3: onComplete (Resource.Gold); break;
 		}
-		yield break;
 	}
-	public override IEnumerator ChooseItemToReceiveFromCharityCard (Game game, List<int> randoms, Action<int> onComplete) {
-		int ind = UnityEngine.Random.Range (0, 5);
+	public override void ChooseItemToReceiveFromCharityCard (Game game, List<int> randoms, Action<int> onComplete) {
+		int ind = RandomRange (0, 5);
 		onComplete (ind);
-		yield break;
 	}
-	public override IEnumerator GetUsedInstrumentSlotInd (Game game, Resource receivedReceource, int points, OnInstrumentsToUseSelected onComplete) {
+	public override void GetUsedInstrumentSlotInd (Game game, Resource receivedReceource, int points, OnInstrumentsToUseSelected onComplete) {
 		bool useSlot0 = !_model.InstrumentsSlot1Used && _model.InstrumentsCountSlot1 > 0;
 		bool useSlot1 = !_model.InstrumentsSlot2Used && _model.InstrumentsCountSlot2 > 0;
 		bool useSlot2 = !_model.InstrumentsSlot3Used && _model.InstrumentsCountSlot3 > 0;
@@ -68,13 +67,11 @@ public class AIRandomPlayer:Player {
 		useOnceSlot3 &= GetRandomBool ();
 		useOnceSlot2 &= GetRandomBool ();
 		onComplete (useSlot0, useSlot1, useSlot2, useOnceSlot4, useOnceSlot3, useOnceSlot2);
-		yield break;
 	}
-	public override IEnumerator BuildCard (Game game, int cardInd, Action<bool> onComplete) {
+	public override void BuildCard (Game game, int cardInd, Action<bool> onComplete) {
 		onComplete (GetRandomBool ());
-		yield break;
 	}
-	public override IEnumerator GetUsedResourceForCardBuilding (Game game, CardToBuild card, List<Resource> alreadySelectedResources, Action<Resource> onComplete) {
+	public override void GetUsedResourceForCardBuilding (Game game, CardToBuild card, List<Resource> alreadySelectedResources, Action<Resource> onComplete) {
 		List<Resource> options = new List<Resource> ();
 		for (int i = 0; i < _model.Forest; i++)
 			options.Add (Resource.Forest);
@@ -88,20 +85,16 @@ public class AIRandomPlayer:Player {
 			int ind = options.IndexOf (res);
 			options.RemoveAt (ind);
 		}
-		int index = UnityEngine.Random.Range(0, options.Count);
+		int index = RandomRange(0, options.Count);
 		onComplete (options [index]);
-		yield break;
 	}
-	public override IEnumerator BuildHouse (Game game, int houseInd, Action<bool> onComplete) {
+	public override void BuildHouse (Game game, int houseInd, Action<bool> onComplete) {
 		onComplete (GetRandomBool ());
-		yield break;
 	}
-	public override IEnumerator GetUsedResourceForHouseBuilding (Game game, HouseToBuild house, List<Resource> options, List<Resource> spendResources, Action<Resource> onComplete) {
-		onComplete (options [UnityEngine.Random.Range (0, options.Count)]);
-		yield break;
+	public override void GetUsedResourceForHouseBuilding (Game game, HouseToBuild house, List<Resource> options, List<Resource> spendResources, Action<Resource> onComplete) {
+		onComplete (options [RandomRange (0, options.Count)]);
 	}
-	public override IEnumerator LeaveHungry (Game game, int eatenResources, Action<bool> onComplete) {
+	public override void LeaveHungry (Game game, int eatenResources, Action<bool> onComplete) {
 		onComplete (GetRandomBool ());
-		yield break;
 	}
 }

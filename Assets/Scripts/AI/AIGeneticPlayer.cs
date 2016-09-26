@@ -21,7 +21,7 @@ public class AIGeneticPlayer:Player {
 	}
 	const int WhereToGoInputsCount = 13;
 	private Decider _whereToGoDecider;
-	public override IEnumerator SelectWhereToGo (Game game, Action<WhereToGo> onComplete) {
+	public override void SelectWhereToGo (Game game, Action<WhereToGo> onComplete) {
 		List<WhereToGo> options = game.GetAvailableTargets (_model);
 		int[] inputs = new int[WhereToGoInputsCount];
 		int i = 0;
@@ -44,12 +44,11 @@ public class AIGeneticPlayer:Player {
 		int decision = _whereToGoDecider.GetDecision (inputs, optionInds);
 		WhereToGo res = (WhereToGo)(decision + 1);
 		onComplete (res);
-		yield break;
 	}
 
 	const int GetUsedHumansInputsCount = 9;
 	private Decider _humansCountDecider;
-	public override IEnumerator SelectUsedHumans (Game game, WhereToGo whereToGo, Action<int> onComplete) {
+	public override void SelectUsedHumans (Game game, WhereToGo whereToGo, Action<int> onComplete) {
 		int max = game.GetMaxHumansCountFor (whereToGo);
 		int min = game.GetMinHumansCountFor (whereToGo);
 		int freePlacesCount = game.GetAvailableHumansCountFor (whereToGo);
@@ -57,7 +56,7 @@ public class AIGeneticPlayer:Player {
 		max = Mathf.Min (max, _model.UnspentHumanCount);
 		if (max <= min) {
 			onComplete (min);
-			yield break;
+			return;
 		}
 
 		// Can only be resource mining turn.
@@ -82,12 +81,11 @@ public class AIGeneticPlayer:Player {
 
 		int count = _humansCountDecider.GetDecision (inputs, optionInds)+1;
 		onComplete (count);
-		yield break;
 	}
 
 	const int GetAnyResourceFromTopCardInputsCount = 6;
 	private Decider _useAnyResourceFromTopCardDecider;
-	public override IEnumerator UseGetAnyResourceFromTopCard (Game game, Action<bool> onComplete) {
+	public override void UseGetAnyResourceFromTopCard (Game game, Action<bool> onComplete) {
 		List<int> optionInds = new List<int> ();
 		optionInds.Add (0);
 		optionInds.Add (1);
@@ -103,12 +101,11 @@ public class AIGeneticPlayer:Player {
 
 		bool selectedTrue = _useAnyResourceFromTopCardDecider.GetDecision (inputs, optionInds)==1;
 		onComplete (selectedTrue);
-		yield break;
 	}
 
 	const int GetResourceFromTopCardInputsCount = 6;
 	private Decider _resourceFromTopCardDecider;
-	public override IEnumerator ChooseResourceToReceiveFromTopCard (Game game, Action<Resource> onComplete) {
+	public override void ChooseResourceToReceiveFromTopCard (Game game, Action<Resource> onComplete) {
 		List<int> optionInds = new List<int> ();
 		optionInds.Add (0);
 		optionInds.Add (1);
@@ -132,12 +129,11 @@ public class AIGeneticPlayer:Player {
 		case 2: onComplete (Resource.Stone); break;
 		case 3: onComplete (Resource.Gold); break;
 		}
-		yield break;
 	}
 
 	const int GetResourceFromCharityInputsCount = 7;
 	private Decider _resourceFromCharityDecider;
-	public override IEnumerator ChooseItemToReceiveFromCharityCard (Game game, List<int> randoms, Action<int> onComplete) {
+	public override void ChooseItemToReceiveFromCharityCard (Game game, List<int> randoms, Action<int> onComplete) {
 		List<int> optionInds = new List<int> ();
 		for (int j = 0; j < 6; j++) {
 			if (randoms.Contains (j + 1))
@@ -156,12 +152,11 @@ public class AIGeneticPlayer:Player {
 
 		int ind = _resourceFromCharityDecider.GetDecision (inputs, optionInds)+1;
 		onComplete (ind);
-		yield break;
 	}
 
 	const int GetResourceFromInstrumentsInputsCount = 10;
 	private Decider _resourceFromInstrumentsDecider;
-	public override IEnumerator GetUsedInstrumentSlotInd (Game game, Resource receivedRecource, int points, OnInstrumentsToUseSelected onComplete) {
+	public override void GetUsedInstrumentSlotInd (Game game, Resource receivedRecource, int points, OnInstrumentsToUseSelected onComplete) {
 		int availableSlot1Instruments = _model.InstrumentsSlot1Used ? 0 : _model.InstrumentsCountSlot1;
 		int availableSlot2Instruments = _model.InstrumentsSlot2Used ? 0 : _model.InstrumentsCountSlot2;
 		int availableSlot3Instruments = _model.InstrumentsSlot3Used ? 0 : _model.InstrumentsCountSlot3;
@@ -242,15 +237,13 @@ public class AIGeneticPlayer:Player {
 		}
 
 		onComplete (useSlot1, useSlot2, useSlot3, useOnceSlot4, useOnceSlot3, useOnceSlot2);
-		yield break;
 	}
 
-	public override IEnumerator BuildCard (Game game, int cardInd, Action<bool> onComplete) {
+	public override void BuildCard (Game game, int cardInd, Action<bool> onComplete) {
 		// Always build card if possible.
 		onComplete (true);
-		yield break;
 	}
-	public override IEnumerator GetUsedResourceForCardBuilding (Game game, CardToBuild card, List<Resource> alreadySelectedResources, Action<Resource> onComplete) {
+	public override void GetUsedResourceForCardBuilding (Game game, CardToBuild card, List<Resource> alreadySelectedResources, Action<Resource> onComplete) {
 		List<Resource> options = new List<Resource> ();
 		for (int i = 0; i < _model.Forest; i++)
 			options.Add (Resource.Forest);
@@ -275,13 +268,11 @@ public class AIGeneticPlayer:Player {
 			res = Resource.Gold;
 		
 		onComplete (res);
-		yield break;
 	}
-	public override IEnumerator BuildHouse (Game game, int houseInd, Action<bool> onComplete) {
+	public override void BuildHouse (Game game, int houseInd, Action<bool> onComplete) {
 		onComplete (true); // Always build house if possible.
-		yield break;
 	}
-	public override IEnumerator GetUsedResourceForHouseBuilding (Game game, HouseToBuild house, List<Resource> options, List<Resource> spendResources, Action<Resource> onComplete) {
+	public override void GetUsedResourceForHouseBuilding (Game game, HouseToBuild house, List<Resource> options, List<Resource> spendResources, Action<Resource> onComplete) {
 		Resource res = Resource.None;
 		if (options.Contains (Resource.Gold))
 			res = Resource.Gold;
@@ -293,11 +284,10 @@ public class AIGeneticPlayer:Player {
 			res = Resource.Forest;
 		
 		onComplete (res);
-		yield break;
 	}
 	const int GetLeaveHungryInputsCount = 5;
 	private Decider _leaveHungryDecider;
-	public override IEnumerator LeaveHungry (Game game, int eatenResources, Action<bool> onComplete) {
+	public override void LeaveHungry (Game game, int eatenResources, Action<bool> onComplete) {
 		List<int> optionInds = new List<int> ();
 		optionInds.Add (0);
 		optionInds.Add (1);
@@ -322,6 +312,5 @@ public class AIGeneticPlayer:Player {
 
 		bool selectTrue = _leaveHungryDecider.GetDecision (inputs, optionInds)== 1;
 		onComplete (selectTrue);
-		yield break;
 	}
 }
