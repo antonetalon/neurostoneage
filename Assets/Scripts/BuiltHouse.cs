@@ -1,7 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
+[Serializable]
 public class BuiltHouse {
 	public readonly ReadonlyList<Resource> SpentResources;
 	public readonly int Score;

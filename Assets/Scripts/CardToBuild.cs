@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
 
 public enum TopCardFeature {
 	RandomForEveryone,//
@@ -34,6 +35,7 @@ public enum Science {
 	Music = 6,
 	Clock = 7
 }
+[Serializable]
 public class CardToBuild {
 	public readonly TopCardFeature TopFeature;
 	public readonly int TopFeatureParam;

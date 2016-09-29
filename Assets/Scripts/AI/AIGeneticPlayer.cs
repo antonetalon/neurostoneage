@@ -3,23 +3,54 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 
-
+[Serializable]
 public class AIGeneticPlayer:Player {
 	const int AdditionalNeuronsCount = 5;
 	private static int Indicator(bool condition) {
 		return condition ? 1 : 0;
 	}
 
-	public AIGeneticPlayer() {
-		_whereToGoDecider = new Decider (WhereToGoInputsCount, AdditionalNeuronsCount, 16);_whereToGoDecider.SetRandomValues ();
-		_humansCountDecider = new Decider (GetUsedHumansInputsCount, AdditionalNeuronsCount, 9);_humansCountDecider.SetRandomValues ();
-		_useAnyResourceFromTopCardDecider = new Decider (GetAnyResourceFromTopCardInputsCount, AdditionalNeuronsCount, 2);_useAnyResourceFromTopCardDecider.SetRandomValues ();
-		_resourceFromTopCardDecider = new Decider (GetResourceFromTopCardInputsCount, AdditionalNeuronsCount, 4);_resourceFromTopCardDecider.SetRandomValues ();
-		_resourceFromCharityDecider = new Decider (GetResourceFromCharityInputsCount, AdditionalNeuronsCount, 6);_resourceFromCharityDecider.SetRandomValues ();
-		_resourceFromInstrumentsDecider = new Decider (GetResourceFromInstrumentsInputsCount, AdditionalNeuronsCount, 4);_resourceFromInstrumentsDecider.SetRandomValues ();
-		_leaveHungryDecider = new Decider (GetLeaveHungryInputsCount, AdditionalNeuronsCount, 2);_leaveHungryDecider.SetRandomValues ();
+	private AIGeneticPlayer() {
 	}
-	const int WhereToGoInputsCount = 13;
+
+	public static AIGeneticPlayer CreateRandom() {
+		AIGeneticPlayer player = new AIGeneticPlayer ();
+		player._whereToGoDecider = GetRandomDecider(WhereToGoInputsCount, AdditionalNeuronsCount, 16);
+		player._humansCountDecider = GetRandomDecider(GetUsedHumansInputsCount, AdditionalNeuronsCount, 9);
+		player._useAnyResourceFromTopCardDecider = GetRandomDecider(GetAnyResourceFromTopCardInputsCount, AdditionalNeuronsCount, 2);
+		player._resourceFromTopCardDecider = GetRandomDecider(GetResourceFromTopCardInputsCount, AdditionalNeuronsCount, 4);
+		player._resourceFromCharityDecider = GetRandomDecider(GetResourceFromCharityInputsCount, AdditionalNeuronsCount, 6);
+		player._resourceFromInstrumentsDecider = GetRandomDecider(GetResourceFromInstrumentsInputsCount, AdditionalNeuronsCount, 4);
+		player._leaveHungryDecider = GetRandomDecider(GetLeaveHungryInputsCount, AdditionalNeuronsCount, 2);
+		return player;
+	}
+	public static AIGeneticPlayer CreateFromCrossover(AIGeneticPlayer parent1, AIGeneticPlayer parent2) {
+		const float MutationRate = 0.005f;
+		AIGeneticPlayer player = new AIGeneticPlayer ();
+		player._whereToGoDecider = GetDeciderFromCrossover(parent1._whereToGoDecider, parent2._whereToGoDecider, MutationRate, WhereToGoInputsCount, AdditionalNeuronsCount, 16);
+		player._humansCountDecider = GetDeciderFromCrossover(parent1._humansCountDecider, parent2._humansCountDecider, MutationRate, GetUsedHumansInputsCount, AdditionalNeuronsCount, 9);
+		player._useAnyResourceFromTopCardDecider = GetDeciderFromCrossover(parent1._useAnyResourceFromTopCardDecider, parent2._useAnyResourceFromTopCardDecider, MutationRate, GetAnyResourceFromTopCardInputsCount, AdditionalNeuronsCount, 2);
+		player._resourceFromTopCardDecider = GetDeciderFromCrossover(parent1._resourceFromTopCardDecider, parent2._resourceFromTopCardDecider, MutationRate, GetResourceFromTopCardInputsCount, AdditionalNeuronsCount, 4);
+		player._resourceFromCharityDecider = GetDeciderFromCrossover(parent1._resourceFromCharityDecider, parent2._resourceFromCharityDecider, MutationRate, GetResourceFromCharityInputsCount, AdditionalNeuronsCount, 6);
+		player._resourceFromInstrumentsDecider = GetDeciderFromCrossover(parent1._resourceFromInstrumentsDecider, parent2._resourceFromInstrumentsDecider, MutationRate, GetResourceFromInstrumentsInputsCount, AdditionalNeuronsCount, 4);
+		player._leaveHungryDecider = GetDeciderFromCrossover(parent1._leaveHungryDecider, parent2._leaveHungryDecider, MutationRate, GetLeaveHungryInputsCount, AdditionalNeuronsCount, 2);
+		return player;
+	}
+	private static Decider GetRandomDecider(int inputsCount, int neuronsCount, int outputsCount) {
+		var decider = new Decider (inputsCount, neuronsCount, outputsCount);
+		decider.SetRandomValues ();
+		return decider;
+	}
+	private static Decider GetDeciderFromCrossover(Decider parent1, Decider parent2, float MutationRate, int inputsCount, int neuronsCount, int outputsCount) {
+		if (UnityEngine.Random.value < MutationRate)
+			return GetRandomDecider (inputsCount, neuronsCount, outputsCount);
+		if (UnityEngine.Random.value < 0.5f)
+			return parent1;
+		else
+			return parent2;
+	}
+
+	const int WhereToGoInputsCount = 17;
 	private Decider _whereToGoDecider;
 	public override void SelectWhereToGo (Game game, Action<WhereToGo> onComplete) {
 		List<WhereToGo> options = game.GetAvailableTargets (_model);
@@ -30,6 +61,10 @@ public class AIGeneticPlayer:Player {
 		inputs [i] = _model.Forest; i++;
 		inputs [i] = _model.Stone; i++;
 		inputs [i] = _model.Gold; i++;
+		inputs [i] = Indicator(EnoughResourcesForBuilding (game, _model, 0)); i++;
+		inputs [i] = Indicator(EnoughResourcesForBuilding (game, _model, 1)); i++;
+		inputs [i] = Indicator(EnoughResourcesForBuilding (game, _model, 2)); i++;
+		inputs [i] = Indicator(EnoughResourcesForBuilding (game, _model, 3)); i++;
 		inputs [i] = _model.HumansCount; i++;
 		inputs [i] = _model.FieldsCount; i++;
 		inputs [i] = _model.InstrumentsCountSlot1+_model.InstrumentsCountSlot2+_model.InstrumentsCountSlot3; i++;
@@ -44,6 +79,49 @@ public class AIGeneticPlayer:Player {
 		int decision = _whereToGoDecider.GetDecision (inputs, optionInds);
 		WhereToGo res = (WhereToGo)(decision + 1);
 		onComplete (res);
+	}
+
+	static int[] _remainingResources = new int[5];
+	private static bool EnoughResourcesForBuilding(Game game, PlayerModel model, int buildingSlot) {
+		_remainingResources [(int)Resource.Forest] = model.Forest;
+		_remainingResources [(int)Resource.Clay] = model.Clay;
+		_remainingResources [(int)Resource.Stone] = model.Stone;
+		_remainingResources [(int)Resource.Gold] = model.Gold;
+		for (int slotInd = 0; slotInd < 4; slotInd++) {
+			if (buildingSlot == slotInd || model.GetSpentOnHouse (slotInd) > 0)
+				SubtractResourcesFromRemaining (game.GetHouse (slotInd));
+		}
+		return _remainingResources [(int)Resource.Forest] >= 0 && _remainingResources [(int)Resource.Clay] >= 0 &&
+			_remainingResources [(int)Resource.Stone] >= 0 && _remainingResources [(int)Resource.Gold] >= 0;
+	}
+	private static List<Resource> resourcesFromGoldToForest = new List<Resource>() { Resource.Gold, Resource.Stone, Resource.Clay, Resource.Forest };
+	private static void SubtractResourcesFromRemaining(HouseToBuild house) {
+		// Fast method of rough estimating resource enoughness for building.
+		if (house.StaticCost != null) {
+			foreach (var res in house.StaticCost)
+				_remainingResources [(int)res]--;
+		} else {
+			int differentResCount = house.DifferentResourcesCount;
+			foreach (var res in resourcesFromGoldToForest) {
+				if (_remainingResources [(int)res] > 0) {
+					_remainingResources [(int)res]--;
+					differentResCount--;
+				}
+			}
+			if (differentResCount > 0) {
+				_remainingResources [(int)Resource.Forest] = -1;
+				return;
+			}
+			int minResourcesCount = house.MinResourcesCount - house.DifferentResourcesCount;
+			foreach (var res in resourcesFromGoldToForest) {
+				while (minResourcesCount > 0 && _remainingResources [(int)res] > 0) {
+					_remainingResources [(int)res]--;
+					minResourcesCount--;
+				}
+			}
+			if (minResourcesCount>0)
+				_remainingResources [(int)Resource.Forest] = -1;
+		}
 	}
 
 	const int GetUsedHumansInputsCount = 9;

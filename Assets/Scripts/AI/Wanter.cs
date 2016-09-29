@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
 
+[Serializable]
 public class Wanter {
 	float[] _inToOutCoefs;
 	float[,] _inToAdditionalCoefs;
@@ -25,7 +27,7 @@ public class Wanter {
 		_constWanting = GetRandomCoef ();
 	}
 	private float GetRandomCoef() {
-		return Random.value - 0.5f;
+		return Game.RandomValue - 0.5f;
 	}
 	public float GetValue(int[] inputs) {
 		float wanting = _constWanting;

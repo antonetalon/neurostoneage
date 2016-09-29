@@ -10,7 +10,7 @@ public class Utils {
 			source.Add (item);
 		list.Clear ();
 		foreach (var item in source) {
-			int ind = Random.Range (0, list.Count);
+			int ind = Game.RandomRange (0, list.Count);
 			list.Insert (ind, item);
 		}
 	}

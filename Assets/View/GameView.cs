@@ -9,24 +9,26 @@ public class GameView : MonoBehaviour {
 	public HumanTurnView TurnView;
 	Game _game;
 	public void Init(Game game) {
-		_game = game;
-		_game.OnChanged += UpdateView;
-		_game.OnTurnEnded += UpdateWinnerView;
-		_gameEndedParent.SetActive (false);
+		CompositionRoot.Instance.ExecuteInMainThread (() => {
+			_game = game;
+			_game.OnChanged += UpdateView;
+			_game.OnTurnEnded += UpdateWinnerView;
+			_gameEndedParent.SetActive (false);
+		});
 	}
 	void Destroy() {
 		_game.OnChanged -= UpdateView;
 		_game.OnTurnEnded -= UpdateWinnerView;
 	}
 	void UpdateView() {
-		TurnView.ExecuteInMainThread (() => {
+		CompositionRoot.Instance.ExecuteInMainThread (() => {
 			_board.UpdateView (_game);
 			for (int i = 0; i < _players.Count; i++)
 				_players [i].UpdateView (_game.PlayerModels [i]);	
 		});
 	}
 	void UpdateWinnerView() {
-		TurnView.ExecuteInMainThread (() => {
+		CompositionRoot.Instance.ExecuteInMainThread (() => {
 			if (_game.GetEnded ()) {
 				// Show winner.
 				PlayerModel player = null;
@@ -49,5 +51,8 @@ public class GameView : MonoBehaviour {
 	void Update() {
 		if (_game != null)
 			_game.Update ();
+	}
+	public void OnClosePressed() {
+		gameObject.SetActive (false);
 	}
 }

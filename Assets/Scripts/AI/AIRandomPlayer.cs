@@ -5,15 +5,11 @@ using System.Collections.Generic;
 
 
 public class AIRandomPlayer:Player {
-	System.Random rand;
 	public AIRandomPlayer() {
-		rand = new System.Random ();
 	}
-	private float RandomValue { get { return (float)rand.NextDouble (); } }
-	private int RandomRange(int min, int max) { return rand.Next()%(max-min)+min; }
 	public override void SelectWhereToGo (Game game, Action<WhereToGo> onComplete) {
 		List<WhereToGo> options = game.GetAvailableTargets (_model);
-		int ind = RandomRange (0, options.Count);
+		int ind = Game.RandomRange (0, options.Count);
 		onComplete (options [ind]);
 	}
 	public override void SelectUsedHumans (Game game, WhereToGo whereToGo, Action<int> onComplete) {
@@ -27,20 +23,20 @@ public class AIRandomPlayer:Player {
 			return;
 		}
 			
-		int count = RandomRange (min, maxTotal + 1);
+		int count = Game.RandomRange (min, maxTotal + 1);
 		onComplete (count);
 	}
 	public override void UseGetAnyResourceFromTopCard (Game game, Action<bool> onComplete) {
 		onComplete (GetRandomBool());
 	}
 	private bool GetRandomBool() {
-		if (RandomValue> 0.5f)
+		if (Game.RandomValue> 0.5f)
 			return true;
 		else
 			return false;
 	}
 	public override void ChooseResourceToReceiveFromTopCard (Game game, Action<Resource> onComplete) {
-		int ind = RandomRange (0, 4);
+		int ind = Game.RandomRange (0, 4);
 		switch (ind) {
 			default:
 			case 0: onComplete (Resource.Forest); break;
@@ -50,7 +46,7 @@ public class AIRandomPlayer:Player {
 		}
 	}
 	public override void ChooseItemToReceiveFromCharityCard (Game game, List<int> randoms, Action<int> onComplete) {
-		int ind = RandomRange (0, 5);
+		int ind = Game.RandomRange (0, 5);
 		onComplete (ind);
 	}
 	public override void GetUsedInstrumentSlotInd (Game game, Resource receivedReceource, int points, OnInstrumentsToUseSelected onComplete) {
@@ -85,14 +81,14 @@ public class AIRandomPlayer:Player {
 			int ind = options.IndexOf (res);
 			options.RemoveAt (ind);
 		}
-		int index = RandomRange(0, options.Count);
+		int index = Game.RandomRange(0, options.Count);
 		onComplete (options [index]);
 	}
 	public override void BuildHouse (Game game, int houseInd, Action<bool> onComplete) {
 		onComplete (GetRandomBool ());
 	}
 	public override void GetUsedResourceForHouseBuilding (Game game, HouseToBuild house, List<Resource> options, List<Resource> spendResources, Action<Resource> onComplete) {
-		onComplete (options [RandomRange (0, options.Count)]);
+		onComplete (options [Game.RandomRange (0, options.Count)]);
 	}
 	public override void LeaveHungry (Game game, int eatenResources, Action<bool> onComplete) {
 		onComplete (GetRandomBool ());

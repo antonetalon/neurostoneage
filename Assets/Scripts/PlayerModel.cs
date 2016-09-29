@@ -1,7 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
+using System.Text;
 
+[Serializable]
 public class PlayerModel {
 	public enum Color
 	{
@@ -534,5 +537,33 @@ public class PlayerModel {
 		}
 		int incScore = complectCount * complectCount - (complectCount - 1) * (complectCount - 1);
 		Score += incScore;
+	}
+
+	public override string ToString ()
+	{
+		StringBuilder sb = new StringBuilder ();
+		foreach (var house in Houses)
+			sb.Append (string.Format(" + {0}", house.Score));
+		
+		return string.Format ("PlayerModel: \n" +
+			"HumansCount*Multiplier={0}*{1}={2}, \n" +
+			"FieldsCount*Multiplier={3}*{4}={5}, \n" +
+			"Instruments*Multiplier=({6}+{7}+{8})*{9}={10}, \n" +
+			"Food={11}*0 = {12},\n" +
+			"Forest+Clay+Stone+Gold={13}+{14}+{15}+{16},\n" +
+			"Houses*Multiplier={17}*{18}{19}, \n" +
+			"Cards={20}, \n" +
+			"HungryTurnsCount={21}*10={22},\n" +
+			"Score={23}\n",
+			HumansCount, HumansMultiplier, HumansCount*HumansMultiplier,
+			FieldsCount, FieldsMultiplier, FieldsCount*FieldsMultiplier,
+			InstrumentsCountSlot1, InstrumentsCountSlot2, InstrumentsCountSlot3, InstrumentsMultiplier, (InstrumentsCountSlot1+InstrumentsCountSlot2+InstrumentsCountSlot3)*InstrumentsMultiplier,
+			Food, 0,
+			Forest, Clay, Stone, Gold,
+			Houses.Count, HouseMultiplier, sb.ToString(),
+			Cards.Count,
+			HungryTurnsCount, -HungryTurnsCount*10,
+			Score
+		);
 	}
 }

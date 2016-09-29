@@ -1,7 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
+[Serializable]
 public class Decider {
 	Wanter[] _wanters;
 	public Decider(int inputsCount, int additionalNeuronsCount, int outputsCount) {

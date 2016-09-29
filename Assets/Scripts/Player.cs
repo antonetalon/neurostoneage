@@ -22,7 +22,9 @@ public enum WhereToGo {
 	Card3,
 	Card4
 }
+[Serializable]
 public abstract class Player {
+	[NonSerialized]
 	protected PlayerModel _model;
 	public PlayerModel Model { get { return _model; } }
 	public PlayerModel.Color Color { get { return _model.CurrColor; } }
@@ -199,7 +201,7 @@ public class HumanPlayer:Player {
 		_turnView.ShowSelectResourceForBuildingHouse(house, options, spendResources);
 		while (true) {
 			System.Threading.Thread.Sleep (1000);
-			if (_turnView.SelectedResourceForHouseBuilding!=Resource.None) {
+			if (_turnView.ResourceForHouseBuildingSelectionDone) {
 				onComplete (_turnView.SelectedResourceForHouseBuilding);
 				return;
 			}

@@ -3,9 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class Game {
-	System.Random rand;
-	private int RandomRange(int min, int max) { return rand.Next()%(max-min)+min; }
-	const bool Logging = true;
+	static System.Random rand = new System.Random();
+	public static int RandomRange(int min, int max) { 
+		if (max == min)
+			return min;
+		return rand.Next()%(max-min)+min;
+	}
+	public static float RandomValue { get { return (float)rand.NextDouble (); } }
+	const bool Logging = false;
 	public List<PlayerModel> PlayerModels;
 	public List<Player> Players;
 	private List<HouseToBuild> _houseHeap1;
@@ -252,6 +257,9 @@ public class Game {
 		SetChanged ();
 	}
 	public bool GetEnded() {
+		const int MaxTurnsCount = 100;
+		if (TurnInd >= MaxTurnsCount)
+			return true;
 		// Condition 1 - cant prepare new card set.
 		int requiredCards = 0;
 		if (AvailableCardFor1Resource == null)
@@ -406,7 +414,7 @@ public class Game {
 		while (!GetEnded ()) {
 			NewTurn ();
 			//if (Logging) 
-			Debug.Log ("New turn, ind = " + TurnInd.ToString());
+			//Debug.Log ("New turn, ind = " + TurnInd.ToString());
 			int finishedTurnPlayersCount = 0;
 
 			// First phase - selecting where to go.
@@ -831,6 +839,7 @@ public class Game {
 			if (OnTurnEnded != null)
 				OnTurnEnded ();
 		}
+			
 		onEnded ();
 	}
 
