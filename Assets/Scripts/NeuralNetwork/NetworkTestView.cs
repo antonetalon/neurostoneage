@@ -36,9 +36,11 @@ public class NetworkTestView : MonoBehaviour {
 			return;
 		Vector2 localPoint;
 		if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_view.rectTransform, Input.mousePosition, Camera.main, out localPoint))
-			return;
+			return;		
 		localPoint.x *= Width / _view.rectTransform.rect.width;
 		localPoint.y *= Height / _view.rectTransform.rect.height;
+		if (Mathf.Abs (localPoint.x) > Width / 2 || Mathf.Abs (localPoint.y) > Height / 2)
+			return;
 		localPoint += new Vector2 (Width / 2, Height / 2);
 
 		IntVec pt = new IntVec ();
@@ -53,6 +55,24 @@ public class NetworkTestView : MonoBehaviour {
 			col = Color.red;
 		}
 		_texture.SetPixel (pt.X, pt.Y, col);
+		_texture.Apply ();
+	}
+
+	public void OnShowRandomResultPressed() {
+		NeuralNetwork brain = new NeuralNetwork (new int[4] { 2, 4, 4, 2 });
+		Color32[] colors = _texture.GetPixels32 ();
+		double[] input = new double[2];
+		for (int x = 0; x < Width; x++) {
+			for (int y = 0; y < Height; y++) {
+				input [0] = x;
+				input [1] = y;
+				double[] res = brain.Think (input);
+				//Color32 col = new Color32((byte)(x*255/Width), (byte)(y*255/Height),0,255); // - test
+				Color32 col = res[0] > res[1] ? new Color32 (120, 0, 0, 255) : new Color32 (0, 120, 0, 255);
+				colors [x + (Width - y - 1) * Width] = col;
+			}
+		}
+		_texture.SetPixels32 (colors);
 		_texture.Apply ();
 	}
 }
