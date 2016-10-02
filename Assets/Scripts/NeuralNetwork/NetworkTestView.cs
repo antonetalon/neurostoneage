@@ -58,17 +58,55 @@ public class NetworkTestView : MonoBehaviour {
 		_texture.Apply ();
 	}
 
-	public void OnShowRandomResultPressed() {
-		NeuralNetwork brain = new NeuralNetwork (new int[4] { 2, 4, 4, 2 });
+	NeuralNetwork _brain;
+	int _trainingsCount;
+	public void CreateRandomBrainPressed() {
+		//_brain = new NeuralNetwork (new int[4] { 2, 4, 4, 1 });
+		_brain = new NeuralNetwork (new int[2] { 2, 1 });
+		_trainingsCount = 0;
+	}
+
+	public void TrainLoopX10Pressed() {
+		for (int i=0;i<10;i++)
+			TrainLoop ();
+		UpdateResult ();
+		Debug.LogFormat("Train {0} performed", _trainingsCount);
+	}
+	public void TrainLoopPressed() {
+		TrainLoop ();
+		UpdateResult ();
+		Debug.LogFormat("Train {0} performed", _trainingsCount);
+	}
+
+	private void TrainLoop() {
+		const float nu = 0.6f;
+		double[] input = new double[2];
+		double[] idealOutput = new double[1];
+		idealOutput [0] = 1;
+		foreach (var pt in GoodPts) {
+			input [0] = pt.X/(double)Width;
+			input [1] = pt.Y/(double)Height;
+			_brain.Train(input, idealOutput, nu);
+		}
+		idealOutput [0] = 0;
+		foreach (var pt in BadPts) {
+			input [0] = pt.X/(double)Width;
+			input [1] = pt.Y/(double)Height;
+			_brain.Train(input, idealOutput, nu);
+		}
+		_trainingsCount++;
+	}
+
+	private void UpdateResult() {		
 		Color32[] colors = _texture.GetPixels32 ();
 		double[] input = new double[2];
 		for (int x = 0; x < Width; x++) {
 			for (int y = 0; y < Height; y++) {
-				input [0] = x;
-				input [1] = y;
-				double[] res = brain.Think (input);
+				input [0] = x/(double)Width;
+				input [1] = y/(double)Height;
+				double[] res = _brain.Think (input);
 				//Color32 col = new Color32((byte)(x*255/Width), (byte)(y*255/Height),0,255); // - test
-				Color32 col = res[0] > res[1] ? new Color32 (120, 0, 0, 255) : new Color32 (0, 120, 0, 255);
+				Color32 col = res[0] < 0.5d ? new Color32 (120, 0, 0, 255) : new Color32 (0, 120, 0, 255);
 				foreach (var coo in GoodPts) {
 					if (x == coo.X && y == coo.Y) {
 						col = new Color32 (0, 255, 0, 255);
@@ -87,4 +125,6 @@ public class NetworkTestView : MonoBehaviour {
 		_texture.SetPixels32 (colors);
 		_texture.Apply ();
 	}
+
+
 }
