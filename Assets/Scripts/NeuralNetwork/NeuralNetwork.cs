@@ -85,7 +85,7 @@ public class NeuralNetwork {
 				else {
 					double sum = 0;
 					for (int neuronInd2 = 0; neuronInd2 < _layerSizes [layerInd + 1]; neuronInd2++)
-						sum += _sigmas [layerInd] [neuronInd2] * _weights [layerInd-1] [neuronInd1, neuronInd2];
+						sum += _sigmas [layerInd] [neuronInd2] * _weights [layerInd] [neuronInd1, neuronInd2];
 					_sigmas [layerInd-1] [neuronInd1] = FActDerivative (_neuronInputs [layerInd-1] [neuronInd1]) * sum;
 				}					
 			}

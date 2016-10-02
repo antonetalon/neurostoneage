@@ -62,7 +62,7 @@ public class NetworkTestView : MonoBehaviour {
 	int _trainingsCount;
 	public void CreateRandomBrainPressed() {
 		//_brain = new NeuralNetwork (new int[4] { 2, 4, 4, 1 });
-		_brain = new NeuralNetwork (new int[2] { 2, 1 });
+		_brain = new NeuralNetwork (new int[3] { 2, 4, 1 });
 		_trainingsCount = 0;
 	}
 
