@@ -78,6 +78,8 @@ public class AIGeneticPlayer:Player {
 			optionInds.Add ((int)options[j]-1);
 		int decision = _whereToGoDecider.GetDecision (inputs, optionInds);
 		WhereToGo res = (WhereToGo)(decision + 1);
+		if (res == WhereToGo.None)
+			decision = _whereToGoDecider.GetDecision (inputs, optionInds);
 		onComplete (res);
 	}
 
@@ -155,7 +157,7 @@ public class AIGeneticPlayer:Player {
 		inputs [i] = Indicator(receivedResource == Resource.Stone); i++;
 		inputs [i] = Indicator(receivedResource == Resource.Gold); i++;
 		inputs [i] = _model.InstrumentsCountSlot1+_model.InstrumentsCountSlot2+_model.InstrumentsCountSlot3; i++;
-		inputs [i] = _model.HumansCount-_model.FieldsCount-_model.Food; i++; // Needed food.
+		inputs [i] = Mathf.Max(0, _model.HumansCount-_model.FieldsCount-_model.Food); i++; // Needed food.
 
 		int count = _humansCountDecider.GetDecision (inputs, optionInds)+1;
 		onComplete (count);

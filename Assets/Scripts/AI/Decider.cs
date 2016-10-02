@@ -22,6 +22,8 @@ public class Decider {
 			if (!options.Contains (i))
 				continue;
 			float wanting = _wanters [i].GetValue (inputs);
+			if (float.IsNaN(wanting))
+				wanting = _wanters [i].GetValue (inputs);
 			if (wanting > biggestWanting) {
 				mostWantedOption = i;
 				biggestWanting = wanting;
