@@ -45,7 +45,7 @@ public class NetworkTestView : MonoBehaviour {
 
 		IntVec pt = new IntVec ();
 		pt.X = Mathf.RoundToInt (localPoint.x);
-		pt.Y = Mathf.RoundToInt (localPoint.y);
+		pt.Y = Height - 1 - Mathf.RoundToInt (localPoint.y);
 		Color col;
 		if (mouseButton == 0) {
 			GoodPts.Add (pt);
@@ -54,7 +54,7 @@ public class NetworkTestView : MonoBehaviour {
 			BadPts.Add (pt);
 			col = Color.red;
 		}
-		_texture.SetPixel (pt.X, pt.Y, col);
+		_texture.SetPixel (pt.X, Height - pt.Y - 1, col);
 		_texture.Apply ();
 	}
 
@@ -69,6 +69,18 @@ public class NetworkTestView : MonoBehaviour {
 				double[] res = brain.Think (input);
 				//Color32 col = new Color32((byte)(x*255/Width), (byte)(y*255/Height),0,255); // - test
 				Color32 col = res[0] > res[1] ? new Color32 (120, 0, 0, 255) : new Color32 (0, 120, 0, 255);
+				foreach (var coo in GoodPts) {
+					if (x == coo.X && y == coo.Y) {
+						col = new Color32 (0, 255, 0, 255);
+						break;
+					}
+				}
+				foreach (var coo in BadPts) {
+					if (x == coo.X && y == coo.Y) {
+						col = new Color32 (255, 0, 0, 255);
+						break;
+					}
+				}
 				colors [x + (Width - y - 1) * Width] = col;
 			}
 		}
