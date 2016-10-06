@@ -61,10 +61,10 @@ public class AIGeneticPlayer:Player {
 		inputs [i] = _model.Forest; i++;
 		inputs [i] = _model.Stone; i++;
 		inputs [i] = _model.Gold; i++;
-		inputs [i] = Indicator(EnoughResourcesForBuilding (game, _model, 0)); i++;
-		inputs [i] = Indicator(EnoughResourcesForBuilding (game, _model, 1)); i++;
-		inputs [i] = Indicator(EnoughResourcesForBuilding (game, _model, 2)); i++;
-		inputs [i] = Indicator(EnoughResourcesForBuilding (game, _model, 3)); i++;
+		inputs [i] = Indicator(Game.EnoughResourcesForBuilding (game, _model, 0)); i++;
+		inputs [i] = Indicator(Game.EnoughResourcesForBuilding (game, _model, 1)); i++;
+		inputs [i] = Indicator(Game.EnoughResourcesForBuilding (game, _model, 2)); i++;
+		inputs [i] = Indicator(Game.EnoughResourcesForBuilding (game, _model, 3)); i++;
 		inputs [i] = _model.HumansCount; i++;
 		inputs [i] = _model.FieldsCount; i++;
 		inputs [i] = _model.InstrumentsCountSlot1+_model.InstrumentsCountSlot2+_model.InstrumentsCountSlot3; i++;
@@ -78,52 +78,7 @@ public class AIGeneticPlayer:Player {
 			optionInds.Add ((int)options[j]-1);
 		int decision = _whereToGoDecider.GetDecision (inputs, optionInds);
 		WhereToGo res = (WhereToGo)(decision + 1);
-		if (res == WhereToGo.None)
-			decision = _whereToGoDecider.GetDecision (inputs, optionInds);
 		onComplete (res);
-	}
-
-	static int[] _remainingResources = new int[5];
-	private static bool EnoughResourcesForBuilding(Game game, PlayerModel model, int buildingSlot) {
-		_remainingResources [(int)Resource.Forest] = model.Forest;
-		_remainingResources [(int)Resource.Clay] = model.Clay;
-		_remainingResources [(int)Resource.Stone] = model.Stone;
-		_remainingResources [(int)Resource.Gold] = model.Gold;
-		for (int slotInd = 0; slotInd < 4; slotInd++) {
-			if (buildingSlot == slotInd || model.GetSpentOnHouse (slotInd) > 0)
-				SubtractResourcesFromRemaining (game.GetHouse (slotInd));
-		}
-		return _remainingResources [(int)Resource.Forest] >= 0 && _remainingResources [(int)Resource.Clay] >= 0 &&
-			_remainingResources [(int)Resource.Stone] >= 0 && _remainingResources [(int)Resource.Gold] >= 0;
-	}
-	private static List<Resource> resourcesFromGoldToForest = new List<Resource>() { Resource.Gold, Resource.Stone, Resource.Clay, Resource.Forest };
-	private static void SubtractResourcesFromRemaining(HouseToBuild house) {
-		// Fast method of rough estimating resource enoughness for building.
-		if (house.StaticCost != null) {
-			foreach (var res in house.StaticCost)
-				_remainingResources [(int)res]--;
-		} else {
-			int differentResCount = house.DifferentResourcesCount;
-			foreach (var res in resourcesFromGoldToForest) {
-				if (_remainingResources [(int)res] > 0) {
-					_remainingResources [(int)res]--;
-					differentResCount--;
-				}
-			}
-			if (differentResCount > 0) {
-				_remainingResources [(int)Resource.Forest] = -1;
-				return;
-			}
-			int minResourcesCount = house.MinResourcesCount - house.DifferentResourcesCount;
-			foreach (var res in resourcesFromGoldToForest) {
-				while (minResourcesCount > 0 && _remainingResources [(int)res] > 0) {
-					_remainingResources [(int)res]--;
-					minResourcesCount--;
-				}
-			}
-			if (minResourcesCount>0)
-				_remainingResources [(int)Resource.Forest] = -1;
-		}
 	}
 
 	const int GetUsedHumansInputsCount = 9;

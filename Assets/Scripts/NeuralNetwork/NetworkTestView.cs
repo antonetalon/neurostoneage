@@ -62,10 +62,16 @@ public class NetworkTestView : MonoBehaviour {
 	int _trainingsCount;
 	public void CreateRandomBrainPressed() {
 		//_brain = new NeuralNetwork (new int[4] { 2, 4, 4, 1 });
-		_brain = new NeuralNetwork (new int[3] { 2, 4, 1 });
+		_brain = new NeuralNetwork (new int[4] { 2, 4, 4, 1 });
 		_trainingsCount = 0;
 	}
 
+	public void TrainLoopX100Pressed() {
+		for (int i=0;i<100;i++)
+			TrainLoop ();
+		UpdateResult ();
+		Debug.LogFormat("Train {0} performed", _trainingsCount);
+	}
 	public void TrainLoopX10Pressed() {
 		for (int i=0;i<10;i++)
 			TrainLoop ();

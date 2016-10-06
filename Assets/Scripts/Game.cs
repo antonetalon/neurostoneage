@@ -29,6 +29,10 @@ public class Game {
 	public CardToBuild AvailableCardFor2Resource;
 	public CardToBuild AvailableCardFor3Resource;
 	public CardToBuild AvailableCardFor4Resource;
+
+	List<TrainingDecisionModel> _trainingModels = new List<TrainingDecisionModel>();
+	public ReadonlyList<TrainingDecisionModel> TrainingModels { get; private set; }
+
 	public CardToBuild GetAvailableCard(int cardInd) {
 		switch (cardInd) {
 			case 0: return AvailableCardFor1Resource;
@@ -193,6 +197,9 @@ public class Game {
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.Score, 3, BottomCardFeature.HouseMultiplier, 3));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.ResourceConstFood, 2, BottomCardFeature.HouseMultiplier, 2));
 		Utils.Shuffle<CardToBuild> (_cardsInHeap);
+
+		_trainingModels.Clear ();
+
 		SetChanged ();
 	}
 	public void NewTurn() {
@@ -290,6 +297,53 @@ public class Game {
 			foreach (var player in PlayerModels)
 				count += player.UnspentHumanCount;
 			return count;
+		}
+	}
+	static int[] _remainingResources = new int[5];
+	public static int[] GetRemainingResourcesAfterHousesBuilding(Game game, PlayerModel model) {
+		_remainingResources [(int)Resource.Forest] = model.Forest;
+		_remainingResources [(int)Resource.Clay] = model.Clay;
+		_remainingResources [(int)Resource.Stone] = model.Stone;
+		_remainingResources [(int)Resource.Gold] = model.Gold;
+		for (int slotInd = 0; slotInd < 4; slotInd++) {
+			if (model.GetSpentOnHouse (slotInd) > 0)
+				SubtractResourcesFromRemaining (game.GetHouse (slotInd));
+		}
+		return _remainingResources;
+	}
+	public static bool EnoughResourcesForBuilding(Game game, PlayerModel model, int buildingSlot) {
+		GetRemainingResourcesAfterHousesBuilding (game, model);
+		SubtractResourcesFromRemaining (game.GetHouse (buildingSlot));
+		return _remainingResources [(int)Resource.Forest] >= 0 && _remainingResources [(int)Resource.Clay] >= 0 &&
+			_remainingResources [(int)Resource.Stone] >= 0 && _remainingResources [(int)Resource.Gold] >= 0;
+	}
+	private static List<Resource> resourcesFromGoldToForest = new List<Resource>() { Resource.Gold, Resource.Stone, Resource.Clay, Resource.Forest };
+	private static void SubtractResourcesFromRemaining(HouseToBuild house) {
+		// Fast method of rough estimating resource enoughness for building.
+		if (house.StaticCost != null) {
+			foreach (var res in house.StaticCost)
+				_remainingResources [(int)res]--;
+		} else {
+			int differentResCount = house.DifferentResourcesCount;
+			foreach (var res in resourcesFromGoldToForest) {
+				if (_remainingResources [(int)res] > 0) {
+					_remainingResources [(int)res]--;
+					differentResCount--;
+				}
+			}
+			if (differentResCount > 0) {
+				_remainingResources [(int)Resource.Forest] = -1;
+				return;
+			}
+			int minResourcesCount = house.MinResourcesCount - house.DifferentResourcesCount;
+			foreach (var res in resourcesFromGoldToForest) {
+				while (minResourcesCount > 0 && _remainingResources [(int)res] > 0) {
+					_remainingResources [(int)res]--;
+					minResourcesCount--;
+				}
+			}
+			if (minResourcesCount>0)
+				_remainingResources [(int)Resource.Forest] = -1;
 		}
 	}
 	public List<WhereToGo> GetAvailableTargets(PlayerModel player) {
@@ -427,11 +481,15 @@ public class Game {
 					WhereToGo target = WhereToGo.None;
 					List<WhereToGo> availableTargets = GetAvailableTargets (model);
 					if (availableTargets.Count > 0) {
+						TrainingDecisionModel trainingModel = new TrainingDecisionModel (DecisionType.SelectWhereToGo, 
+							AINeuralPlayer.GetInputs (DecisionType.SelectWhereToGo, this, model, Resource.None, WhereToGo.None), currPlayerInd);
 						currPlayer.SelectWhereToGo (this, (WhereToGo tgt) => {
 							target = tgt;
 						});
 						while (target== WhereToGo.None)
 							System.Threading.Thread.Sleep (1000);
+						trainingModel.Output = (int)target - 1;
+						_trainingModels.Add (trainingModel);
 					} else {
 						if (availableTargets.Count == 0) {
 							finishedTurnPlayersCount++;
@@ -445,11 +503,15 @@ public class Game {
 					int minCount = GetMinHumansCountFor (target);
 					int maxCount = GetMaxHumansCountFor (target);
 					if (maxCount - minCount > 0) {
+						TrainingDecisionModel trainingModel = new TrainingDecisionModel (DecisionType.SelectUsedHumans, 
+							AINeuralPlayer.GetInputs (DecisionType.SelectUsedHumans, this, model, GetResourceFromTarget(target), target), currPlayerInd);
 						currPlayer.SelectUsedHumans (this, target, (int cnt) => {
 							count = cnt;
 						});
 						while (count==-1)
 							System.Threading.Thread.Sleep (1000);
+						trainingModel.Output = count - 1;
+						_trainingModels.Add (trainingModel);
 					} else
 						count = maxCount;
 
@@ -532,6 +594,11 @@ public class Game {
 						rand += RandomRange(1, 6);
 					Resource resource = GetResourceFromTarget (target);
 					bool processEnded = false;
+
+					TrainingDecisionModel trainingModel = new TrainingDecisionModel (DecisionType.GetUsedInstrumentSlotInd, 
+						AINeuralPlayer.GetInputs (DecisionType.GetUsedInstrumentSlotInd, this, model, resource, target), currPlayerInd);
+
+					int randFromDices = rand;
 					currPlayer.GetUsedInstrumentSlotInd (this, resource, rand,
 						(bool useSlot0, bool useSlot1, bool useSlot2, bool useOnce4Slot, bool useOnce3Slot, bool useOnce2Slot) => {
 							processEnded = true;
@@ -568,9 +635,14 @@ public class Game {
 					});
 					while (!processEnded)
 						System.Threading.Thread.Sleep (1000);
-					
+
 					int cost = GetResourceCost (resource);
+					int resourceCountFromDices = randFromDices / cost;
 					int resourceCount = rand / cost;
+					int resourcesFromInstruments = resourceCount - resourceCountFromDices;
+					trainingModel.Output = resourcesFromInstruments;
+					_trainingModels.Add (trainingModel);
+					
 					model.AddResource (resource, resourceCount);
 					SetChanged ();
 				}
@@ -790,6 +862,8 @@ public class Game {
 					if (!enoughResources)
 						selectedToLeaveHungry = true;
 					else {
+						TrainingDecisionModel trainingModel = new TrainingDecisionModel (DecisionType.LeaveHungry, 
+							AINeuralPlayer.GetInputs (DecisionType.LeaveHungry, this, modelForFeding, Resource.None, WhereToGo.None), currFedPlayerInd);
 						bool processEnded = false;
 						currFedPlayer.LeaveHungry (this, eatenResourcesCount, (bool leaveHungry) => {
 							selectedToLeaveHungry = leaveHungry;
@@ -797,6 +871,8 @@ public class Game {
 						});
 						while (!processEnded)
 							System.Threading.Thread.Sleep (1000);
+						trainingModel.Output = selectedToLeaveHungry?1:0;
+						_trainingModels.Add (trainingModel);
 					}
 				}
 				if (Logging) {
