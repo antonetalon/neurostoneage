@@ -2,10 +2,13 @@
 using System.Collections;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.Threading;
+using System.IO;
 
 public class NetworkTestView : MonoBehaviour {
 
 	[SerializeField] RawImage _view;
+	[SerializeField] GameView _gameView;
 	Texture2D _texture;
 	const int Width = 100;
 	const int Height = 100;
@@ -58,79 +61,86 @@ public class NetworkTestView : MonoBehaviour {
 		_texture.Apply ();
 	}
 
-	NeuralNetwork _brain;
+	AINeuralPlayer _brain;
 	int _trainingsCount;
+
+	#region Buttons
 	public void CreateRandomBrainPressed() {
 		//_brain = new NeuralNetwork (new int[4] { 2, 4, 4, 1 });
-		_brain = new NeuralNetwork (new int[4] { 2, 4, 4, 1 });
+		_brain = new AINeuralPlayer();
 		_trainingsCount = 0;
+		Debug.Log ("Created ai");
+		InitTrainingViews ();
 	}
-
-	public void TrainLoopX100Pressed() {
-		for (int i=0;i<100;i++)
-			TrainLoop ();
-		UpdateResult ();
-		Debug.LogFormat("Train {0} performed", _trainingsCount);
-	}
-	public void TrainLoopX10Pressed() {
-		for (int i=0;i<10;i++)
-			TrainLoop ();
-		UpdateResult ();
-		Debug.LogFormat("Train {0} performed", _trainingsCount);
-	}
-	public void TrainLoopPressed() {
-		TrainLoop ();
-		UpdateResult ();
-		Debug.LogFormat("Train {0} performed", _trainingsCount);
-	}
-
-	private void TrainLoop() {
-		const float nu = 0.6f;
-		double[] input = new double[2];
-		double[] idealOutput = new double[1];
-		idealOutput [0] = 1;
-		foreach (var pt in GoodPts) {
-			input [0] = pt.X/(double)Width;
-			input [1] = pt.Y/(double)Height;
-			_brain.Train(input, idealOutput, nu);
+	const string FilePath = "SavedTraining";
+	public void SaveTraining() {
+		using (Stream stream = File.Open(FilePath, FileMode.Create))
+		{
+			var binaryFormatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+			binaryFormatter.Serialize(stream, _trainingModels);
+			binaryFormatter.Serialize(stream, _brain);
 		}
-		idealOutput [0] = 0;
-		foreach (var pt in BadPts) {
-			input [0] = pt.X/(double)Width;
-			input [1] = pt.Y/(double)Height;
-			_brain.Train(input, idealOutput, nu);
+		Debug.Log ("Training saved");
+	}
+	public void LoadTraining() {
+		using (Stream stream = File.Open(FilePath, FileMode.Open))
+		{
+			var binaryFormatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+			_trainingModels = (List<TrainingDecisionModel>)binaryFormatter.Deserialize(stream);
+			_brain = (AINeuralPlayer)binaryFormatter.Deserialize (stream);
 		}
-		_trainingsCount++;
+		InitTrainingViews ();
+		UpdateView ();
+		Debug.Log ("Training loaded");
 	}
 
-	private void UpdateResult() {		
-		Color32[] colors = _texture.GetPixels32 ();
-		double[] input = new double[2];
-		for (int x = 0; x < Width; x++) {
-			for (int y = 0; y < Height; y++) {
-				input [0] = x/(double)Width;
-				input [1] = y/(double)Height;
-				double[] res = _brain.Think (input);
-				//Color32 col = new Color32((byte)(x*255/Width), (byte)(y*255/Height),0,255); // - test
-				Color32 col = res[0] < 0.5d ? new Color32 (120, 0, 0, 255) : new Color32 (0, 120, 0, 255);
-				foreach (var coo in GoodPts) {
-					if (x == coo.X && y == coo.Y) {
-						col = new Color32 (0, 255, 0, 255);
-						break;
-					}
-				}
-				foreach (var coo in BadPts) {
-					if (x == coo.X && y == coo.Y) {
-						col = new Color32 (255, 0, 0, 255);
-						break;
-					}
-				}
-				colors [x + (Width - y - 1) * Width] = col;
-			}
-		}
-		_texture.SetPixels32 (colors);
-		_texture.Apply ();
+	public void PlayAndAddTraining() {
+
+		List<Player> players = new List<Player> () {
+			new HumanPlayer (_gameView.TurnView),
+			_brain,
+			_brain.Clone(),
+			_brain.Clone()
+		};
+		_gameView.gameObject.SetActive (true);
+		Game game = new Game (players);
+		_gameView.Init (game);
+		Thread thread = new Thread (new ThreadStart(()=>{game.Play (()=>{
+			CompositionRoot.Instance.ExecuteInMainThread(()=>{
+				//_view.gameObject.SetActive (false);
+				Debug.Log("Match ended");
+				foreach (var trainingModel in game.TrainingModels)
+					_trainingModels.Add(trainingModel);
+			});
+		});}));
+		thread.Start ();
 	}
+	#endregion
 
+	List<TrainingDecisionModel> _trainingModels = new List<TrainingDecisionModel>();
 
+	[SerializeField] Text _trainingModelsCount;
+	[SerializeField] OneDeciderTrainingView _whereToGoTrainingView;
+	[SerializeField] OneDeciderTrainingView _usedHumansTrainingView;
+	[SerializeField] OneDeciderTrainingView _charityTrainingView;
+	[SerializeField] OneDeciderTrainingView _instrumentsTrainingView;
+	[SerializeField] OneDeciderTrainingView _hungryTrainingView;
+	[SerializeField] OneDeciderTrainingView _totalTrainingView;
+	void InitTrainingViews() {
+		_whereToGoTrainingView.Init (DecisionType.SelectWhereToGo, _trainingModels, _brain);
+		_usedHumansTrainingView.Init (DecisionType.SelectUsedHumans, _trainingModels, _brain);
+		_charityTrainingView.Init (DecisionType.SelectCharity, _trainingModels, _brain);
+		_instrumentsTrainingView.Init (DecisionType.SelectInstruments, _trainingModels, _brain);
+		_hungryTrainingView.Init (DecisionType.SelectLeaveHungry, _trainingModels, _brain);
+		_totalTrainingView.Init (DecisionType.None, _trainingModels, _brain);
+	}
+	public void UpdateView() {
+		_trainingModelsCount.text = _trainingModels.Count.ToString ();
+		_whereToGoTrainingView.UpdateView ();
+		_usedHumansTrainingView.UpdateView ();
+		_charityTrainingView.UpdateView ();
+		_instrumentsTrainingView.UpdateView ();
+		_hungryTrainingView.UpdateView ();
+		_totalTrainingView.UpdateView ();
+	}
 }

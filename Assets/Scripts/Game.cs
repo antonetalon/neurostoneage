@@ -199,6 +199,7 @@ public class Game {
 		Utils.Shuffle<CardToBuild> (_cardsInHeap);
 
 		_trainingModels.Clear ();
+		TrainingModels = new ReadonlyList<TrainingDecisionModel> (_trainingModels);
 
 		SetChanged ();
 	}
@@ -482,7 +483,8 @@ public class Game {
 					List<WhereToGo> availableTargets = GetAvailableTargets (model);
 					if (availableTargets.Count > 0) {
 						TrainingDecisionModel trainingModel = new TrainingDecisionModel (DecisionType.SelectWhereToGo, 
-							AINeuralPlayer.GetInputs (DecisionType.SelectWhereToGo, this, model, Resource.None, WhereToGo.None), currPlayerInd);
+							AINeuralPlayer.GetInputs (DecisionType.SelectWhereToGo, this, model, Resource.None, WhereToGo.None), 
+							AINeuralPlayer.GetOptionInds(DecisionType.SelectWhereToGo, this, model, null, -1, Resource.None, WhereToGo.None), currPlayerInd);
 						currPlayer.SelectWhereToGo (this, (WhereToGo tgt) => {
 							target = tgt;
 						});
@@ -504,7 +506,8 @@ public class Game {
 					int maxCount = GetMaxHumansCountFor (target);
 					if (maxCount - minCount > 0) {
 						TrainingDecisionModel trainingModel = new TrainingDecisionModel (DecisionType.SelectUsedHumans, 
-							AINeuralPlayer.GetInputs (DecisionType.SelectUsedHumans, this, model, GetResourceFromTarget(target), target), currPlayerInd);
+							AINeuralPlayer.GetInputs (DecisionType.SelectUsedHumans, this, model, GetResourceFromTarget(target), target),
+							AINeuralPlayer.GetOptionInds(DecisionType.SelectUsedHumans, this, model, null, -1, GetResourceFromTarget(target), target), currPlayerInd);
 						currPlayer.SelectUsedHumans (this, target, (int cnt) => {
 							count = cnt;
 						});
@@ -595,8 +598,9 @@ public class Game {
 					Resource resource = GetResourceFromTarget (target);
 					bool processEnded = false;
 
-					TrainingDecisionModel trainingModel = new TrainingDecisionModel (DecisionType.GetUsedInstrumentSlotInd, 
-						AINeuralPlayer.GetInputs (DecisionType.GetUsedInstrumentSlotInd, this, model, resource, target), currPlayerInd);
+					TrainingDecisionModel trainingModel = new TrainingDecisionModel (DecisionType.SelectInstruments, 
+						AINeuralPlayer.GetInputs (DecisionType.SelectInstruments, this, model, resource, target),
+						AINeuralPlayer.GetOptionInds(DecisionType.SelectInstruments, this, model, null, rand, resource, target), currPlayerInd);
 
 					int randFromDices = rand;
 					currPlayer.GetUsedInstrumentSlotInd (this, resource, rand,
@@ -720,12 +724,20 @@ public class Game {
 							Player currPlayer2 = Players [randomBonusPlayerInd];
 							PlayerModel model2 = PlayerModels [randomBonusPlayerInd];
 							int selectedOption = -1;
+
+							TrainingDecisionModel trainingModel = new TrainingDecisionModel (DecisionType.SelectCharity, 
+								AINeuralPlayer.GetInputs (DecisionType.SelectCharity, this, model2, Resource.None, WhereToGo.None),
+								AINeuralPlayer.GetOptionInds(DecisionType.SelectCharity, this, model2, options, -1, Resource.None, WhereToGo.None), currPlayerInd);
+							
 							currPlayer2.ChooseItemToReceiveFromCharityCard (this, options, (int option) => {
 								selectedOption = option;
 							});
 							while (selectedOption==-1)
 								System.Threading.Thread.Sleep (1000);
 							if (Logging) Debug.LogFormat ("Charity option {0} selected by player {1}", selectedOption, randomBonusPlayerInd);
+
+							trainingModel.Output = selectedOption;
+							_trainingModels.Add (trainingModel);
 
 							options.Remove (selectedOption);
 							switch (selectedOption) {
@@ -862,8 +874,9 @@ public class Game {
 					if (!enoughResources)
 						selectedToLeaveHungry = true;
 					else {
-						TrainingDecisionModel trainingModel = new TrainingDecisionModel (DecisionType.LeaveHungry, 
-							AINeuralPlayer.GetInputs (DecisionType.LeaveHungry, this, modelForFeding, Resource.None, WhereToGo.None), currFedPlayerInd);
+						TrainingDecisionModel trainingModel = new TrainingDecisionModel (DecisionType.SelectLeaveHungry, 
+							AINeuralPlayer.GetInputs (DecisionType.SelectLeaveHungry, this, modelForFeding, Resource.None, WhereToGo.None),
+							AINeuralPlayer.GetOptionInds(DecisionType.SelectLeaveHungry, this, modelForFeding, null, -1, Resource.None, WhereToGo.None), currFedPlayerInd);
 						bool processEnded = false;
 						currFedPlayer.LeaveHungry (this, eatenResourcesCount, (bool leaveHungry) => {
 							selectedToLeaveHungry = leaveHungry;
@@ -915,6 +928,25 @@ public class Game {
 			if (OnTurnEnded != null)
 				OnTurnEnded ();
 		}
+
+		// Fill rewards.
+		float[] rewards = new float[4];
+		int maxScore = int.MinValue;
+		for (int i = 0; i < Players.Count; i++) {
+			if (Players [i].Model.Score>maxScore)
+				maxScore = Players [i].Model.Score;
+		}
+		for (int i = 0; i < Players.Count; i++) {
+			rewards [i] = Players [i].Model.Score / (float)maxScore;
+			const float winnerThreshold = 0.9f;
+			rewards [i] -= winnerThreshold;
+			if (rewards [i] > 0)
+				rewards [i] *= 1 / (1 - winnerThreshold);
+			else
+				rewards [i] *= 1 / winnerThreshold;
+		}
+		foreach (var trainingModel in TrainingModels)
+			trainingModel.RewardPercent = rewards[trainingModel.PlayerInd];
 			
 		onEnded ();
 	}

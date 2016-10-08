@@ -9,12 +9,21 @@ public class AINeuralPlayer:Player {
 		return condition ? 1 : 0;
 	}
 
-	private AINeuralPlayer() {
+	public AINeuralPlayer() {
 		InitWhereToGo ();
 		InitGetUsedHumans ();
 		InitCharity ();
 		InitInstruments ();
 		InitHungry ();
+	}
+	public AINeuralPlayer Clone() {
+		AINeuralPlayer clone = new AINeuralPlayer ();
+		clone._whereToGoDecider = _whereToGoDecider;
+		clone._getUsedHumansDecider = _getUsedHumansDecider;
+		clone._charityDecider = _charityDecider;
+		clone._instrumentsDecider = _instrumentsDecider;
+		clone._hungryDecider = _hungryDecider;
+		return clone;
 	}
 
 	public static int[] GetInputs(DecisionType type, Game game, PlayerModel player, Resource receivedRecource, WhereToGo whereToGo) {
@@ -22,9 +31,9 @@ public class AINeuralPlayer:Player {
 		default:
 		case DecisionType.SelectWhereToGo: return GetWhereToGoInputs (game, player);
 		case DecisionType.SelectUsedHumans: return GetUsedHumansInputs (game, player, whereToGo);
-		case DecisionType.ChooseItemToReceiveFromCharityCard: return GetCharityInputs (game, player);
-		case DecisionType.GetUsedInstrumentSlotInd: return GetInstrumentsInputs (game, player, receivedRecource);
-		case DecisionType.LeaveHungry: return GetHungryInputs (game, player);
+		case DecisionType.SelectCharity: return GetCharityInputs (game, player);
+		case DecisionType.SelectInstruments: return GetInstrumentsInputs (game, player, receivedRecource);
+		case DecisionType.SelectLeaveHungry: return GetHungryInputs (game, player);
 		}
 	}
 	public static List<int> GetOptionInds(DecisionType type, Game game, PlayerModel player, List<int> randoms, int points, Resource receivedRecource, WhereToGo whereToGo) {
@@ -32,12 +41,12 @@ public class AINeuralPlayer:Player {
 		default:
 		case DecisionType.SelectWhereToGo: return GetWhereToGoOptionInds (game, player);
 		case DecisionType.SelectUsedHumans: return GetUsedHumansOptionInds (game, player, whereToGo);
-		case DecisionType.ChooseItemToReceiveFromCharityCard: return GetCharityOptionInds (game, player, randoms);
-		case DecisionType.GetUsedInstrumentSlotInd: return GetInstrumentsOptionInds (game, player, randoms, points, receivedRecource);
-		case DecisionType.LeaveHungry: return GetHungryOptionInds (game, player);
+		case DecisionType.SelectCharity: return GetCharityOptionInds (game, player, randoms);
+		case DecisionType.SelectInstruments: return GetInstrumentsOptionInds (game, player, randoms, points, receivedRecource);
+		case DecisionType.SelectLeaveHungry: return GetHungryOptionInds (game, player);
 		}
 	}
-	private static int GetDecisionFromOutputs(double[] outputs, List<int> optionInds) {
+	public static int GetDecisionFromOutputs(double[] outputs, List<int> optionInds) {
 		double maxAllowedOutput = double.MinValue;
 		int maxAllowedOutputInd = -1;
 		for (int i = 0; i < outputs.Length; i++) {
@@ -57,6 +66,16 @@ public class AINeuralPlayer:Player {
 		double[] outputs = decider.Think (inputsDouble);
 		int decisionInd = GetDecisionFromOutputs (outputs, optionInds);
 		return decisionInd;
+	}
+	public NeuralNetwork GetDecider(DecisionType type) {
+		switch (type) {
+			case DecisionType.SelectWhereToGo: return _whereToGoDecider;
+			case DecisionType.SelectUsedHumans: return _getUsedHumansDecider;
+			case DecisionType.SelectInstruments: return _instrumentsDecider;
+			case DecisionType.SelectCharity: return _charityDecider;
+			case DecisionType.SelectLeaveHungry: return _hungryDecider;
+			default: return null;
+		}
 	}
 
 	#region Where to go
@@ -180,7 +199,7 @@ public class AINeuralPlayer:Player {
 	}
 
 	public override void ChooseItemToReceiveFromCharityCard (Game game, List<int> randoms, Action<int> onComplete) {
-		int decisionInd = GetDecisionInd (DecisionType.ChooseItemToReceiveFromCharityCard, game, _model, _charityDecider, randoms, -1, Resource.None, WhereToGo.None);
+		int decisionInd = GetDecisionInd (DecisionType.SelectCharity, game, _model, _charityDecider, randoms, -1, Resource.None, WhereToGo.None);
 		onComplete (decisionInd+1);
 	}
 	#endregion
@@ -239,7 +258,7 @@ public class AINeuralPlayer:Player {
 	}
 
 	public override void GetUsedInstrumentSlotInd (Game game, Resource receivedRecource, int points, OnInstrumentsToUseSelected onComplete) {
-		int decision = GetDecisionInd (DecisionType.GetUsedInstrumentSlotInd, game, _model, _instrumentsDecider, null, points, receivedRecource, WhereToGo.None);
+		int decision = GetDecisionInd (DecisionType.SelectInstruments, game, _model, _instrumentsDecider, null, points, receivedRecource, WhereToGo.None);
 
 		int availableSlot1Instruments = _model.InstrumentsSlot1Used ? 0 : _model.InstrumentsCountSlot1;
 		int availableSlot2Instruments = _model.InstrumentsSlot2Used ? 0 : _model.InstrumentsCountSlot2;
@@ -306,7 +325,7 @@ public class AINeuralPlayer:Player {
 		onComplete (true);
 	}
 
-	List<Resource> _resourcesForCardBuilding = new List<Resource>() { Resource.Forest, Resource.Clay, Resource.Stone, Resource.Gold };
+	static List<Resource> _resourcesForCardBuilding = new List<Resource>() { Resource.Forest, Resource.Clay, Resource.Stone, Resource.Gold };
 	public override void GetUsedResourceForCardBuilding (Game game, CardToBuild card, List<Resource> alreadySelectedResources, Action<Resource> onComplete) {
 		// Drop this decision.
 		int[] remainingResources = Game.GetRemainingResourcesAfterHousesBuilding (game, _model);
@@ -376,7 +395,7 @@ public class AINeuralPlayer:Player {
 	}
 
 	public override void LeaveHungry (Game game, int eatenResources, Action<bool> onComplete) {
-		int decisionInd = GetDecisionInd (DecisionType.LeaveHungry, game, _model, _hungryDecider, null, -1, Resource.None, WhereToGo.None);
+		int decisionInd = GetDecisionInd (DecisionType.SelectLeaveHungry, game, _model, _hungryDecider, null, -1, Resource.None, WhereToGo.None);
 		bool selectTrue = decisionInd == 1;
 		onComplete (selectTrue);
 	}
