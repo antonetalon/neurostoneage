@@ -36,6 +36,22 @@ public class HumanTurnView : MonoBehaviour {
 	[SerializeField] GameObject _card4;
 
 	public void ShowWhereToGo(Game game, PlayerModel player) {
+		FieldPressed = false;
+		HousingPressed = false;
+		InstrumentPressed = false;
+		FoodPressed = false;
+		ForestPressed = false;
+		ClayPressed = false;
+		StonePressed = false;
+		GoldPressed = false;
+		House1Pressed = false;
+		House2Pressed = false;
+		House3Pressed = false;
+		House4Pressed = false;
+		Card1Pressed = false;
+		Card2Pressed = false;
+		Card3Pressed = false;
+		Card4Pressed = false;
 		CompositionRoot.Instance.ExecuteInMainThread (() => {
 			_whereToGo.SetActive (true);
 			List<WhereToGo> availableTargets = game.GetAvailableTargets (player);
@@ -55,22 +71,6 @@ public class HumanTurnView : MonoBehaviour {
 			_card2.SetActive (availableTargets.Contains (WhereToGo.Card2));
 			_card3.SetActive (availableTargets.Contains (WhereToGo.Card3));
 			_card4.SetActive (availableTargets.Contains (WhereToGo.Card4));
-			FieldPressed = false;
-			HousingPressed = false;
-			InstrumentPressed = false;
-			FoodPressed = false;
-			ForestPressed = false;
-			ClayPressed = false;
-			StonePressed = false;
-			GoldPressed = false;
-			House1Pressed = false;
-			House2Pressed = false;
-			House3Pressed = false;
-			House4Pressed = false;
-			Card1Pressed = false;
-			Card2Pressed = false;
-			Card3Pressed = false;
-			Card4Pressed = false;
 		});
 	}
 
@@ -162,8 +162,8 @@ public class HumanTurnView : MonoBehaviour {
 	[SerializeField] List<Sprite> _playerSprites;
 	public int SelectedHumansCount { get; private set; }
 	public void ShowHumansCount(Game game, PlayerModel player, WhereToGo target, PlayerModel.Color color) {
+		SelectedHumansCount = -1;
 		CompositionRoot.Instance.ExecuteInMainThread (() => {
-			SelectedHumansCount = -1;
 			_selectHumansCount.SetActive (true);
 			int maxHumans = Mathf.Min (game.GetAvailableHumansCountFor (target), player.UnspentHumanCount);
 			for (int i = 0; i < _humans.Count; i++) {
@@ -189,8 +189,8 @@ public class HumanTurnView : MonoBehaviour {
 	public bool SelectedAnyResourceUse { get; private set; }
 	public bool SelectedAnyResourceDontUse { get; private set; }
 	public void ShowSelectAnyResource() {
+		SelectedAnyResourceUse = false;
 		CompositionRoot.Instance.ExecuteInMainThread (() => {
-			SelectedAnyResourceUse = false;
 			SelectedAnyResourceDontUse = false;
 			_selectAnyResource.SetActive (true);
 		});
@@ -210,8 +210,8 @@ public class HumanTurnView : MonoBehaviour {
 	[SerializeField] List<Image> _resourceImages;
 	public Resource SelectedResource { get; private set; }
 	public void ShowSelectResource() {
+		SelectedResource = Resource.None;
 		CompositionRoot.Instance.ExecuteInMainThread (() => {
-			SelectedResource = Resource.None;
 			_selectResource.SetActive (true);
 		});
 	}
@@ -236,9 +236,15 @@ public class HumanTurnView : MonoBehaviour {
 	private int _pointsCount;
 	PlayerModel _player;
 	public void ShowSelectInstruments(PlayerModel player, Resource receivedReceource, int points) {
+		InstrumentSlot0Used = false;
+		InstrumentSlot1Used = false;
+		InstrumentSlot2Used = false;
+		Instrument4OnceUsed = false;
+		Instrument3OnceUsed = false;
+		Instrument2OnceUsed = false;
+		SelectingInstrumentsDone = false;
 		CompositionRoot.Instance.ExecuteInMainThread (() => {
 			_selectInstruments.SetActive (true);
-			SelectingInstrumentsDone = false;
 			_player = player;
 			_pointsCount = points;
 			_points.text = points.ToString ();
@@ -247,23 +253,17 @@ public class HumanTurnView : MonoBehaviour {
 
 			_instrumentsImages [0].gameObject.SetActive (!player.InstrumentsSlot1Used && player.InstrumentsCountSlot1 > 0);
 			_instrumentsCounts [0].text = player.InstrumentsCountSlot1.ToString ();
-			InstrumentSlot0Used = false;
 			_instrumentsImages [1].gameObject.SetActive (!player.InstrumentsSlot2Used && player.InstrumentsCountSlot2 > 0);
 			_instrumentsCounts [1].text = player.InstrumentsCountSlot2.ToString ();
-			InstrumentSlot1Used = false;
 			_instrumentsImages [2].gameObject.SetActive (!player.InstrumentsSlot3Used && player.InstrumentsCountSlot3 > 0);
 			_instrumentsCounts [2].text = player.InstrumentsCountSlot3.ToString ();
-			InstrumentSlot2Used = false;
 
 			_instrumentsImages [3].gameObject.SetActive (player.Top4Instruments != null && !player.Top4Instruments.Card.TopUsed);
 			//_instrumentsCounts [3].text = 4.ToString ();
-			Instrument4OnceUsed = false;
 			_instrumentsImages [4].gameObject.SetActive (player.Top3Instruments != null && !player.Top3Instruments.Card.TopUsed);
 			//_instrumentsCounts [4].text = 3.ToString ();
-			Instrument3OnceUsed = false;
 			_instrumentsImages [5].gameObject.SetActive (player.Top2Instruments != null && !player.Top2Instruments.Card.TopUsed);
 			//_instrumentsCounts [2].text = 2.ToString ();
-			Instrument2OnceUsed = false;
 		});
 	}
 	public bool InstrumentSlot0Used { get; private set; }
@@ -318,9 +318,9 @@ public class HumanTurnView : MonoBehaviour {
 	public int SelectedItemFromCharityCard { get; private set; }
 	List<int> _charityRandoms;
 	public void ShowSelectingItemFromCharityCard(PlayerModel model, List<int> randoms) {
+		SelectedItemFromCharityCard = -1;
 		CompositionRoot.Instance.ExecuteInMainThread (() => {
 			_charityRandoms = randoms;
-			SelectedItemFromCharityCard = -1;
 			_charityCardSelectingParent.SetActive (true);
 			for (int i = 0; i < _charityCardButtons.Count; i++) {
 				_charityCardButtons [i].gameObject.SetActive (randoms.Count > i);
@@ -352,8 +352,8 @@ public class HumanTurnView : MonoBehaviour {
 	public bool SelectingBuildCardDone { get; private set; }
 	public bool SelectedBuildCard { get; private set; }
 	public void ShowBuildCard(int cardInd) {
-		CompositionRoot.Instance.ExecuteInMainThread (() => {
-			SelectingBuildCardDone = false;
+		SelectingBuildCardDone = false;
+		CompositionRoot.Instance.ExecuteInMainThread (() => {			
 			_buildCardSelectingParent.SetActive (true);
 			for (int i = 0; i < _cardToBuildSelectionParent.Count; i++)
 				_cardToBuildSelectionParent [i].SetActive (i == cardInd);
@@ -374,8 +374,8 @@ public class HumanTurnView : MonoBehaviour {
 	[SerializeField] List<GameObject> _selectedResourcesForCardBuildingButtons;
 	public Resource SelectedResourceForCardBuilding { get; private set; }
 	public void ShowSelectResourceForCard(PlayerModel model, List<Resource> alreadySelectedResources) {
-		CompositionRoot.Instance.ExecuteInMainThread (() => {
-			SelectedResourceForCardBuilding = Resource.None;
+		SelectedResourceForCardBuilding = Resource.None;
+		CompositionRoot.Instance.ExecuteInMainThread (() => {			
 			_selectingResourceForCardBuyingParent.SetActive (true);
 			Dictionary<Resource, int> spentResourcesDict = new Dictionary<Resource, int> ();
 			spentResourcesDict.Add (Resource.Forest, 0);
@@ -405,8 +405,8 @@ public class HumanTurnView : MonoBehaviour {
 	public bool SelectingBuildHouseDone { get; private set; }
 	public bool SelectedToBuildHouse { get; private set; }
 	public void ShowSelectBuildingHouse(int houseInd) {
-		CompositionRoot.Instance.ExecuteInMainThread (() => {
-			SelectingBuildHouseDone = false;
+		SelectingBuildHouseDone = false;
+		CompositionRoot.Instance.ExecuteInMainThread (() => {			
 			_buildingHouseSelectingParent.SetActive (true);
 			for (int i = 0; i < _houseToBuild.Count; i++)
 				_houseToBuild [i].SetActive (i == houseInd);
@@ -429,8 +429,8 @@ public class HumanTurnView : MonoBehaviour {
 	public Resource SelectedResourceForHouseBuilding { get; private set; }
 	public bool ResourceForHouseBuildingSelectionDone { get; private set; }
 	public void ShowSelectResourceForBuildingHouse(HouseToBuild house, List<Resource> options, List<Resource> spentResources) {
-		CompositionRoot.Instance.ExecuteInMainThread (() => {
-			ResourceForHouseBuildingSelectionDone = false;
+		ResourceForHouseBuildingSelectionDone = false;
+		CompositionRoot.Instance.ExecuteInMainThread (() => {			
 			SelectedResourceForHouseBuilding = Resource.None;
 			_gettingResourceForHouseBuildingParent.SetActive (true);
 			for (int ind = 0; ind < _selectedResourceForHouseBuildingButtons.Count; ind++) {
@@ -465,8 +465,8 @@ public class HumanTurnView : MonoBehaviour {
 	public bool SelectingLeavingHungryDone { get; private set; }
 	public bool SelecedLeaveHungry { get; private set; }
 	public void ShowSelectingLeavingHungry(int eatenResources) {
-		CompositionRoot.Instance.ExecuteInMainThread (() => {
-			SelectingLeavingHungryDone = false;
+		SelectingLeavingHungryDone = false;
+		CompositionRoot.Instance.ExecuteInMainThread (() => {			
 			_leavingHungryParent.SetActive (true);
 			_eatenResourcesCount.text = eatenResources.ToString ();
 		});

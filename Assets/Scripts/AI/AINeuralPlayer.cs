@@ -192,7 +192,7 @@ public class AINeuralPlayer:Player {
 	private static List<int> GetCharityOptionInds(Game game, PlayerModel player, List<int> randoms) {
 		List<int> optionInds = new List<int> ();
 		for (int j = 0; j < 6; j++) {
-			if (randoms.Contains (j + 1))
+			if (randoms.Contains (j))
 				optionInds.Add (j);
 		}
 		return optionInds;
@@ -200,7 +200,7 @@ public class AINeuralPlayer:Player {
 
 	public override void ChooseItemToReceiveFromCharityCard (Game game, List<int> randoms, Action<int> onComplete) {
 		int decisionInd = GetDecisionInd (DecisionType.SelectCharity, game, _model, _charityDecider, randoms, -1, Resource.None, WhereToGo.None);
-		onComplete (decisionInd+1);
+		onComplete (decisionInd);
 	}
 	#endregion
 

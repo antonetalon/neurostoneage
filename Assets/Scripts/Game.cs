@@ -691,12 +691,12 @@ public class Game {
 					// Define what resources to spend.
 					List<Resource> spendResources = new List<Resource>();
 					for (int resourceInd = 0; resourceInd < cardPrice; resourceInd++) {
-						processEnded = false;
+						bool processEnded2 = false;
 						currPlayer.GetUsedResourceForCardBuilding (this, GetAvailableCard(cardInd), spendResources, (Resource resource) => {
 							spendResources.Add(resource);
-							processEnded = true;
+							processEnded2 = true;
 						});
-						while (!processEnded)
+						while (!processEnded2)
 							System.Threading.Thread.Sleep (1000);
 					}
 
@@ -727,10 +727,12 @@ public class Game {
 
 							TrainingDecisionModel trainingModel = new TrainingDecisionModel (DecisionType.SelectCharity, 
 								AINeuralPlayer.GetInputs (DecisionType.SelectCharity, this, model2, Resource.None, WhereToGo.None),
-								AINeuralPlayer.GetOptionInds(DecisionType.SelectCharity, this, model2, options, -1, Resource.None, WhereToGo.None), currPlayerInd);
+								AINeuralPlayer.GetOptionInds(DecisionType.SelectCharity, this, model2, options, -1, Resource.None, WhereToGo.None), randomBonusPlayerInd);
 							
 							currPlayer2.ChooseItemToReceiveFromCharityCard (this, options, (int option) => {
 								selectedOption = option;
+								if (!AINeuralPlayer.GetOptionInds(DecisionType.SelectCharity, this, model2, options, -1, Resource.None, WhereToGo.None).Contains (option))
+									Debug.Log ("WTF");
 							});
 							while (selectedOption==-1)
 								System.Threading.Thread.Sleep (1000);
@@ -738,6 +740,8 @@ public class Game {
 
 							trainingModel.Output = selectedOption;
 							_trainingModels.Add (trainingModel);
+							if (!trainingModel.Options.Contains (trainingModel.Output))
+								Debug.Log ("WTF");
 
 							options.Remove (selectedOption);
 							switch (selectedOption) {
@@ -764,11 +768,11 @@ public class Game {
 					case TopCardFeature.ResourceRandomForest:
 					case TopCardFeature.ResourceRandomStone:
 					case TopCardFeature.ResourceRandomGold:
-						processEnded = false;
+						bool processEnded3 = false;
 						AddRandomResourceFromTopCard (card, model, currPlayer, ()=>{
-							processEnded = true;
+							processEnded3 = true;
 						});
-						while (!processEnded)
+						while (!processEnded3)
 							System.Threading.Thread.Sleep (1000);
 						break;
 					}
@@ -936,14 +940,19 @@ public class Game {
 			if (Players [i].Model.Score>maxScore)
 				maxScore = Players [i].Model.Score;
 		}
-		for (int i = 0; i < Players.Count; i++) {
-			rewards [i] = Players [i].Model.Score / (float)maxScore;
-			const float winnerThreshold = 0.9f;
-			rewards [i] -= winnerThreshold;
-			if (rewards [i] > 0)
-				rewards [i] *= 1 / (1 - winnerThreshold);
-			else
-				rewards [i] *= 1 / winnerThreshold;
+		if (maxScore != 0) {
+			for (int i = 0; i < Players.Count; i++) {
+				rewards [i] = Players [i].Model.Score / (float)maxScore;
+				const float winnerThreshold = 0.9f;
+				rewards [i] -= winnerThreshold;
+				if (rewards [i] > 0)
+					rewards [i] *= 1 / (1 - winnerThreshold);
+				else
+					rewards [i] *= 1 / winnerThreshold;
+			}
+		} else {
+			for (int i = 0; i < Players.Count; i++)
+				rewards [i] = 0;
 		}
 		foreach (var trainingModel in TrainingModels)
 			trainingModel.RewardPercent = rewards[trainingModel.PlayerInd];

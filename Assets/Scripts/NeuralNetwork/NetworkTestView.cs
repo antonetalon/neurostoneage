@@ -21,6 +21,7 @@ public class NetworkTestView : MonoBehaviour {
 		_texture.SetPixels32 (colors);
 		_texture.Apply ();
 		_view.texture = _texture;
+		_progressParent.SetActive (false);
 	}
 	
 	// Update is called once per frame
@@ -142,5 +143,17 @@ public class NetworkTestView : MonoBehaviour {
 		_instrumentsTrainingView.UpdateView ();
 		_hungryTrainingView.UpdateView ();
 		_totalTrainingView.UpdateView ();
+	}
+
+	[SerializeField] GameObject _progressParent;
+	[SerializeField] Slider _progress;
+	[SerializeField] Text _progressText;
+	public void UpdateProgress(int completedCount, int totalCount) {
+		CompositionRoot.Instance.ExecuteInMainThread (() => {
+			_progressParent.SetActive (completedCount < totalCount);
+			float progress = completedCount / (float)totalCount;
+			_progress.value = progress;
+			_progressText.text = string.Format ("{0}/{1}={2}", completedCount, totalCount, progress);
+		});
 	}
 }
