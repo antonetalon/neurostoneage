@@ -98,15 +98,24 @@ public class NeuralNetwork {
 		}
 		return _neuronOutputs [LayersCount - 1];
 	}
+	const float BigNum = 500;
 	private double FAct(double sum) {
+		if (sum < -BigNum)
+			return 0;
+		if (sum > BigNum)
+			return 1;
 		return 1/(1+Math.Exp(-sum));
 	}
 	private double FActDerivative(double sum) {
+		if (sum < -BigNum)
+			return 0;
+		if (sum > BigNum)
+			return 0;
 		double exp = Math.Exp (-sum);
 		double expPlus1 = 1 + exp;
 		double res = exp / (expPlus1 * expPlus1);
-		if (double.IsNaN (res))
-			Debug.Log ("hi");
+//		if (double.IsNaN (res))
+//			Debug.Log ("hi");
 		return res;
 	}
 	private static double[] IntToDoubleArray(int[] array) {
@@ -137,26 +146,27 @@ public class NeuralNetwork {
 						_sigmas [layerInd - 1] [neuronInd1] = FActDerivative (_neuronInputs [layerInd - 1] [neuronInd1]) * (idealOutputs [neuronInd1] - outputs [neuronInd1]);
 					else
 						_sigmas [layerInd - 1] [neuronInd1] = 0;
-					if (double.IsNaN (_sigmas [layerInd - 1] [neuronInd1]))
-						Debug.Log ("hi");
+//					if (double.IsNaN (_sigmas [layerInd - 1] [neuronInd1]))
+//						Debug.Log ("hi");
 				} else {
 					double sum = 0;
 					for (int neuronInd2 = 0; neuronInd2 < _layerSizes [layerInd + 1]; neuronInd2++)
 						sum += _sigmas [layerInd] [neuronInd2] * _weights [layerInd] [neuronInd1, neuronInd2];
 					_sigmas [layerInd-1] [neuronInd1] = FActDerivative (_neuronInputs [layerInd-1] [neuronInd1]) * sum;
-					if (double.IsNaN (_sigmas [layerInd - 1] [neuronInd1]))
-						Debug.Log ("hi");
+//					if (double.IsNaN (_sigmas [layerInd - 1] [neuronInd1]))
+//						Debug.Log ("hi");
 				}					
 			}
 		}
 
 		// Deltas applying.
 		for (int layerInd=0;layerInd<_weights.Length;layerInd++) {
+			float currLayerNu = nu * (layerInd+1) / (float)LayersCount;
 			for (int neuronInd1 = 0; neuronInd1 < _layerSizes [layerInd]+1; neuronInd1++) {
 				for (int neuronInd2 = 0; neuronInd2 < _layerSizes [layerInd + 1]; neuronInd2++) {
-					double delta = nu * _neuronOutputs [layerInd] [neuronInd1] * _sigmas [layerInd] [neuronInd2];
-					if (double.IsNaN (delta))
-						Debug.Log ("hi");
+					double delta = currLayerNu * _neuronOutputs [layerInd] [neuronInd1] * _sigmas [layerInd] [neuronInd2];
+//					if (double.IsNaN (delta))
+//						Debug.Log ("hi");
 					_weights [layerInd] [neuronInd1, neuronInd2] += delta;
 				}
 			}

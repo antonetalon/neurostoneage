@@ -40,14 +40,16 @@ public class OneDeciderTrainingView : MonoBehaviour {
 					string options = "";
 					foreach (var option in training.Options)
 						options += option.ToString()+";";
-					CompositionRoot.Instance.ExecuteInMainThread (() => {
-						Debug.LogFormat("output={0} from {2}, reward={1}", output, reward, options);
-					});
+//					CompositionRoot.Instance.ExecuteInMainThread (() => {
+//						Debug.LogFormat("output={0} from {2}, reward={1}", output, reward, options);
+//					});
 					NeuralNetwork decider = _player.GetDecider (training.Type);
 					int existingOutput = AINeuralPlayer.GetDecisionFromOutputs(decider.Think (training.Inputs), training.Options);
 					//if ((existingOutput == training.Output) == (training.RewardPercent > 0))
 					//	continue;
 					float learningSpeed = training.RewardPercent*0.5f;
+					if (learningSpeed<0)
+						learningSpeed *= 0.05f; // Slower negative learning.
 					double[] idealOutputs = new double[decider.OutputLength];
 					for (int optionInd = 0; optionInd < idealOutputs.Length; optionInd++) {
 						if (optionInd == training.Output)

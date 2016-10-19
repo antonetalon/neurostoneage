@@ -102,6 +102,13 @@ public class AINeuralPlayer:Player {
 		inputs [i] = player.InstrumentsMultiplier; i++;
 		inputs [i] = player.GetScienceScore(0); i++;
 		inputs [i] = player.Score; i++;
+		// card i not owned science exists
+		// card i science score addition
+		// card i houses, fields, humans, instruments multipliers
+		// card i has charity
+		// card i forest, clay, stone, gold amount - random and const aggregated
+		// card i instruments and once instruments
+		// house i min, max score
 		return inputs;
 	}
 	private static List<int> GetWhereToGoOptionInds(Game game, PlayerModel player) {

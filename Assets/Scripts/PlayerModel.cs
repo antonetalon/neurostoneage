@@ -159,6 +159,8 @@ public class PlayerModel {
 	public BuiltCard Top3Instruments { 
 		get {
 			foreach (BuiltCard card in _cards) {
+				if (card == null || card.Card == null)
+					Debug.Log ("hi");
 				if (card.Card.TopFeature == TopCardFeature.InstrumentsOnce && card.Card.TopFeatureParam == 3 && !card.Card.TopUsed)
 					return card;
 			}
