@@ -227,4 +227,17 @@ public class PopulationManager : MonoBehaviour {
 		});}));
 		thread.Start ();
 	}
+
+	public void OnSavePlayerPressed() {
+		int bestAverage = int.MinValue;
+		int firstBest = -1;
+		for (int i = 0; i < _population.Players.Count; i++) {
+			if (bestAverage < _population.Players[i].AverageScore) {
+				bestAverage = _population.Players[i].AverageScore;
+				firstBest = i;
+			}
+		}
+
+		PlayerSerializer.SavePlayer ("Rodriges", _population.Players[firstBest].Player);
+	}
 }

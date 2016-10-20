@@ -139,12 +139,16 @@ public class PlayerModel {
 		return _sciencesCount [sci] > row;
 	}
 	public int GetScienceScore(int row) {
+		int sum = GetSciencesCount (row);
+		return sum * sum;
+	}
+	public int GetSciencesCount(int row) {
 		int sum = 0;
 		foreach (var count in _sciencesCount.Values) {
 			if (count > row)
 				sum++;
 		}
-		return sum * sum;
+		return sum;
 	}
 
 	public BuiltCard Top4Instruments { 

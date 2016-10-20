@@ -66,6 +66,9 @@ public class NetworkTestView : MonoBehaviour {
 	int _trainingsCount;
 
 	#region Buttons
+	public void OnSavePlayerPressed() {
+		PlayerSerializer.SavePlayer ("Jorge", _brain);
+	}
 	public void CreateRandomBrainPressed() {
 		//_brain = new NeuralNetwork (new int[4] { 2, 4, 4, 1 });
 		_brain = new AINeuralPlayer();
@@ -157,3 +160,4 @@ public class NetworkTestView : MonoBehaviour {
 		});
 	}
 }
+

@@ -44,24 +44,26 @@ public class NeuralNetwork {
 		for (int layerInd = 0; layerInd < LayersCount-1; layerInd++)
 			_neuronInputs [layerInd] = new double[_layerSizes [layerInd+1]];
 	}
-	public NeuralNetwork Clone() {
-		int[] layerSizes = new int[_layerSizes.Length];
-		for (int i = 0; i < layerSizes.Length; i++)
-			layerSizes [i] = _layerSizes [i];
-		NeuralNetwork clone = new NeuralNetwork (layerSizes);
-		for (int i = 0; i < _weights.Length; i++) {
-			for (int j = 0; j < _weights [i].GetLength (0); j++) {
-				for (int k = 0; k < _weights [i].GetLength (1); k++)
-					clone._weights [i] [j, k] = _weights [i] [j, k];
-			}
-		}
-		return clone;
-	}
 
 	public double[] Think(int[] inputs) {
 		double[] inputDoubles = IntToDoubleArray (inputs);
 		return Think (inputDoubles);
 	}
+
+	public NeuralNetwork Clone() {
+		NeuralNetwork clone = new NeuralNetwork (_layerSizes);
+		clone.CopyWeightsFrom (this);
+		return clone;
+	}
+	public void CopyWeightsFrom(NeuralNetwork origin) {
+		for (int layerInd=0;layerInd<_weights.Length;layerInd++) {
+			for (int neuronInd1 = 0; neuronInd1 < _layerSizes [layerInd]+1; neuronInd1++) {
+				for (int neuronInd2 = 0; neuronInd2 < _layerSizes [layerInd + 1]; neuronInd2++)
+					_weights [layerInd] [neuronInd1, neuronInd2] = origin._weights [layerInd] [neuronInd1, neuronInd2];
+			}
+		}
+	}
+
 
 	[NonSerialized]
 	double[][] _neuronOutputs;
@@ -124,18 +126,18 @@ public class NeuralNetwork {
 			inputDoubles [i] = array [i];
 		return inputDoubles;
 	}
-	public void Train(int[] inputs, double[] idealOutputs, List<int> consideredOutputs, float nu) {
+	public void Train(int[] inputs, double[] idealOutputs, List<int> consideredOutputs, float nu, NeuralNetwork learningDestination) {
 		double[] inputDoubles = IntToDoubleArray (inputs);
-		Train (inputDoubles, idealOutputs, consideredOutputs, nu);
+		Train (inputDoubles, idealOutputs, consideredOutputs, nu, learningDestination);
 	}
 
-	public void Train(double[] inputs, double[] idealOutputs, float nu) {
-		Train (inputs, idealOutputs, null, nu);
+	public void Train(double[] inputs, double[] idealOutputs, float nu, NeuralNetwork learningDestination) {
+		Train (inputs, idealOutputs, null, nu, learningDestination);
 	}
 
 	[NonSerialized]
 	private double[][] _sigmas;
-	public void Train(double[] inputs, double[] idealOutputs, List<int> consideredOutputs, float nu) {
+	public void Train(double[] inputs, double[] idealOutputs, List<int> consideredOutputs, float nu, NeuralNetwork learningDestination) {
 		InitIfNeeded ();
 		double[] outputs = Think (inputs);
 		// Backward propagation.
@@ -167,7 +169,7 @@ public class NeuralNetwork {
 					double delta = currLayerNu * _neuronOutputs [layerInd] [neuronInd1] * _sigmas [layerInd] [neuronInd2];
 //					if (double.IsNaN (delta))
 //						Debug.Log ("hi");
-					_weights [layerInd] [neuronInd1, neuronInd2] += delta;
+					learningDestination._weights [layerInd] [neuronInd1, neuronInd2] += delta;
 				}
 			}
 		}

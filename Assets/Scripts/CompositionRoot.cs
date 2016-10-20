@@ -4,10 +4,12 @@ using System.Collections.Generic;
 using System.Threading;
 
 public class CompositionRoot : MonoBehaviour {
-
+	private Object thisLock = new Object();
 	private List<System.Action> _executeAtMainThread = new List<System.Action>();
 	public void ExecuteInMainThread(System.Action action) {
-		_executeAtMainThread.Add (action);
+		lock (thisLock) {
+			_executeAtMainThread.Add (action);
+		}
 	}
 	void Update() {
 		for (int i = 0; i < _executeAtMainThread.Count; i++)

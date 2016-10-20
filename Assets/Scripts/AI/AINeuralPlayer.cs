@@ -80,10 +80,10 @@ public class AINeuralPlayer:Player {
 
 	#region Where to go
 	private void InitWhereToGo() {
-		_whereToGoDecider = new NeuralNetwork (new int[4]{ 17, 10, 10, 16 });
+		_whereToGoDecider = new NeuralNetwork (new int[4]{ 81, 80, 50, 16 });
 	}
 	private static int[] GetWhereToGoInputs(Game game, PlayerModel player) {
-		int[] inputs = new int[17];
+		int[] inputs = new int[81];
 		int i = 0;
 		inputs [i] = game.TurnInd; i++;
 		inputs [i] = player.Food; i++;
@@ -102,14 +102,162 @@ public class AINeuralPlayer:Player {
 		inputs [i] = player.InstrumentsMultiplier; i++;
 		inputs [i] = player.GetScienceScore(0); i++;
 		inputs [i] = player.Score; i++;
-		// card i not owned science exists
-		// card i science score addition
-		// card i houses, fields, humans, instruments multipliers
-		// card i has charity
-		// card i forest, clay, stone, gold amount - random and const aggregated
-		// card i instruments and once instruments
-		// house i min, max score
+
+		List<CardToBuild> cards = new List<CardToBuild> ();
+		cards.Add (game.GetAvailableCard (0));
+		cards.Add (game.GetAvailableCard (1));
+		cards.Add (game.GetAvailableCard (2));
+		cards.Add (game.GetAvailableCard (3));
+		// Card i not owned science exists.
+		inputs [i] = Indicator( cards [0].BottomFeature == BottomCardFeature.Science && player.ScienceExists ((Science)cards [0].BottomFeatureParam, 0) ); i++;
+		inputs [i] = Indicator( cards [1].BottomFeature == BottomCardFeature.Science && player.ScienceExists ((Science)cards [1].BottomFeatureParam, 0) ); i++;
+		inputs [i] = Indicator( cards [2].BottomFeature == BottomCardFeature.Science && player.ScienceExists ((Science)cards [2].BottomFeatureParam, 0) ); i++;
+		inputs [i] = Indicator( cards [3].BottomFeature == BottomCardFeature.Science && player.ScienceExists ((Science)cards [3].BottomFeatureParam, 0) ); i++;
+		// Card i science score addition for row 0.
+		inputs [i] = inputs [i-4]>0.5f?player.GetSciencesCount(0)*player.GetSciencesCount(0):0; i++;
+		inputs [i] = inputs [i-4]>0.5f?player.GetSciencesCount(0)*player.GetSciencesCount(0):0; i++;
+		inputs [i] = inputs [i-4]>0.5f?player.GetSciencesCount(0)*player.GetSciencesCount(0):0; i++;
+		inputs [i] = inputs [i-4]>0.5f?player.GetSciencesCount(0)*player.GetSciencesCount(0):0; i++;
+		// Card i houses, fields, humans, instruments multipliers.
+		inputs [i] = cards[0].BottomFeature == BottomCardFeature.FieldMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = cards[0].BottomFeature == BottomCardFeature.HouseMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = cards[0].BottomFeature == BottomCardFeature.HumanMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = cards[0].BottomFeature == BottomCardFeature.InstrumentsMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = cards[1].BottomFeature == BottomCardFeature.FieldMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = cards[1].BottomFeature == BottomCardFeature.HouseMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = cards[1].BottomFeature == BottomCardFeature.HumanMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = cards[1].BottomFeature == BottomCardFeature.InstrumentsMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = cards[2].BottomFeature == BottomCardFeature.FieldMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = cards[2].BottomFeature == BottomCardFeature.HouseMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = cards[2].BottomFeature == BottomCardFeature.HumanMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = cards[2].BottomFeature == BottomCardFeature.InstrumentsMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = cards[3].BottomFeature == BottomCardFeature.FieldMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = cards[3].BottomFeature == BottomCardFeature.HouseMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = cards[3].BottomFeature == BottomCardFeature.HumanMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = cards[3].BottomFeature == BottomCardFeature.InstrumentsMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		// Card i has charity.
+		inputs [i] = Indicator( cards[0].TopFeature == TopCardFeature.RandomForEveryone ); i++;
+		inputs [i] = Indicator( cards[1].TopFeature == TopCardFeature.RandomForEveryone ); i++;
+		inputs [i] = Indicator( cards[2].TopFeature == TopCardFeature.RandomForEveryone ); i++;
+		inputs [i] = Indicator( cards[3].TopFeature == TopCardFeature.RandomForEveryone ); i++;
+		// Card i forest, clay, stone, gold amount - random and const aggregated.
+		inputs [i] = GetResourceExpectedCount(cards[0],Resource.Food); i++;
+		inputs [i] = GetResourceExpectedCount(cards[0],Resource.Forest); i++;
+		inputs [i] = GetResourceExpectedCount(cards[0],Resource.Clay); i++;
+		inputs [i] = GetResourceExpectedCount(cards[0],Resource.Stone); i++;
+		inputs [i] = GetResourceExpectedCount(cards[0],Resource.Gold); i++;
+		inputs [i] = GetResourceExpectedCount(cards[1],Resource.Food); i++;
+		inputs [i] = GetResourceExpectedCount(cards[1],Resource.Forest); i++;
+		inputs [i] = GetResourceExpectedCount(cards[1],Resource.Clay); i++;
+		inputs [i] = GetResourceExpectedCount(cards[1],Resource.Stone); i++;
+		inputs [i] = GetResourceExpectedCount(cards[1],Resource.Gold); i++;
+		inputs [i] = GetResourceExpectedCount(cards[2],Resource.Food); i++;
+		inputs [i] = GetResourceExpectedCount(cards[2],Resource.Forest); i++;
+		inputs [i] = GetResourceExpectedCount(cards[2],Resource.Clay); i++;
+		inputs [i] = GetResourceExpectedCount(cards[2],Resource.Stone); i++;
+		inputs [i] = GetResourceExpectedCount(cards[2],Resource.Gold); i++;
+		inputs [i] = GetResourceExpectedCount(cards[3],Resource.Food); i++;
+		inputs [i] = GetResourceExpectedCount(cards[3],Resource.Forest); i++;
+		inputs [i] = GetResourceExpectedCount(cards[3],Resource.Clay); i++;
+		inputs [i] = GetResourceExpectedCount(cards[3],Resource.Stone); i++;
+		inputs [i] = GetResourceExpectedCount(cards[3],Resource.Gold); i++;
+		// Card i instruments and once instruments.
+		inputs [i] = cards[0].TopFeature == TopCardFeature.InstrumentsForever? 1:0; i++;
+		inputs [i] = cards[0].TopFeature == TopCardFeature.InstrumentsOnce? cards[0].TopFeatureParam:0; i++;
+		inputs [i] = cards[1].TopFeature == TopCardFeature.InstrumentsForever? 1:0; i++;
+		inputs [i] = cards[1].TopFeature == TopCardFeature.InstrumentsOnce? cards[1].TopFeatureParam:0; i++;
+		inputs [i] = cards[2].TopFeature == TopCardFeature.InstrumentsForever? 1:0; i++;
+		inputs [i] = cards[2].TopFeature == TopCardFeature.InstrumentsOnce? cards[2].TopFeatureParam:0; i++;
+		inputs [i] = cards[3].TopFeature == TopCardFeature.InstrumentsForever? 1:0; i++;
+		inputs [i] = cards[3].TopFeature == TopCardFeature.InstrumentsOnce? cards[3].TopFeatureParam:0; i++;
+		// House i min, max score.
+		inputs [i] = GetHouseMaxScore(game.GetHouse(0)); i++;
+		inputs [i] = GetHouseMinScore(game.GetHouse(0)); i++;
+		inputs [i] = GetHouseMaxScore(game.GetHouse(1)); i++;
+		inputs [i] = GetHouseMinScore(game.GetHouse(1)); i++;
+		inputs [i] = GetHouseMaxScore(game.GetHouse(2)); i++;
+		inputs [i] = GetHouseMinScore(game.GetHouse(2)); i++;
+		inputs [i] = GetHouseMaxScore(game.GetHouse(3)); i++;
+		inputs [i] = GetHouseMinScore(game.GetHouse(3)); i++;
 		return inputs;
+	}
+	private static int GetHouseMaxScore(HouseToBuild house) {
+		if (house.StaticCost != null)
+			return GetHouseStaticCost (house);
+		else {
+			int sum = 0;
+			if (house.DifferentResourcesCount >= 1)
+				sum += Game.GetResourceCost (Resource.Gold);
+			if (house.DifferentResourcesCount >= 2)
+				sum += Game.GetResourceCost (Resource.Stone);
+			if (house.DifferentResourcesCount >= 3)
+				sum += Game.GetResourceCost (Resource.Clay);
+			if (house.DifferentResourcesCount >= 4)
+				sum += Game.GetResourceCost (Resource.Forest);
+			sum += Mathf.Max (0, house.MaxResourcesCount - house.DifferentResourcesCount)* Game.GetResourceCost (Resource.Gold);
+			return sum;
+		}
+	}
+	private static int GetHouseMinScore(HouseToBuild house) {
+		if (house.StaticCost != null)
+			return GetHouseStaticCost (house);
+		else {
+			int sum = 0;
+			if (house.DifferentResourcesCount >= 1)
+				sum += Game.GetResourceCost (Resource.Forest);
+			if (house.DifferentResourcesCount >= 2)
+				sum += Game.GetResourceCost (Resource.Clay);
+			if (house.DifferentResourcesCount >= 3)
+				sum += Game.GetResourceCost (Resource.Stone);
+			if (house.DifferentResourcesCount >= 4)
+				sum += Game.GetResourceCost (Resource.Gold);
+			sum += Mathf.Max (0, house.MaxResourcesCount - house.DifferentResourcesCount)* Game.GetResourceCost (Resource.Forest);
+			return sum;
+		}
+	}
+	private static int GetHouseStaticCost(HouseToBuild house) {
+		int sum = 0;
+		foreach (var res in house.StaticCost)
+			sum += Game.GetResourceCost (res);
+		return sum;
+	}
+	private static int GetResourceExpectedCount(CardToBuild card, Resource res) {
+		int count = 0;
+		switch (card.TopFeature) {
+		case TopCardFeature.ResourceAny:
+			if (res == Resource.Gold)
+				count += 2;
+			break;
+		case TopCardFeature.ResourceConstClay:
+			if (res == Resource.Clay)
+				count += card.TopFeatureParam;
+			break;
+		case TopCardFeature.ResourceConstFood:
+			if (res == Resource.Food)
+				count += card.TopFeatureParam;
+			break;
+		case TopCardFeature.ResourceConstGold:
+			if (res == Resource.Gold)
+				count += card.TopFeatureParam;
+			break;
+		case TopCardFeature.ResourceConstStone:
+			if (res == Resource.Stone)
+				count += card.TopFeatureParam;
+			break;
+		case TopCardFeature.ResourceRandomForest:
+			if (res == Resource.Forest)
+				count += (int)(card.TopFeatureParam*3.5f/Game.GetResourceCost(res));
+			break;
+		case TopCardFeature.ResourceRandomGold:
+			if (res == Resource.Gold)
+				count += (int)(card.TopFeatureParam*3.5f/Game.GetResourceCost(res));
+			break;
+		case TopCardFeature.ResourceRandomStone:
+			if (res == Resource.Forest)
+				count += (int)(card.TopFeatureParam*3.5f/Game.GetResourceCost(res));
+			break;
+		}
+		return count;
 	}
 	private static List<int> GetWhereToGoOptionInds(Game game, PlayerModel player) {
 		List<WhereToGo> options = game.GetAvailableTargets (player);
