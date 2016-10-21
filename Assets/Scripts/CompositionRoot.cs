@@ -12,8 +12,10 @@ public class CompositionRoot : MonoBehaviour {
 		}
 	}
 	void Update() {
-		for (int i = 0; i < _executeAtMainThread.Count; i++)
-			_executeAtMainThread [i] ();
+		for (int i = 0; i < _executeAtMainThread.Count; i++) {
+			if (_executeAtMainThread [i]!=null)
+				_executeAtMainThread [i] ();
+		}
 		_executeAtMainThread.Clear ();
 	}
 
