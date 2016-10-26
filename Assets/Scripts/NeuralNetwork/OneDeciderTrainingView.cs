@@ -22,63 +22,45 @@ public class OneDeciderTrainingView : MonoBehaviour {
 		_player = player;
 		UpdateView ();
 	}
-	int totalLoops;
-	const int threadsCount = 8;
 	public void OnTrainPressed() {
 		int loopsCount = int.Parse (_loopsCountInput.text);
 		if (loopsCount <= 0)
 			return;
 		//Debug.LogFormat("Training {0} loops started", loopsCount);
-		totalLoops = 0;
 
-		for (int threadInd = 0; threadInd < threadsCount; threadInd++) {
-			int ind = threadInd;
-			Thread thread = new Thread (()=> TrainInOneThread(loopsCount, ind));
-			thread.Start ();
-		}
-		//Debug.LogFormat("Training {0} loops finished", loopsCount);
-	}
-	private void TrainInOneThread(int loopsCount, int currThread) {
-		Debug.LogFormat ("{0}-th thread started", currThread);
-		NeuralNetwork decider = _player.GetDecider (_type);
-		NeuralNetwork currThreadDecider = decider.Clone();
-		for (int loopInd = 0; loopInd < loopsCount/threadsCount+1; loopInd++) {
-			_view.UpdateProgress (totalLoops + 1, loopsCount);
-			totalLoops++;
-			Debug.LogFormat("{0}-th loop, {1}-th for curr thread, {2}-th thread", totalLoops, loopInd, currThread);
-			currThreadDecider.CopyWeightsFrom(decider);
-			foreach (var training in _trainingModels) {
-				if (_type != DecisionType.None && training.Type != _type)
-					continue;
+		Thread thread = new Thread (new ThreadStart(()=>{
+			for (int loopInd = 0; loopInd < loopsCount; loopInd++) {
+				_view.UpdateProgress (loopInd+1, loopsCount);
+				foreach (var training in _trainingModels) {
+					if (_type != DecisionType.None && training.Type != _type)
+						continue;
 
-				int output = training.Output;
-				float reward = training.RewardPercent;
-				string options = "";
-				foreach (var option in training.Options)
-					options += option.ToString () + ";";
-				//					CompositionRoot.Instance.ExecuteInMainThread (() => {
-				//						Debug.LogFormat("output={0} from {2}, reward={1}", output, reward, options);
-				//					});
-				int existingOutput = AINeuralPlayer.GetDecisionFromOutputs (currThreadDecider.Think (training.Inputs), training.Options);
-				//if ((existingOutput == training.Output) == (training.RewardPercent > 0))
-				//	continue;
-				float learningSpeed = training.RewardPercent * 0.5f;
-				if (learningSpeed < 0)
-					//continue; // Do not do negative training.
-					learningSpeed *= 0.15f; // Slower negative learning.
-				double[] idealOutputs = new double[currThreadDecider.OutputLength];
-				for (int optionInd = 0; optionInd < idealOutputs.Length; optionInd++) {
-					if (optionInd == training.Output)
-						idealOutputs [optionInd] = 1;
-					else
-						idealOutputs [optionInd] = 0;
+					int output = training.Output;
+					float reward = training.RewardPercent;
+					string options = "";
+					foreach (var option in training.Options)
+						options += option.ToString()+";";
+					NeuralNetwork decider = _player.GetDecider (training.Type);
+					int existingOutput = AINeuralPlayer.GetDecisionFromOutputs(decider.Think (training.Inputs), training.Options);
+					//if ((existingOutput == training.Output) == (training.RewardPercent > 0))
+					//	continue;
+					float learningSpeed = training.RewardPercent*0.5f;
+					double[] idealOutputs = new double[decider.OutputLength];
+					for (int optionInd = 0; optionInd < idealOutputs.Length; optionInd++) {
+						if (optionInd == training.Output)
+							idealOutputs [optionInd] = 1;
+						else
+							idealOutputs [optionInd] = 0;
+					}
+					decider.Train (training.Inputs, idealOutputs, training.Options, learningSpeed);
 				}
-				currThreadDecider.Train (training.Inputs, idealOutputs, training.Options, learningSpeed, decider);
 			}
-		}
-		CompositionRoot.Instance.ExecuteInMainThread (() => {
-			_view.UpdateView ();
-		});
+			CompositionRoot.Instance.ExecuteInMainThread (() => {
+				_view.UpdateView ();
+			});
+		}));
+		thread.Start ();
+		//Debug.LogFormat("Training {0} loops finished", loopsCount);
 	}
 	public void UpdateView() {
 		if (_trainingModels.Count == 0) {
