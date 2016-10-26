@@ -129,14 +129,12 @@ public class NetworkTestView : MonoBehaviour {
 	[SerializeField] OneDeciderTrainingView _charityTrainingView;
 	[SerializeField] OneDeciderTrainingView _instrumentsTrainingView;
 	[SerializeField] OneDeciderTrainingView _hungryTrainingView;
-	[SerializeField] OneDeciderTrainingView _totalTrainingView;
 	void InitTrainingViews() {
 		_whereToGoTrainingView.Init (DecisionType.SelectWhereToGo, _trainingModels, _brain);
 		_usedHumansTrainingView.Init (DecisionType.SelectUsedHumans, _trainingModels, _brain);
 		_charityTrainingView.Init (DecisionType.SelectCharity, _trainingModels, _brain);
 		_instrumentsTrainingView.Init (DecisionType.SelectInstruments, _trainingModels, _brain);
 		_hungryTrainingView.Init (DecisionType.SelectLeaveHungry, _trainingModels, _brain);
-		_totalTrainingView.Init (DecisionType.None, _trainingModels, _brain);
 	}
 	public void UpdateView() {
 		_trainingModelsCount.text = _trainingModels.Count.ToString ();
@@ -145,7 +143,6 @@ public class NetworkTestView : MonoBehaviour {
 		_charityTrainingView.UpdateView ();
 		_instrumentsTrainingView.UpdateView ();
 		_hungryTrainingView.UpdateView ();
-		_totalTrainingView.UpdateView ();
 	}
 
 	[SerializeField] GameObject _progressParent;
@@ -157,6 +154,20 @@ public class NetworkTestView : MonoBehaviour {
 			float progress = completedCount / (float)totalCount;
 			_progress.value = progress;
 			_progressText.text = string.Format ("{0}/{1}={2}", completedCount, totalCount, progress);
+		});
+	}
+
+	private float _prevProgress;
+	public void OnTrainAllPressed() {
+		_prevProgress = 0;
+		NeuralPlayerTrainerController.Train (100, _trainingModels, 0.05f, _brain, (progress) => {
+			if (progress>_prevProgress+0.01f) {
+				_prevProgress = progress;
+				CompositionRoot.Instance.ExecuteInMainThread (() => {
+					UpdateProgress((int)(progress*1000), 1000);
+					UpdateView();
+				});
+			}
 		});
 	}
 }

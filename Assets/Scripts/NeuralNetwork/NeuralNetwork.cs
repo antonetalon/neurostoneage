@@ -64,6 +64,19 @@ public class NeuralNetwork {
 		}
 	}
 
+	[NonSerialized]
+	private int _complexity;
+	public int Complexity {
+		get {
+			if (_complexity == 0) {
+				for (int layerInd = 0; layerInd < _weights.Length; layerInd++) {
+					for (int neuronInd1 = 0; neuronInd1 < _layerSizes [layerInd] + 1; neuronInd1++)
+						_complexity += _layerSizes [layerInd + 1];
+				}
+			}
+			return _complexity;
+		}
+	}
 
 	[NonSerialized]
 	double[][] _neuronOutputs;

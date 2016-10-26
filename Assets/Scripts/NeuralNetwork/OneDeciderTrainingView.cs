@@ -5,9 +5,11 @@ using System.Collections.Generic;
 using System.Threading;
 
 public class OneDeciderTrainingView : MonoBehaviour {
-
+	
 	[SerializeField] NetworkTestView _view;
 	[SerializeField] Text _loopsCountInput;
+	[SerializeField] Text _speedInput;
+	[SerializeField] Text _totalLoops;
 	[SerializeField] Text _state;
 	DecisionType _type;
 	List<TrainingDecisionModel> _trainingModels;
@@ -27,33 +29,11 @@ public class OneDeciderTrainingView : MonoBehaviour {
 		if (loopsCount <= 0)
 			return;
 		//Debug.LogFormat("Training {0} loops started", loopsCount);
-
+		float speed = float.Parse(_speedInput.text); // 0.5f
 		Thread thread = new Thread (new ThreadStart(()=>{
 			for (int loopInd = 0; loopInd < loopsCount; loopInd++) {
 				_view.UpdateProgress (loopInd+1, loopsCount);
-				foreach (var training in _trainingModels) {
-					if (_type != DecisionType.None && training.Type != _type)
-						continue;
-
-					int output = training.Output;
-					float reward = training.RewardPercent;
-					string options = "";
-					foreach (var option in training.Options)
-						options += option.ToString()+";";
-					NeuralNetwork decider = _player.GetDecider (training.Type);
-					int existingOutput = AINeuralPlayer.GetDecisionFromOutputs(decider.Think (training.Inputs), training.Options);
-					//if ((existingOutput == training.Output) == (training.RewardPercent > 0))
-					//	continue;
-					float learningSpeed = training.RewardPercent*0.5f;
-					double[] idealOutputs = new double[decider.OutputLength];
-					for (int optionInd = 0; optionInd < idealOutputs.Length; optionInd++) {
-						if (optionInd == training.Output)
-							idealOutputs [optionInd] = 1;
-						else
-							idealOutputs [optionInd] = 0;
-					}
-					decider.Train (training.Inputs, idealOutputs, training.Options, learningSpeed);
-				}
+				NeuralPlayerTrainerController.DoTrainingLoop(_type, _trainingModels, speed, _player);
 			}
 			CompositionRoot.Instance.ExecuteInMainThread (() => {
 				_view.UpdateView ();
@@ -62,6 +42,84 @@ public class OneDeciderTrainingView : MonoBehaviour {
 		thread.Start ();
 		//Debug.LogFormat("Training {0} loops finished", loopsCount);
 	}
+	enum ComparingState { Improved, Still, Degraded }
+	public void OnTrainWhilePossiblePressed() {
+		const int minLoopsCount = 400;
+		const int step = 40;
+		const float minSuccessibilityChange = 0.001f;
+		//Debug.LogFormat("Training {0} loops started", loopsCount);
+
+		Thread thread = new Thread (new ThreadStart(()=>{
+			bool trainingPossible = true;
+			int loopInd = 0;
+			int loopsUntilSuccessCalc = step;
+			float prevSuccess = GetSuccess();
+			float learningSpeed = 0.5f;
+			const float minLearningSpeed = 0.001f;
+			const float maxLearningSpeed = 10;
+			ComparingState prevState = ComparingState.Improved;
+			do {
+				loopInd++;
+				NeuralPlayerTrainerController.DoTrainingLoop(_type, _trainingModels, learningSpeed, _player);
+
+				loopsUntilSuccessCalc--;
+				if (loopsUntilSuccessCalc==0) {
+					loopsUntilSuccessCalc = step;
+					float success = GetSuccess();
+					ComparingState state;
+					if (Mathf.Abs(success-prevSuccess)<minSuccessibilityChange) {
+						// No change.
+						learningSpeed *= 1.2f;
+						state = ComparingState.Still;
+						trainingPossible = false;
+					} else if (success>prevSuccess) {
+						// Improved success.
+						//learningSpeed *= 1.1f;
+						state = ComparingState.Improved;
+					} else {
+						// Success decreased.
+						learningSpeed *= 0.1f;
+						state = ComparingState.Degraded;
+					}
+					if (state == ComparingState.Degraded && prevState == ComparingState.Still)
+						trainingPossible = false;
+					Debug.Log("learning speed = " + learningSpeed.ToString());
+					if (learningSpeed<minLearningSpeed || learningSpeed>maxLearningSpeed)
+						trainingPossible = false;
+					prevSuccess = success;
+					prevState = state;
+				}
+
+				if (loopInd%10==0) {
+					int shownCount = loopInd;
+					CompositionRoot.Instance.ExecuteInMainThread (() => {
+						_totalLoops.text = shownCount.ToString();
+					});
+				}
+
+				if (loopInd<minLoopsCount)
+					trainingPossible = true;
+			} while (trainingPossible);
+				
+			CompositionRoot.Instance.ExecuteInMainThread (() => {
+				_loopsCountInput.text = loopInd.ToString();
+				_view.UpdateView ();
+			});
+		}));
+		thread.Start ();
+		//Debug.LogFormat("Training {0} loops finished", loopsCount);
+	}
+
+	private float GetSuccess() {
+		int positiveTrainingCount = 0;
+		int negativeTrainingCount = 0;
+		int positiveSuccessesCount = 0;
+		int negativeSuccessesCount = 0;
+		GetSuccessfullTrainingsCount (_type,ref positiveTrainingCount,ref negativeTrainingCount,ref positiveSuccessesCount,ref negativeSuccessesCount);
+		const float ratio = NeuralPlayerTrainerController.WinToLooseImportancyRatio;
+		return (positiveSuccessesCount*ratio + negativeSuccessesCount) / (float)(positiveTrainingCount*ratio + negativeTrainingCount);
+	}
+
 	public void UpdateView() {
 		if (_trainingModels.Count == 0) {
 			_state.text = "no data";
@@ -71,14 +129,7 @@ public class OneDeciderTrainingView : MonoBehaviour {
 		int negativeTrainingCount = 0;
 		int positiveSuccessesCount = 0;
 		int negativeSuccessesCount = 0;
-		if (_type == DecisionType.None){
-			GetSuccessfullTrainingsCount (DecisionType.SelectWhereToGo, ref positiveTrainingCount, ref negativeTrainingCount, ref positiveSuccessesCount, ref negativeSuccessesCount);
-			GetSuccessfullTrainingsCount (DecisionType.SelectUsedHumans, ref positiveTrainingCount, ref negativeTrainingCount, ref positiveSuccessesCount, ref negativeSuccessesCount);
-			GetSuccessfullTrainingsCount (DecisionType.SelectInstruments, ref positiveTrainingCount, ref negativeTrainingCount, ref positiveSuccessesCount, ref negativeSuccessesCount);
-			GetSuccessfullTrainingsCount (DecisionType.SelectCharity, ref positiveTrainingCount, ref negativeTrainingCount, ref positiveSuccessesCount, ref negativeSuccessesCount);
-			GetSuccessfullTrainingsCount (DecisionType.SelectLeaveHungry, ref positiveTrainingCount, ref negativeTrainingCount, ref positiveSuccessesCount, ref negativeSuccessesCount);
-		}else
-			GetSuccessfullTrainingsCount (_type,ref positiveTrainingCount,ref negativeTrainingCount,ref positiveSuccessesCount,ref negativeSuccessesCount);
+		GetSuccessfullTrainingsCount (_type,ref positiveTrainingCount,ref negativeTrainingCount,ref positiveSuccessesCount,ref negativeSuccessesCount);
 		_state.text = string.Format ("pos {0}/{1}={2:P}\nneg {3}/{4}={5:P}", 
 			positiveSuccessesCount, positiveTrainingCount, positiveSuccessesCount/(float)positiveTrainingCount,
 			negativeSuccessesCount, negativeTrainingCount, negativeSuccessesCount/(float)negativeTrainingCount);
@@ -110,4 +161,6 @@ public class OneDeciderTrainingView : MonoBehaviour {
 			}
 		}
 	}
+
+
 }

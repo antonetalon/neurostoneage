@@ -80,7 +80,7 @@ public class AINeuralPlayer:Player {
 
 	#region Where to go
 	private void InitWhereToGo() {
-		_whereToGoDecider = new NeuralNetwork (new int[4]{ 81, 80, 50, 16 });
+		_whereToGoDecider = new NeuralNetwork (new int[4]{ 81, 50, 30, 16 });
 	}
 	private static int[] GetWhereToGoInputs(Game game, PlayerModel player) {
 		int[] inputs = new int[81];
