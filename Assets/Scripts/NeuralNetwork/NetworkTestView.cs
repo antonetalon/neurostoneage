@@ -113,8 +113,10 @@ public class NetworkTestView : MonoBehaviour {
 			CompositionRoot.Instance.ExecuteInMainThread(()=>{
 				//_view.gameObject.SetActive (false);
 				Debug.Log("Match ended");
-				foreach (var trainingModel in game.TrainingModels)
-					_trainingModels.Add(trainingModel);
+				foreach (var trainingController in game.TrainingControllers) {
+					foreach (var trainingModel in trainingController.TrainingModels)
+						_trainingModels.Add(trainingModel);
+				}
 			});
 		});}));
 		thread.Start ();

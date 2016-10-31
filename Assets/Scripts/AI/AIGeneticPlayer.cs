@@ -191,13 +191,14 @@ public class AIGeneticPlayer:Player {
 
 	const int GetResourceFromInstrumentsInputsCount = 10;
 	private Decider _resourceFromInstrumentsDecider;
+
 	public override void GetUsedInstrumentSlotInd (Game game, Resource receivedRecource, int points, OnInstrumentsToUseSelected onComplete) {
-		int availableSlot1Instruments = _model.InstrumentsSlot1Used ? 0 : _model.InstrumentsCountSlot1;
-		int availableSlot2Instruments = _model.InstrumentsSlot2Used ? 0 : _model.InstrumentsCountSlot2;
-		int availableSlot3Instruments = _model.InstrumentsSlot3Used ? 0 : _model.InstrumentsCountSlot3;
-		int availableTop4Instruments =  (_model.Top4Instruments != null && !_model.Top4Instruments.Card.TopUsed) ? 4 : 0;
-		int availableTop3Instruments =  (_model.Top3Instruments != null && !_model.Top3Instruments.Card.TopUsed) ? 3 : 0;
-		int availableTop2Instruments =  (_model.Top2Instruments != null && !_model.Top2Instruments.Card.TopUsed) ? 2 : 0;
+		int availableSlot1Instruments = _model.GetAvailableInstruments (0);
+		int availableSlot2Instruments = _model.GetAvailableInstruments (1);
+		int availableSlot3Instruments = _model.GetAvailableInstruments (2);
+		int availableTop4Instruments =  _model.GetAvailableOnceInstruments (0);
+		int availableTop3Instruments =  _model.GetAvailableOnceInstruments (1);
+		int availableTop2Instruments =  _model.GetAvailableOnceInstruments (2);
 
 		bool useSlot1 = availableSlot1Instruments > 0;
 		bool useSlot2 = availableSlot2Instruments > 0;

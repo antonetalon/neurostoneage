@@ -41,7 +41,7 @@ public class PlayerModel {
 			default: return -1;
 		}
 	}
-	public void SetSpentOnCard(int cardInd, int val) {
+	private void SetSpentOnCard(int cardInd, int val) {
 		switch (cardInd) {
 			case 0: SpentOnCard1 = val; break;
 			case 1: SpentOnCard2 = val; break;
@@ -104,6 +104,23 @@ public class PlayerModel {
 	public bool InstrumentsSlot1Used { get; private set; }
 	public bool InstrumentsSlot2Used { get; private set; }
 	public bool InstrumentsSlot3Used { get; private set; }
+
+	public int GetAvailableInstruments(int slotInd) {
+		switch (slotInd) {
+			default: return 0;
+			case 0: return InstrumentsSlot1Used ? 0 : InstrumentsCountSlot1;
+			case 1: return InstrumentsSlot2Used ? 0 : InstrumentsCountSlot2;
+			case 2: return InstrumentsSlot3Used ? 0 : InstrumentsCountSlot3;
+		}
+	}
+	public int GetAvailableOnceInstruments(int slotInd) {
+		switch (slotInd) {
+			default: return 0;
+			case 0: return (Top4Instruments != null && !Top4Instruments.Card.TopUsed) ? 4 : 0;
+			case 1: return (Top3Instruments != null && !Top3Instruments.Card.TopUsed) ? 3 : 0;
+			case 2: return (Top2Instruments != null && !Top2Instruments.Card.TopUsed) ? 2 : 0;
+		}
+	}
 
 	public int Food { get; private set; }
 	public int Forest { get; private set; }
@@ -297,61 +314,53 @@ public class PlayerModel {
 
 	#region Applying where went - turn phase 2.
 	public void ApplyGoToHousing() {
-		SpentOnHousing = 0;
 		HumansCount++;
+		SpentOnHousing++;
 		Score += HumansMultiplier;
 	}
 	public void ApplyGoToFields() {
 		if (SpentOnFields == 0)
 			return;
-		SpentOnFields = 0;
 		AddField ();
 	}
 	public void ApplyGoToInstruments() {
 		if (SpentOnInstruments == 0)
 			return;
-		SpentOnInstruments = 0;
 		AddInstrument ();
 	}
-	public void ApplyGoToFood(int pointsSum) {
+	private void ApplyGoToFood(int pointsSum) {
 		if (SpentOnFood == 0)
 			return;
-		SpentOnFood = 0;
 		int inc = pointsSum / Config.PointsPerFood;
 		Food += inc;
 	}
 	public void ApplyGoToForest(int pointsSum) {
 		if (SpentOnForest == 0)
 			return;
-		SpentOnForest = 0;
 		int inc = pointsSum / Config.PointsPerForest;
 		Forest += inc;
 	}
 	public void ApplyGoToClay(int pointsSum) {
 		if (SpentOnClay == 0)
 			return;
-		SpentOnClay = 0;
 		int inc = pointsSum / Config.PointsPerClay;
 		Clay += inc;
 	}
 	public void ApplyGoToStone(int pointsSum) {
 		if (SpentOnStone == 0)
 			return;
-		SpentOnStone = 0;
 		int inc = pointsSum / Config.PointsPerStone;
 		Stone += inc;
 	}
 	public void ApplyGoToGold(int pointsSum) {
 		if (SpentOnGold == 0)
 			return;
-		SpentOnGold = 0;
 		int inc = pointsSum / Config.PointsPerGold;
 		Gold += inc;
 	}
 	public void ApplyGoToBuilding(int buildingInd, List<Resource> spentResources) {
 		if (GetSpentOnHouse(buildingInd) == 0)
 			return;
-		SetSpentOnHouse (buildingInd, 0); 
 		if (spentResources!=null)
 			ApplyGoToBuilding (spentResources);
 	}
@@ -365,7 +374,6 @@ public class PlayerModel {
 	public void ApplyGoToCard(bool build, int cardInd, List<Resource> spentResources, CardToBuild card) {
 		if (GetSpentOnCard(cardInd) == 0)
 			return;
-		SetSpentOnCard (cardInd, 0);
 		ApplyGoToCard (build, spentResources, card);
 	}
 	private void ApplyGoToCard(bool build, List<Resource> spentResources, CardToBuild card) {
@@ -439,16 +447,6 @@ public class PlayerModel {
 				card.UseTop ();
 		}
 	}
-	public void ApplyCardTopRandomToAllSelection(int selection) {
-		switch (selection) {
-			case 1: AddResource (Resource.Forest, 1); break;
-			case 2: AddResource (Resource.Clay, 1); break;
-			case 3: AddResource (Resource.Stone, 1); break;
-			case 4: AddResource (Resource.Gold, 1); break;
-			case 5: AddInstrument (); break;
-			case 6: AddField(); break;
-		}
-	}
 	public bool GetHasAnyResourceFromCard() {
 		foreach (BuiltCard card in _cards) {
 			if (card.Card.TopFeature == TopCardFeature.ResourceAny && !card.Card.TopUsed)
@@ -505,12 +503,16 @@ public class PlayerModel {
 		}
 	}
 	public void AddInstrument() {
-		if (InstrumentsCountSlot3 < InstrumentsCountSlot2)
+		if (InstrumentsCountSlot3 < InstrumentsCountSlot2) {
 			InstrumentsCountSlot3++;
-		else if (InstrumentsCountSlot2 < InstrumentsCountSlot1)
+			InstrumentsSlot3Used = true;
+		} else if (InstrumentsCountSlot2 < InstrumentsCountSlot1) {
 			InstrumentsCountSlot2++;
-		else
+			InstrumentsSlot2Used = true;
+		} else {
 			InstrumentsCountSlot1++;
+			InstrumentsSlot1Used = true;
+		}
 		Score += InstrumentsMultiplier;
 	}
 	public void AddField() {

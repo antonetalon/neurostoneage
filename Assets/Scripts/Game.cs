@@ -30,8 +30,7 @@ public class Game {
 	public CardToBuild AvailableCardFor3Resource;
 	public CardToBuild AvailableCardFor4Resource;
 
-	List<TrainingDecisionModel> _trainingModels = new List<TrainingDecisionModel>();
-	public ReadonlyList<TrainingDecisionModel> TrainingModels { get; private set; }
+	public List<GameTrainingController> TrainingControllers;
 
 	public CardToBuild GetAvailableCard(int cardInd) {
 		switch (cardInd) {
@@ -104,14 +103,23 @@ public class Game {
 	public int FirstPlayerInd { get { return TurnInd % Players.Count; } }
 
 	public Game(List<Player> players) {
+		TrainingControllers = new List<GameTrainingController> ();
+		for (int i = 0; i < 4; i++)
+			TrainingControllers.Add (new GameTrainingController (i, this));
+		
 		rand = new System.Random ();
 		PlayerModels = new List<PlayerModel> ();
 		this.Players = players;
-		foreach (var player in Players) {
-			PlayerModel model = new PlayerModel ((PlayerModel.Color)PlayerModels.Count);
+		for (int i=0;i<4;i++) {
+			TrainingControllers [i].OnBeforeModelChange ();
+			var player = Players [i];
+			PlayerModel model = new PlayerModel ((PlayerModel.Color)i);
 			player.Init (model);
 			PlayerModels.Add (model);
 		}
+
+		for (int i=0;i<4;i++)
+			TrainingControllers [i].OnAfterModelChange (GameTrainingController.ModelChangeType.StartGame);
 			
 		TurnInd = -1;
 		// Init buildings.
@@ -173,7 +181,7 @@ public class Game {
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.ResourceConstFood, 5, BottomCardFeature.Science, Science.Grass));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.RandomForEveryone, 0, BottomCardFeature.Science, Science.Pot));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.ResourceRandomGold, 2, BottomCardFeature.Science, Science.Statue));
-		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.InstrumentsForever, 1, BottomCardFeature.Science, Science.Statue));
+		/*_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.InstrumentsForever, 1, BottomCardFeature.Science, Science.Statue));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.RandomForEveryone, 0, BottomCardFeature.HouseMultiplier, 2));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.InstrumentsOnce, 3, BottomCardFeature.InstrumentsMultiplier, 1));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.InstrumentsOnce, 2, BottomCardFeature.InstrumentsMultiplier, 2));
@@ -195,11 +203,8 @@ public class Game {
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.RandomForEveryone, 0, BottomCardFeature.Science, Science.Clock));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.RandomForEveryone, 0, BottomCardFeature.HouseMultiplier, 1));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.Score, 3, BottomCardFeature.HouseMultiplier, 3));
-		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.ResourceConstFood, 2, BottomCardFeature.HouseMultiplier, 2));
+		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.ResourceConstFood, 2, BottomCardFeature.HouseMultiplier, 2));*/
 		Utils.Shuffle<CardToBuild> (_cardsInHeap);
-
-		_trainingModels.Clear ();
-		TrainingModels = new ReadonlyList<TrainingDecisionModel> (_trainingModels);
 
 		SetChanged ();
 	}
@@ -260,8 +265,11 @@ public class Game {
 			AvailableCardFor4Resource = _cardsInHeap [0];
 			_cardsInHeap.RemoveAt (0);
 		}
-		foreach (PlayerModel player in PlayerModels)
-			player.NewTurn ();
+		for (int i=0;i<4;i++) {
+			TrainingControllers [i].OnBeforeModelChange ();
+			PlayerModels[i].NewTurn ();
+			TrainingControllers [i].OnAfterModelChange (GameTrainingController.ModelChangeType.StartRound);
+		}
 		SetChanged ();
 	}
 	public bool GetEnded() {
@@ -491,7 +499,7 @@ public class Game {
 						while (target== WhereToGo.None)
 							System.Threading.Thread.Sleep (1000);
 						trainingModel.Output = (int)target - 1;
-						_trainingModels.Add (trainingModel);
+						TrainingControllers[currPlayerInd].OnAfterDecision(trainingModel);
 					} else {
 						if (availableTargets.Count == 0) {
 							finishedTurnPlayersCount++;
@@ -514,11 +522,12 @@ public class Game {
 						while (count==-1)
 							System.Threading.Thread.Sleep (1000);
 						trainingModel.Output = count - 1;
-						_trainingModels.Add (trainingModel);
+						TrainingControllers[currPlayerInd].OnAfterDecision(trainingModel);
 					} else
 						count = maxCount;
 
 					if (Logging) Debug.LogFormat("{2} go to {0} with {1}", target.ToString(), count.ToString(), currPlayer.Color.ToString());
+					TrainingControllers [currPlayerInd].OnBeforeModelChange ();
 					switch (target) {
 						case WhereToGo.Card1: model.GoToCard1 (); break;
 						case WhereToGo.Card2: model.GoToCard2 (); break;
@@ -537,6 +546,7 @@ public class Game {
 						case WhereToGo.Instrument: model.GoToInstruments (); break;
 						case WhereToGo.Housing: model.GoToHousing (); break;
 					}
+					TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.SetSpentHumans);
 					SetChanged ();
 				}
 			}
@@ -572,6 +582,7 @@ public class Game {
 						});
 						while (resource == Resource.None)
 							System.Threading.Thread.Sleep (1000);
+						TrainingControllers [currPlayerInd].OnBeforeModelChange ();
 						model.AddResource (resource, 1);
 						resource = Resource.None;
 						currPlayer.ChooseResourceToReceiveFromTopCard (this, (Resource res) => {
@@ -582,6 +593,7 @@ public class Game {
 						if (Logging) Debug.Log ("Selected resource to receive = "+resource.ToString());
 						model.AddResource (resource, 1);
 						model.ApplyAnyResourceFromTopCard ();
+						TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.AnyResourcesFromCard);
 						SetChanged ();
 					}
 				}
@@ -597,7 +609,7 @@ public class Game {
 						rand += RandomRange(1, 6);
 					Resource resource = GetResourceFromTarget (target);
 					bool processEnded = false;
-
+					TrainingControllers [currPlayerInd].OnBeforeModelChange ();
 					TrainingDecisionModel trainingModel = new TrainingDecisionModel (DecisionType.SelectInstruments, 
 						AINeuralPlayer.GetInputs (DecisionType.SelectInstruments, this, model, resource, target),
 						AINeuralPlayer.GetOptionInds(DecisionType.SelectInstruments, this, model, null, rand, resource, target), currPlayerInd);
@@ -645,9 +657,11 @@ public class Game {
 					int resourceCount = rand / cost;
 					int resourcesFromInstruments = resourceCount - resourceCountFromDices;
 					trainingModel.Output = resourcesFromInstruments;
-					_trainingModels.Add (trainingModel);
-					
+
+					TrainingControllers[currPlayerInd].OnAfterDecision(trainingModel);
+
 					model.AddResource (resource, resourceCount);
+					TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ResourcesMining);
 					SetChanged ();
 				}
 
@@ -656,13 +670,14 @@ public class Game {
 				for (int cardInd = 0; cardInd < 4; cardInd++) {
 					if (model.GetSpentOnCard (cardInd) < 1)
 						continue; // Should be spent on card.
-
+					TrainingControllers [currPlayerInd].OnBeforeModelChange();
 					CardToBuild card = GetAvailableCard (cardInd);
 
 					int cardPrice = 4 - cardInd;
 					int resourcesSum = model.Forest + model.Clay + model.Stone + model.Gold;
 					if (cardPrice > resourcesSum) {
 						model.ApplyGoToCard (false, cardInd, null, card);
+						TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToCard);
 						SetChanged ();
 						continue; //  Should have enough resources.
 					}
@@ -684,6 +699,7 @@ public class Game {
 
 					if (!selectedToBuy) {
 						model.ApplyGoToCard (false, cardInd, null, card);
+						TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToCard);
 						SetChanged ();
 						continue; // Player should want to build card.
 					}
@@ -709,6 +725,7 @@ public class Game {
 
 					
 					model.ApplyGoToCard (true, cardInd, spendResources, card);
+					TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToCard);
 					SetAvailableCard (cardInd);
 					SetChanged ();
 
@@ -739,11 +756,12 @@ public class Game {
 							if (Logging) Debug.LogFormat ("Charity option {0} selected by player {1}", selectedOption, randomBonusPlayerInd);
 
 							trainingModel.Output = selectedOption;
-							_trainingModels.Add (trainingModel);
+							TrainingControllers[randomBonusPlayerInd].OnAfterDecision(trainingModel);
 							if (!trainingModel.Options.Contains (trainingModel.Output))
 								Debug.Log ("WTF");
 
 							options.Remove (selectedOption);
+							TrainingControllers [randomBonusPlayerInd].OnBeforeModelChange ();
 							switch (selectedOption) {
 								case 0:model2.AddResource (Resource.Forest, 1);break;
 								case 1:model2.AddResource (Resource.Clay, 1);break;
@@ -752,6 +770,10 @@ public class Game {
 								case 4:model2.AddInstrument ();break;
 								case 5:model2.AddField ();break;
 							}
+							if (playerIndShift==0)
+								TrainingControllers [randomBonusPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.BonusFromOwnCharity);
+							else
+								TrainingControllers [randomBonusPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.BonusFromOthersCharity);
 							SetChanged ();
 						}
 						break;
@@ -759,7 +781,9 @@ public class Game {
 						if (_cardsInHeap.Count > 0) {
 							CardToBuild oneMoreCard = _cardsInHeap [0];
 							_cardsInHeap.RemoveAt (0);
+							TrainingControllers [currPlayerInd].OnBeforeModelChange ();
 							model.ApplyCardTopOneCardMore (oneMoreCard);
+							TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyCardGivenByCard);
 							if (Logging)
 								Debug.LogFormat ("Added one more card to player ind={0} with bottom={1} and param={2}", currPlayerInd, oneMoreCard.BottomFeature, oneMoreCard.BottomFeatureParam);
 							SetChanged ();
@@ -782,10 +806,11 @@ public class Game {
 				for (int houseInd = 0; houseInd < 4; houseInd++) {
 					if (model.GetSpentOnHouse (houseInd) == 0)
 						continue; // Should spend numan there.
-
+					TrainingControllers [currPlayerInd].OnBeforeModelChange();
 					HouseToBuild house = GetHouse (houseInd);
 					if (!EnoughResourcesForHouse (house, model)) {
 						model.ApplyGoToBuilding(houseInd, null); 
+						TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToHouse);
 						SetChanged ();
 						continue; // Should be able to build.
 					}
@@ -806,6 +831,7 @@ public class Game {
 					}
 					if (!selectedToBuild) {
 						model.ApplyGoToBuilding(houseInd, null); 
+						TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToHouse);
 						SetChanged ();
 						continue;
 					}// Should want to build. 
@@ -841,24 +867,31 @@ public class Game {
 					// Spend resources.
 					model.ApplyGoToBuilding(houseInd, spentResources);
 					RemoveAvailableHouse (houseInd);
+					TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToHouse);
 					SetChanged ();
 				}
 			
 				// Crafting instruments.
 				if (model.SpentOnInstruments > 0) {
+					TrainingControllers [currPlayerInd].OnBeforeModelChange ();
 					model.ApplyGoToInstruments ();
+					TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToInstruments);
 					SetChanged ();
 				}
 
 				// Seeding fields.
 				if (model.SpentOnFields > 0) {
+					TrainingControllers [currPlayerInd].OnBeforeModelChange ();
 					model.ApplyGoToFields ();
+					TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToFields);
 					SetChanged ();
 				}
 
 				// Housing.
 				if (model.SpentOnHousing > 0) {
+					TrainingControllers [currPlayerInd].OnBeforeModelChange ();
 					model.ApplyGoToHousing ();
+					TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToHousing);
 					SetChanged ();
 				}
 			}
@@ -889,7 +922,7 @@ public class Game {
 						while (!processEnded)
 							System.Threading.Thread.Sleep (1000);
 						trainingModel.Output = selectedToLeaveHungry?1:0;
-						_trainingModels.Add (trainingModel);
+						TrainingControllers[currFedPlayerInd].OnAfterDecision(trainingModel);
 					}
 				}
 				if (Logging) {
@@ -925,7 +958,9 @@ public class Game {
 					eatenResources.Add (Resource.Gold);
 					neededResourceCount--;
 				}
+				TrainingControllers [currFedPlayerInd].OnBeforeModelChange ();
 				modelForFeding.Feed (selectedToLeaveHungry, eatenResources);
+				TrainingControllers [currFedPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.Feeding);
 				SetChanged ();
 			}
 		
@@ -933,34 +968,15 @@ public class Game {
 				OnTurnEnded ();
 		}
 
-		// Fill rewards.
-		float[] rewards = new float[4];
-		int maxScore = int.MinValue;
-		for (int i = 0; i < Players.Count; i++) {
-			if (Players [i].Model.Score>maxScore)
-				maxScore = Players [i].Model.Score;
-		}
-		if (maxScore != 0) {
-			for (int i = 0; i < Players.Count; i++) {
-				rewards [i] = Players [i].Model.Score / (float)maxScore;
-				const float winnerThreshold = 0.9f;
-				rewards [i] -= winnerThreshold;
-				if (rewards [i] > 0)
-					rewards [i] *= 1 / (1 - winnerThreshold);
-				else
-					rewards [i] *= 1 / winnerThreshold;
-			}
-		} else {
-			for (int i = 0; i < Players.Count; i++)
-				rewards [i] = 0;
-		}
-		foreach (var trainingModel in TrainingModels)
-			trainingModel.RewardPercent = rewards[trainingModel.PlayerInd];
+		for (int i = 0; i < 4; i++)
+			TrainingControllers [i].OnEndGame ();
+		
 			
 		onEnded ();
 	}
 
 	private void AddRandomResourceFromTopCard(CardToBuild card, PlayerModel model, Player player, System.Action onEnded) {
+		TrainingControllers [(int)player.Color].OnBeforeModelChange ();
 		Resource resource = Resource.None;
 		switch (card.TopFeature) {
 			case TopCardFeature.ResourceRandomForest: resource = Resource.Forest; break;
@@ -1008,7 +1024,9 @@ public class Game {
 		while (!processEnded)
 			System.Threading.Thread.Sleep (1000);
 		int resCount = rand / GetResourceCost (resource);
+
 		model.AddResource (resource, resCount);
+		TrainingControllers [(int)player.Color].OnAfterModelChange (GameTrainingController.ModelChangeType.ResourcesFromCard);
 		SetChanged ();
 		onEnded ();
 	}
