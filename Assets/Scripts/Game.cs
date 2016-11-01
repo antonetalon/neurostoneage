@@ -618,6 +618,7 @@ public class Game {
 					currPlayer.GetUsedInstrumentSlotInd (this, resource, rand,
 						(bool useSlot0, bool useSlot1, bool useSlot2, bool useOnce4Slot, bool useOnce3Slot, bool useOnce2Slot) => {
 							processEnded = true;
+							TrainingControllers[currPlayerInd].OnBeforeModelChange();
 							if (useSlot0 && !model.InstrumentsSlot1Used) {
 								model.ApplyUseInstrumentSlot(0);
 								rand += model.InstrumentsCountSlot1;
@@ -644,10 +645,12 @@ public class Game {
 								if (Logging) Debug.LogFormat("Used instrument slot {0} with count {1}", "top3", 3);
 							}
 							if (useOnce2Slot && !model.Top2Instruments.Card.TopUsed) {
+								TrainingControllers[currPlayerInd].OnBeforeModelChange();
 								model.Top2Instruments.Card.UseTop();
 								rand += 2;
 								if (Logging) Debug.LogFormat("Used instrument slot {0} with count {1}", "top2", 2);
 							}
+							TrainingControllers[currPlayerInd].OnAfterModelChange(GameTrainingController.ModelChangeType.ApplyingInstruments);
 					});
 					while (!processEnded)
 						System.Threading.Thread.Sleep (1000);
@@ -677,7 +680,7 @@ public class Game {
 					int resourcesSum = model.Forest + model.Clay + model.Stone + model.Gold;
 					if (cardPrice > resourcesSum) {
 						model.ApplyGoToCard (false, cardInd, null, card);
-						TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToCard);
+						TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToCard, cardInd);
 						SetChanged ();
 						continue; //  Should have enough resources.
 					}
@@ -699,7 +702,7 @@ public class Game {
 
 					if (!selectedToBuy) {
 						model.ApplyGoToCard (false, cardInd, null, card);
-						TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToCard);
+						TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToCard, cardInd);
 						SetChanged ();
 						continue; // Player should want to build card.
 					}
@@ -725,7 +728,7 @@ public class Game {
 
 					
 					model.ApplyGoToCard (true, cardInd, spendResources, card);
-					TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToCard);
+					TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToCard, cardInd);
 					SetAvailableCard (cardInd);
 					SetChanged ();
 
@@ -771,7 +774,7 @@ public class Game {
 								case 5:model2.AddField ();break;
 							}
 							if (playerIndShift==0)
-								TrainingControllers [randomBonusPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.BonusFromOwnCharity);
+								TrainingControllers [randomBonusPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.BonusFromOwnCharity, cardInd);
 							else
 								TrainingControllers [randomBonusPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.BonusFromOthersCharity);
 							SetChanged ();
@@ -783,7 +786,7 @@ public class Game {
 							_cardsInHeap.RemoveAt (0);
 							TrainingControllers [currPlayerInd].OnBeforeModelChange ();
 							model.ApplyCardTopOneCardMore (oneMoreCard);
-							TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyCardGivenByCard);
+							TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyCardGivenByCard, cardInd);
 							if (Logging)
 								Debug.LogFormat ("Added one more card to player ind={0} with bottom={1} and param={2}", currPlayerInd, oneMoreCard.BottomFeature, oneMoreCard.BottomFeatureParam);
 							SetChanged ();
@@ -810,7 +813,7 @@ public class Game {
 					HouseToBuild house = GetHouse (houseInd);
 					if (!EnoughResourcesForHouse (house, model)) {
 						model.ApplyGoToBuilding(houseInd, null); 
-						TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToHouse);
+						TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToHouse, houseInd);
 						SetChanged ();
 						continue; // Should be able to build.
 					}
@@ -831,7 +834,7 @@ public class Game {
 					}
 					if (!selectedToBuild) {
 						model.ApplyGoToBuilding(houseInd, null); 
-						TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToHouse);
+						TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToHouse, houseInd);
 						SetChanged ();
 						continue;
 					}// Should want to build. 
@@ -867,7 +870,7 @@ public class Game {
 					// Spend resources.
 					model.ApplyGoToBuilding(houseInd, spentResources);
 					RemoveAvailableHouse (houseInd);
-					TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToHouse);
+					TrainingControllers [currPlayerInd].OnAfterModelChange (GameTrainingController.ModelChangeType.ApplyGoToHouse, houseInd);
 					SetChanged ();
 				}
 			
@@ -964,6 +967,11 @@ public class Game {
 				SetChanged ();
 			}
 		
+			for (int i = 0; i < 4; i++) {
+				TrainingControllers [i].OnBeforeModelChange ();
+				PlayerModels [i].ApplyEndTurn ();
+				TrainingControllers [i].OnAfterModelChange (GameTrainingController.ModelChangeType.EndTurn);
+			}
 			if (OnTurnEnded != null)
 				OnTurnEnded ();
 		}
@@ -976,7 +984,8 @@ public class Game {
 	}
 
 	private void AddRandomResourceFromTopCard(CardToBuild card, PlayerModel model, Player player, System.Action onEnded) {
-		TrainingControllers [(int)player.Color].OnBeforeModelChange ();
+		int currPlayerInd = (int)player.Color;
+		TrainingControllers [currPlayerInd].OnBeforeModelChange ();
 		Resource resource = Resource.None;
 		switch (card.TopFeature) {
 			case TopCardFeature.ResourceRandomForest: resource = Resource.Forest; break;
@@ -990,7 +999,8 @@ public class Game {
 		player.GetUsedInstrumentSlotInd (this, resource, rand,
 			(bool useSlot0, bool useSlot1, bool useSlot2, bool useOnce4Slot, bool useOnce3Slot, bool useOnce2Slot) => {
 				processEnded = true;
-				if (useSlot0 && !model.InstrumentsSlot1Used) {
+				TrainingControllers[currPlayerInd].OnBeforeModelChange();
+				if (useSlot0 && !model.InstrumentsSlot1Used) {					
 					model.ApplyUseInstrumentSlot(0);
 					rand += model.InstrumentsCountSlot1;
 					if (Logging) Debug.LogFormat("Used instrument slot {0} with count {1}", 0, model.InstrumentsCountSlot1);
@@ -1020,6 +1030,7 @@ public class Game {
 					rand += 2;
 					if (Logging) Debug.LogFormat("Used instrument slot {0} with count {1}", "top2", 2);
 				}
+				TrainingControllers[currPlayerInd].OnAfterModelChange(GameTrainingController.ModelChangeType.ApplyingInstruments);
 		});
 		while (!processEnded)
 			System.Threading.Thread.Sleep (1000);

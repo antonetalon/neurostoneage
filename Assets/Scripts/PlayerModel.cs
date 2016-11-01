@@ -31,6 +31,8 @@ public class PlayerModel {
 	public int SpentOnCard2 { get; private set; }
 	public int SpentOnCard3 { get; private set; }
 	public int SpentOnCard4 { get; private set; }
+	public int WastedOnEndOfTurn { get; private set; }
+	public int UnSpentFields { get; private set; }
 
 	public int GetSpentOnCard(int cardInd) {
 		switch (cardInd) {
@@ -93,7 +95,7 @@ public class PlayerModel {
 		get {
 			return HumansCount - SpentOnHousing - SpentOnFields - SpentOnInstruments - SpentOnFood - SpentOnForest
 			- SpentOnClay - SpentOnStone - SpentOnGold - SpentOnBuilding1 - SpentOnBuilding2 - SpentOnBuilding3
-			- SpentOnBuilding4 - SpentOnCard1 - SpentOnCard2 - SpentOnCard3 - SpentOnCard4;
+				- SpentOnBuilding4 - SpentOnCard1 - SpentOnCard2 - SpentOnCard3 - SpentOnCard4 - WastedOnEndOfTurn;
 		}
 	}
 
@@ -259,6 +261,8 @@ public class PlayerModel {
 		SpentOnCard2 = 0;
 		SpentOnCard3 = 0;
 		SpentOnCard4 = 0;
+		WastedOnEndOfTurn = 0;
+		UnSpentFields = FieldsCount;
 	}
 
 	#region Selecting where to go - turn phase 1.
@@ -315,52 +319,60 @@ public class PlayerModel {
 	#region Applying where went - turn phase 2.
 	public void ApplyGoToHousing() {
 		HumansCount++;
-		SpentOnHousing++;
+		SpentOnHousing=0;
 		Score += HumansMultiplier;
 	}
 	public void ApplyGoToFields() {
 		if (SpentOnFields == 0)
 			return;
+		SpentOnFields = 0;
 		AddField ();
 	}
 	public void ApplyGoToInstruments() {
 		if (SpentOnInstruments == 0)
 			return;
+		SpentOnInstruments = 0;
 		AddInstrument ();
 	}
 	private void ApplyGoToFood(int pointsSum) {
 		if (SpentOnFood == 0)
 			return;
+		SpentOnFood = 0;
 		int inc = pointsSum / Config.PointsPerFood;
 		Food += inc;
 	}
 	public void ApplyGoToForest(int pointsSum) {
 		if (SpentOnForest == 0)
 			return;
+		SpentOnForest = 0;
 		int inc = pointsSum / Config.PointsPerForest;
 		Forest += inc;
 	}
 	public void ApplyGoToClay(int pointsSum) {
 		if (SpentOnClay == 0)
 			return;
+		SpentOnClay = 0;
 		int inc = pointsSum / Config.PointsPerClay;
 		Clay += inc;
 	}
 	public void ApplyGoToStone(int pointsSum) {
 		if (SpentOnStone == 0)
 			return;
+		SpentOnStone = 0;
 		int inc = pointsSum / Config.PointsPerStone;
 		Stone += inc;
 	}
 	public void ApplyGoToGold(int pointsSum) {
 		if (SpentOnGold == 0)
 			return;
+		SpentOnGold = 0;
 		int inc = pointsSum / Config.PointsPerGold;
 		Gold += inc;
 	}
 	public void ApplyGoToBuilding(int buildingInd, List<Resource> spentResources) {
 		if (GetSpentOnHouse(buildingInd) == 0)
 			return;
+		SetSpentOnHouse (buildingInd, 0); 
 		if (spentResources!=null)
 			ApplyGoToBuilding (spentResources);
 	}
@@ -374,6 +386,7 @@ public class PlayerModel {
 	public void ApplyGoToCard(bool build, int cardInd, List<Resource> spentResources, CardToBuild card) {
 		if (GetSpentOnCard(cardInd) == 0)
 			return;
+		SetSpentOnCard (cardInd, 0);
 		ApplyGoToCard (build, spentResources, card);
 	}
 	private void ApplyGoToCard(bool build, List<Resource> spentResources, CardToBuild card) {
@@ -381,6 +394,13 @@ public class PlayerModel {
 			return;
 		SubtractResources (spentResources);
 		AddCard (card, true);
+	}
+	public void ApplyEndTurn() {
+		WastedOnEndOfTurn = UnspentHumanCount;
+		InstrumentsSlot1Used = true;
+		InstrumentsSlot2Used = true;
+		InstrumentsSlot3Used = true;
+		UnSpentFields = 0;
 	}
 	public void ApplyCardTopOneCardMore(CardToBuild cardFromStash) {
 		AddCard (cardFromStash, false);
@@ -468,6 +488,8 @@ public class PlayerModel {
 
 	#region Feeding - turn phase 3.
 	public void Feed(bool leaveHungry, List<Resource> eatenResources) {
+		int eatenFields = Mathf.Min (HumansCount, FieldsCount);
+		UnSpentFields -= eatenFields;
 		int neededFood = HumansCount - FieldsCount;
 		if (neededFood <= 0)
 			return;

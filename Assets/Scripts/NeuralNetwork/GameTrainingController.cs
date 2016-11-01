@@ -39,7 +39,8 @@ public class GameTrainingController {
 		FieldsMultiplier,
 		HousesCount,
 		SciencesIn1stLine,
-		SciencesIn2ndLine
+		SciencesIn2ndLine,
+		UnspentFields
 	}
 	public enum ModelChangeType {
 		StartGame,
@@ -49,6 +50,7 @@ public class GameTrainingController {
 		ApplyGoToFields,
 		ApplyGoToHousing,
 		AnyResourcesFromCard,
+		ApplyingInstruments,
 		ResourcesMining,
 		BonusFromOwnCharity,
 		BonusFromOthersCharity,
@@ -56,7 +58,11 @@ public class GameTrainingController {
 		ApplyGoToHouse,
 		ApplyGoToCard,
 		ApplyCardGivenByCard,
-		Feeding
+		Feeding,
+		EndTurn,
+		AddHumansFromHousing,
+		AddInstrumentsFromGoToInstruments,
+		AddFoodFromFields
 	}
 	private class PlayerModelTrainingDump {
 		
@@ -128,13 +134,17 @@ public class GameTrainingController {
 		public PlayerModelTrainingDump Delta;
 
 		public readonly ModelChangeType Type; 
-		public ModelChangeEvent(PlayerModelTrainingDump stateBefore, PlayerModelTrainingDump stateAfter, ModelChangeType type) {
+		public readonly int CardHouseInd;
+		public ModelChangeEvent(PlayerModelTrainingDump stateBefore, PlayerModelTrainingDump stateAfter, ModelChangeType type, int cardHouseInd = -1) {
 			this.Type = type;
 			this.StateBefore = stateBefore;
 			this.StateAfter = stateAfter;
+			this.CardHouseInd = cardHouseInd;
 			Delta = new PlayerModelTrainingDump ();
-			foreach (ResourceType res in Enum.GetValues(typeof(ResourceType)))
-				Delta.Add (res, StateAfter.GetCount (res) - StateBefore.GetCount (res));
+			foreach (ResourceType res in Enum.GetValues(typeof(ResourceType))) {
+				int delta = StateAfter.GetCount (res) - StateBefore.GetCount (res);
+				Delta.Add (res, delta);
+			}
 		}
 
 		public override string GetString (List<GameEvent> events)
@@ -167,10 +177,10 @@ public class GameTrainingController {
 		else
 			_beforeState = new PlayerModelTrainingDump ();
 	}
-	public void OnAfterModelChange(ModelChangeType type) {
+	public void OnAfterModelChange(ModelChangeType type, int cardHouseInd = -1) {
 		PlayerModel player = GetPlayer (_game);	
 		PlayerModelTrainingDump stateAfter = GetDump (player);
-		ModelChangeEvent modelChange = new ModelChangeEvent (_beforeState, stateAfter, type);
+		ModelChangeEvent modelChange = new ModelChangeEvent (_beforeState, stateAfter, type, cardHouseInd);
 		_events.Add (modelChange);
 	}
 	public void OnAfterDecision(TrainingDecisionModel trainingModel) {
@@ -214,7 +224,7 @@ public class GameTrainingController {
 		res.Add (ResourceType.HousesCount, player.Houses.Count);
 		res.Add (ResourceType.SciencesIn1stLine, player.GetSciencesCount(0));
 		res.Add (ResourceType.SciencesIn2ndLine, player.GetSciencesCount(1));
-
+		res.Add (ResourceType.UnspentFields, player.UnSpentFields);
 		return res;
 	}
 
@@ -227,6 +237,9 @@ public class GameTrainingController {
 		sb.AppendLine ("Training controller log end");
 		Debug.Log (sb.ToString());
 		// Calc game events causes.
+		for (int eventInd = 0; eventInd < _events.Count; eventInd++) {
+			FindEventCauses (eventInd);
+		}
 		// Trainsitive closure for causality matrix.
 		// Give score values to events.
 		// Calc score values for each turn.
@@ -258,5 +271,135 @@ public class GameTrainingController {
 		foreach (var trainingModel in TrainingModels)
 			trainingModel.RewardPercent = rewards[trainingModel.PlayerInd];
 		 */
+	}
+	void FindEventCauses(int eventInd) {
+		List<List<GameEvent>> causes = new List<List<GameEvent>> ();
+		GameDecizionEvent decision;
+		WhereToGo target;
+		ModelChangeEvent currEvent = _events [eventInd] as ModelChangeEvent;
+		if (currEvent == null) {
+			decision = _events [eventInd] as GameDecizionEvent;
+			// Decisions have circular cause.
+			causes.Add(new List<GameEvent>(){ decision });
+		} else {			
+			switch (currEvent.Type) {
+			case ModelChangeType.AnyResourcesFromCard:
+			case ModelChangeType.ApplyCardGivenByCard:
+			case ModelChangeType.ResourcesFromCard:
+				// Cause is going on that card decision.
+				ModelChangeEvent prevApplyCard = GetClosestPastEvent (eventInd, (ModelChangeEvent gotoCardEvent) => {
+					if (gotoCardEvent.Type != ModelChangeType.ApplyGoToCard)
+						return false;
+					return currEvent.CardHouseInd == gotoCardEvent.CardHouseInd;
+				});
+				if (prevApplyCard == null)
+					Debug.LogError ("Apply card not found");
+				causes.Add(new List<GameEvent>(){ prevApplyCard });
+				break;
+			case ModelChangeType.ApplyGoToCard:
+			case ModelChangeType.ApplyGoToFields:
+			case ModelChangeType.ApplyGoToHouse:
+			case ModelChangeType.ApplyGoToHousing:
+			case ModelChangeType.ApplyGoToInstruments:
+				// Cause is prev decision where to go.
+				target = GetTarget(currEvent.Type, currEvent.CardHouseInd);
+				decision = GetPrevDecision (eventInd, DecisionType.SelectWhereToGo, (int)target);
+				if (decision == null)
+					Debug.LogError ("where to go not found");
+				causes.Add(new List<GameEvent>(){ decision });
+				break;
+			case ModelChangeType.BonusFromOthersCharity:
+				// Cause is charity selection.
+				decision = GetPrevDecision (eventInd, DecisionType.SelectCharity, -1);
+				if (decision == null)
+					Debug.LogError ("charity selection not found");
+				causes.Add(new List<GameEvent>(){ decision });
+				break;
+			case ModelChangeType.BonusFromOwnCharity:
+				// Cause is charity selection and where to go selection on charity.
+				decision = GetPrevDecision (eventInd, DecisionType.SelectCharity, -1);
+				if (decision == null)
+					Debug.LogError ("charity selection not found");
+				target = GetTarget(currEvent.Type, currEvent.CardHouseInd);
+				GameDecizionEvent decisionWhereToGo = GetPrevDecision (eventInd, DecisionType.SelectWhereToGo, (int)target);
+				if (decision == null)
+					Debug.LogError ("where to go not found");
+				causes.Add(new List<GameEvent>(){ decision, decisionWhereToGo });
+				break;
+			case ModelChangeType.Feeding:
+				//  Cause is curr turn selection on leaving hungry and all turns that give fields.
+				decision = GetPrevCurrTurnDecision (eventInd, DecisionType.SelectLeaveHungry, -1);
+				// TODO: Add giving fields.
+				if (decision != null)
+					causes.Add(new List<GameEvent>(){ decision });
+				break;
+			case ModelChangeType.ResourcesMining:
+				// Causes are decisions where to go, spending humans, using instruments.
+				GameDecizionEvent humansCountDecision = GetPrevDecision (eventInd, DecisionType.SelectUsedHumans, -1, (GameDecizionEvent currSpentHumansDesicion)=>{					
+					if (currEvent.Delta.GetCount(ResourceType.SpentOnFood)!=0)
+						return currEvent.Delta.GetCount(ResourceType.SpentOnFood)!=0;
+					if (currEvent.Delta.GetCount(ResourceType.SpentOnForest)!=0)
+						return currEvent.Delta.GetCount(ResourceType.SpentOnForest)!=0;
+					if (currEvent.Delta.GetCount(ResourceType.SpentOnClay)!=0)
+						return currEvent.Delta.GetCount(ResourceType.SpentOnClay)!=0;
+					if (currEvent.Delta.GetCount(ResourceType.SpentOnStone)!=0)
+						return currEvent.Delta.GetCount(ResourceType.SpentOnStone)!=0;
+					if (currEvent.Delta.GetCount(ResourceType.SpentOnGold)!=0)
+						return currEvent.Delta.GetCount(ResourceType.SpentOnGold)!=0;
+					return false;
+				});
+				GameDecizionEvent whereToGoDecision = GetPrevDecision(humansCountDecision);
+				if (whereToGoDecision == null)
+					Debug.LogError ("where to go not found");
+				GameDecizionEvent instrumentsDecision = GetNextDecision(humansCountDecision);
+				if (instrumentsDecision == null)
+					Debug.LogError ("instruments found");
+				causes.Add(new List<GameEvent>(){ whereToGoDecision, humansCountDecision, instrumentsDecision });
+				break;
+			case ModelChangeType.SetSpentHumans:
+				// Cause is prev decision - where to go.
+				GameDecizionEvent whereToGoDecision2 = GetPrevDecision(humansCountDecision);
+				if (whereToGoDecision2 == null)
+					Debug.LogError ("where to go not found");
+				causes.Add(new List<GameEvent>(){ whereToGoDecision, humansCountDecision });
+				break;
+			}
+
+			// TODO: Add turns that gave resources.
+		}
+		// TODO: Add turns that add to next turns humans and instruments.
+		// TODO: Calc weights and fill _events [eventInd].Causes
+	}
+	private WhereToGo  GetTarget(ModelChangeType type, int cardHouseInd) {
+		switch (type) {
+		case ModelChangeType.BonusFromOwnCharity:
+		case ModelChangeType.ApplyGoToCard:
+			switch (cardHouseInd) {
+				default:
+				case 0:	return WhereToGo.Card1;
+				case 1:	return WhereToGo.Card2;
+				case 2:	return WhereToGo.Card3;
+				case 3:	return WhereToGo.Card4;
+			}
+			break;
+		case ModelChangeType.ApplyGoToFields:
+			return WhereToGo.Field;
+			break;
+		case ModelChangeType.ApplyGoToHouse:
+			switch (cardHouseInd) {
+				default:
+				case 0:	return WhereToGo.House1;
+				case 1:	return WhereToGo.House2;
+				case 2:	return WhereToGo.House3;
+				case 3:	return WhereToGo.House4;
+			}
+			break;
+		case ModelChangeType.ApplyGoToHousing:
+			return WhereToGo.Housing;
+			break;
+		case ModelChangeType.ApplyGoToInstruments:
+			return WhereToGo.Instrument;
+			break;
+		}
 	}
 }
