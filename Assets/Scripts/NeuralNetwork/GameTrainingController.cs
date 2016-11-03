@@ -5,154 +5,81 @@ using System;
 using System.Text;
 
 public class GameTrainingController {
-	public enum ResourceType {
-		HumansCount,
-		AvailableHumans,
-		SpentOnHousing,
-		SpentOnFields,
-		SpentOnInstruments,
-		SpentOnFood,
-		SpentOnForest,
-		SpentOnClay,
-		SpentOnStone,
-		SpentOnGold,
-		SpentOnBuilding1,
-		SpentOnBuilding2,
-		SpentOnBuilding3,
-		SpentOnBuilding4,
-		SpentOnCard1,
-		SpentOnCard2,
-		SpentOnCard3,
-		SpentOnCard4,
-		Food,
-		Forest,
-		Clay,
-		Stone,
-		Gold,
-		Fields,
-		Instruments,
-		InstrumentsAvailable,
-		InstrumentsOnce,
-		HumanMultiplier,
-		InstrumentsMultiplier,
-		HousesMultiplier,
-		FieldsMultiplier,
-		HousesCount,
-		SciencesIn1stLine,
-		SciencesIn2ndLine,
-		UnspentFields
-	}
-	public enum ModelChangeType {
-		StartGame,
-		StartRound,
-		SetSpentHumans,
-		ApplyGoToInstruments,
-		ApplyGoToFields,
-		ApplyGoToHousing,
-		AnyResourcesFromCard,
-		ApplyingInstruments,
-		ResourcesMining,
-		BonusFromOwnCharity,
-		BonusFromOthersCharity,
-		ResourcesFromCard,
-		ApplyGoToHouse,
-		ApplyGoToCard,
-		ApplyCardGivenByCard,
-		Feeding,
-		EndTurn,
-		AddHumansFromHousing,
-		AddInstrumentsFromGoToInstruments,
-		AddFoodFromFields
-	}
-	private class PlayerModelTrainingDump {
-		
-		private Dictionary<ResourceType, int> Resources;
-		public PlayerModelTrainingDump() {
-			Resources = new Dictionary<ResourceType, int>();
-			foreach (ResourceType type in Enum.GetValues(typeof(ResourceType)))
-				Resources.Add(type, 0);
+	
+	private static Dictionary<ModelChangeType, List<ResourceType>> AllowedIncs = new Dictionary<ModelChangeType, List<ResourceType>>() {
+		{ModelChangeType.StartGame, new List<ResourceType>(){ ResourceType.Food, ResourceType.HumanMultiplier, ResourceType.InstrumentsMultiplier, 
+				ResourceType.HousesMultiplier, ResourceType.FieldsMultiplier, ResourceType.HumansCount }},
+		{ModelChangeType.StartRound, new List<ResourceType>(){ ResourceType.AvailableHumans }},
+		{ModelChangeType.EndTurn, new List<ResourceType>(){/*its ok*/}},
+		{ModelChangeType.AddHumansFromHousing, new List<ResourceType>(){ ResourceType.AvailableHumans }},
+		{ModelChangeType.AddAvailableInstruments, new List<ResourceType>(){ ResourceType.InstrumentsAvailable }},
+		{ModelChangeType.AddUnspentFields, new List<ResourceType>(){ ResourceType.UnspentFields }},
+		{ModelChangeType.WhereToGoSelected, new List<ResourceType>(){ ResourceType.SpendingOnHousing,ResourceType.SpendingOnFields,ResourceType.SpendingOnInstruments,ResourceType.SpendingOnFood,
+				ResourceType.SpendingOnForest,ResourceType.SpendingOnClay,ResourceType.SpendingOnStone,ResourceType.SpendingOnGold,ResourceType.SpendingOnBuilding1,
+				ResourceType.SpendingOnBuilding2,ResourceType.SpendingOnBuilding3,ResourceType.SpendingOnBuilding4,ResourceType.SpendingOnCard1,ResourceType.SpendingOnCard2,
+				ResourceType.SpendingOnCard3, ResourceType.SpendingOnCard4}},
+		{ModelChangeType.SetSpentHumans, new List<ResourceType>(){ ResourceType.SpentOnHousing, ResourceType.SpentOnFields, ResourceType.SpentOnInstruments, 
+				ResourceType.SpentOnFood, ResourceType.SpentOnForest, ResourceType.SpentOnClay, ResourceType.SpentOnStone, ResourceType.SpentOnGold, 
+				ResourceType.SpentOnBuilding1, ResourceType.SpentOnBuilding2, ResourceType.SpentOnBuilding3, ResourceType.SpentOnBuilding4,
+				ResourceType.SpentOnCard1, ResourceType.SpentOnCard2, ResourceType.SpentOnCard3, ResourceType.SpentOnCard4 }},
+		{ModelChangeType.ApplyGoToMining, new List<ResourceType>(){ ResourceType.DicePoints }},
+		{ModelChangeType.ApplyGoToInstruments, new List<ResourceType>(){ ResourceType.Instruments }},
+		{ModelChangeType.ApplyGoToFields, new List<ResourceType>(){ ResourceType.Fields }},
+		{ModelChangeType.ApplyGoToHousing, new List<ResourceType>(){ ResourceType.HumansCount }},
+		{ModelChangeType.ApplyGoToHouse, new List<ResourceType>(){ ResourceType.HousesCount, ResourceType.Score }},
+		{ModelChangeType.ApplyGoToCard, new List<ResourceType>(){ ResourceType.InstrumentsOnce, ResourceType.Charity, ResourceType.Score, 
+				ResourceType.SpentOnForest, ResourceType.SpentOnClay, ResourceType.SpentOnStone, ResourceType.SpentOnGold,
+				ResourceType.Food,ResourceType.Forest, ResourceType.Clay, ResourceType.Stone, ResourceType.Gold,
+				ResourceType.HumanMultiplier, ResourceType.InstrumentsMultiplier, ResourceType.HousesMultiplier, ResourceType.HousesMultiplier, 
+				ResourceType.SciencesIn1stLine, ResourceType.SciencesIn2ndLine, ResourceType.Any2ResourcesFromCard, ResourceType.OneCardBottomMore }},
+		{ModelChangeType.ApplyingInstruments, new List<ResourceType>(){ResourceType.DicePoints}},
+		{ModelChangeType.ResourcesMining, new List<ResourceType>(){ ResourceType.Food, ResourceType.Forest, ResourceType.Clay, ResourceType.Stone, ResourceType.Gold}},
+		{ModelChangeType.ReceiveAny2ResFromCard, new List<ResourceType>(){ ResourceType.Forest, ResourceType.Clay, ResourceType.Stone, ResourceType.Gold, ResourceType.Food }},
+		{ModelChangeType.BonusFromOwnCharity, new List<ResourceType>(){ResourceType.Forest, ResourceType.Clay, ResourceType.Stone, ResourceType.Gold, ResourceType.Instruments, ResourceType.Fields }},
+		{ModelChangeType.BonusFromOthersCharity, new List<ResourceType>(){ ResourceType.Forest, ResourceType.Clay, ResourceType.Stone, ResourceType.Gold, ResourceType.Instruments, ResourceType.Fields }},
+		{ModelChangeType.ApplyCardFromOtherCard, new List<ResourceType>(){ ResourceType.HumanMultiplier, ResourceType.InstrumentsMultiplier, ResourceType.HousesMultiplier, ResourceType.HousesMultiplier, 
+				ResourceType.SciencesIn1stLine, ResourceType.SciencesIn2ndLine }},
+		{ModelChangeType.Feeding, new List<ResourceType>(){ ResourceType.Score}}
+	};
+	private static Dictionary<ModelChangeType, List<ResourceType>> AllowedDecs = new Dictionary<ModelChangeType, List<ResourceType>>() {
+		{ModelChangeType.StartGame, new List<ResourceType>(){/*its ok*/ }},
+		{ModelChangeType.StartRound, new List<ResourceType>(){/*its ok*/ }},
+		{ModelChangeType.EndTurn, new List<ResourceType>(){ ResourceType.AvailableHumans, ResourceType.InstrumentsAvailable }},
+		{ModelChangeType.AddHumansFromHousing, new List<ResourceType>(){/*its ok*/ }},
+		{ModelChangeType.AddAvailableInstruments, new List<ResourceType>(){/*its ok*/ }},
+		{ModelChangeType.AddUnspentFields, new List<ResourceType>(){/*its ok*/ }},
+		{ModelChangeType.WhereToGoSelected, new List<ResourceType>(){/*its ok*/ }},
+		{ModelChangeType.SetSpentHumans, new List<ResourceType>(){ ResourceType.AvailableHumans, ResourceType.SpendingOnHousing,ResourceType.SpendingOnFields,ResourceType.SpendingOnInstruments,
+				ResourceType.SpendingOnFood, ResourceType.SpendingOnForest,ResourceType.SpendingOnClay,ResourceType.SpendingOnStone,ResourceType.SpendingOnGold,ResourceType.SpendingOnBuilding1,
+				ResourceType.SpendingOnBuilding2,ResourceType.SpendingOnBuilding3,ResourceType.SpendingOnBuilding4,ResourceType.SpendingOnCard1,ResourceType.SpendingOnCard2,
+				ResourceType.SpendingOnCard3, ResourceType.SpendingOnCard4}},
+		{ModelChangeType.ApplyGoToInstruments, new List<ResourceType>(){ResourceType.SpentOnInstruments, ResourceType.InstrumentsAvailable }},
+		{ModelChangeType.ApplyGoToFields, new List<ResourceType>(){ ResourceType.SpentOnFields }},
+		{ModelChangeType.ApplyGoToHousing, new List<ResourceType>(){ ResourceType.SpentOnHousing }},
+		{ModelChangeType.ApplyGoToHouse, new List<ResourceType>(){ ResourceType.Forest, ResourceType.Clay, ResourceType.Stone, ResourceType.Gold, ResourceType.SpentOnBuilding1, 
+				ResourceType.SpentOnBuilding2, ResourceType.SpentOnBuilding3, ResourceType.SpentOnBuilding4 }},
+		{ModelChangeType.ApplyGoToCard, new List<ResourceType>(){ ResourceType.Forest, ResourceType.Clay, ResourceType.Stone, ResourceType.Gold, 
+				ResourceType.SpentOnCard1, ResourceType.SpentOnCard2, ResourceType.SpentOnCard3, ResourceType.SpentOnCard4 }},
+		{ModelChangeType.ApplyGoToMining, new List<ResourceType>(){ ResourceType.SpentOnFood, ResourceType.SpentOnForest, ResourceType.SpentOnClay, ResourceType.SpentOnStone, ResourceType.SpentOnGold }},
+		{ModelChangeType.ApplyingInstruments, new List<ResourceType>(){ ResourceType.InstrumentsAvailable, ResourceType.InstrumentsOnce }},
+		{ModelChangeType.ResourcesMining, new List<ResourceType>(){ ResourceType.DicePoints }},
+		{ModelChangeType.ReceiveAny2ResFromCard, new List<ResourceType>(){ ResourceType.Any2ResourcesFromCard }},
+		{ModelChangeType.BonusFromOwnCharity, new List<ResourceType>(){ ResourceType.Charity }},
+		{ModelChangeType.BonusFromOthersCharity, new List<ResourceType>(){/*its ok*/ }},
+		{ModelChangeType.ApplyCardFromOtherCard, new List<ResourceType>(){ ResourceType.OneCardBottomMore }},
+		{ModelChangeType.Feeding, new List<ResourceType>(){ResourceType.Food, ResourceType.UnspentFields, ResourceType.Forest, ResourceType.Clay, ResourceType.Stone, ResourceType.Gold }}
+	};
+	private List<ModelChangeEvent> GetEventsWithResourceChange(ResourceType res, bool incOrDec) {
+		List<ModelChangeEvent> resChangeEvents = new List<ModelChangeEvent> ();
+		for (int i = 0; i < _events.Count; i++) {
+			int delta = _events [i].Delta.GetCount (res);
+			if ((delta > 0 && incOrDec) || (delta < 0 && !incOrDec))
+				resChangeEvents.Add (_events [i]);
 		}
-		public void Add(ResourceType type, int count) {
-			Resources [type] += count;
-		}
-		public int GetCount(ResourceType type) {
-			return Resources [type];
-		}
-		public PlayerModelTrainingDump Clone() {
-			PlayerModelTrainingDump clone = new PlayerModelTrainingDump ();
-			foreach (var item in Resources)
-				clone.Resources[item.Key] = item.Value;
-			return clone;
-		}
-		public override string ToString ()
-		{
-			StringBuilder sb = new StringBuilder ();
-			foreach (var item in Resources) {
-				if (item.Value == 0)
-					continue;
-				
-				sb.Append (item.Key.ToString ());
-				sb.Append (" ");
-				if (item.Value > 0)
-					sb.Append ("+");
-				sb.Append (item.Value.ToString ("000"));
-				sb.Append (", ");
-			}
-			return sb.ToString ();
-		}
-	}
-	private abstract class GameEvent
-	{
-		public int ScoreValue;
-		public Dictionary<GameEvent, float> Causes = new Dictionary<GameEvent, float>();
-		public virtual string GetString(List<GameEvent> events) {
-			StringBuilder sb = new StringBuilder ("Score = ");
-			sb.AppendLine (ScoreValue.ToString ());
-			foreach (var item in Causes) {
-				int ind = events.IndexOf (item.Key);
-				sb.AppendFormat ("cause ind={0} val={1:0.####}\n", ind, item.Value);
-			}
-			if (Causes.Count == 0)
-				sb.AppendLine ("No causes");
-			return sb.ToString ();
-		}
-	}
-	private class GameDecizionEvent : GameEvent {
-		public TrainingDecisionModel DecisionTraining;
-		public GameDecizionEvent(TrainingDecisionModel decisionTraining) {
-			this.DecisionTraining = decisionTraining;
-		}
-		public override string GetString (List<GameEvent> events)
-		{
-			return string.Format ("decision type = {0}, res={1}, {2}", DecisionTraining.Type.ToString (), DecisionTraining.Output, base.GetString (events));
-		}
+		return resChangeEvents;
 	}
 
-	private class ModelChangeEvent : GameEvent {
-		public PlayerModelTrainingDump StateBefore;
-		public PlayerModelTrainingDump StateAfter;
-		public PlayerModelTrainingDump Delta;
-
-		public readonly ModelChangeType Type; 
-		public readonly int CardHouseInd;
-		public ModelChangeEvent(PlayerModelTrainingDump stateBefore, PlayerModelTrainingDump stateAfter, ModelChangeType type, int cardHouseInd = -1) {
-			this.Type = type;
-			this.StateBefore = stateBefore;
-			this.StateAfter = stateAfter;
-			this.CardHouseInd = cardHouseInd;
-			Delta = new PlayerModelTrainingDump ();
-			foreach (ResourceType res in Enum.GetValues(typeof(ResourceType))) {
-				int delta = StateAfter.GetCount (res) - StateBefore.GetCount (res);
-				Delta.Add (res, delta);
-			}
-		}
-
-		public override string GetString (List<GameEvent> events)
-		{
-			return string.Format ("model change type = {0}, delta={1}\n {2}", Type.ToString(), Delta.ToString(), base.GetString (events));
-		}
-	}
-	private List<GameEvent> _events;
+	private List<ModelChangeEvent> _events;
 	private PlayerModel GetPlayer(Game game) {
 		if (game.PlayerModels == null || game.PlayerModels.Count<4)
 			return null;
@@ -167,7 +94,7 @@ public class GameTrainingController {
 		this._game = game;
 		_trainingModels = new List<TrainingDecisionModel>();
 		TrainingModels = new ReadonlyList<TrainingDecisionModel> (_trainingModels);
-		_events = new List<GameEvent> ();
+		_events = new List<ModelChangeEvent> ();
 	}
 	private PlayerModelTrainingDump _beforeState;
 	public void OnBeforeModelChange() {	
@@ -177,16 +104,204 @@ public class GameTrainingController {
 		else
 			_beforeState = new PlayerModelTrainingDump ();
 	}
-	public void OnAfterModelChange(ModelChangeType type, int cardHouseInd = -1) {
+	public void OnAfterModelChange(ModelChangeType type, Dictionary<ResourceType, int> additionalResourceChanges = null) {
 		PlayerModel player = GetPlayer (_game);	
 		PlayerModelTrainingDump stateAfter = GetDump (player);
-		ModelChangeEvent modelChange = new ModelChangeEvent (_beforeState, stateAfter, type, cardHouseInd);
+		if (additionalResourceChanges != null) {
+			foreach (var item in additionalResourceChanges)
+				stateAfter.ChangeCount (item.Key, item.Value);
+		}
+		ModelChangeEvent modelChange = new ModelChangeEvent (_beforeState, stateAfter, type);
 		_events.Add (modelChange);
 	}
-	public void OnAfterDecision(TrainingDecisionModel trainingModel) {
-		GameDecizionEvent decision = new GameDecizionEvent (trainingModel);
+	public void OnAfterDecision(TrainingDecisionModel trainingModel, ModelChangeType type, Dictionary<ResourceType, int> additionalResourceChanges = null) {
+		PlayerModel player = GetPlayer (_game);	
+		PlayerModelTrainingDump stateAfter = GetDump (player);
+		if (additionalResourceChanges != null) {
+			foreach (var item in additionalResourceChanges)
+				stateAfter.ChangeCount (item.Key, item.Value);
+		}
+		GameDecizionEvent decision = new GameDecizionEvent (trainingModel, _beforeState, stateAfter, type);
 		_events.Add (decision);
 		_trainingModels.Add (trainingModel);
+	}
+	public void OnAfterStartTurn() {
+		PlayerModel player = GetPlayer (_game);	
+		// Other turn start.
+		OnAfterModelChange(ModelChangeType.StartRound);
+		ModelChangeEvent startTurnChange = _events [_events.Count - 1];
+		PlayerModelTrainingDump stateAfterStartTurn = startTurnChange.StateAfter;
+		// Add humans from turns.
+		AddLinkEventsForRenewableResources(ResourceType.HumansCount, ResourceType.AvailableHumans, 5, stateAfterStartTurn, ModelChangeType.AddHumansFromHousing);
+		// Add unspent fields.
+		AddLinkEventsForRenewableResources(ResourceType.Fields, ResourceType.UnspentFields, 0, stateAfterStartTurn, ModelChangeType.AddUnspentFields);
+		// Add instruments from turns.
+		AddLinkEventsForRenewableResources(ResourceType.Instruments, ResourceType.InstrumentsAvailable, 0, stateAfterStartTurn, ModelChangeType.AddAvailableInstruments);
+		// stateAfterStartTurn changed, need to update start turn event.
+		startTurnChange.UpdateDelta ();
+	}
+	public void OnAfterWhereToGoSelected(TrainingDecisionModel trainingModel, WhereToGo target) {
+		ResourceType addedResource;
+		switch (target) {
+			case WhereToGo.Card1: addedResource = ResourceType.SpendingOnCard1; break;
+			case WhereToGo.Card2: addedResource = ResourceType.SpendingOnCard2; break;
+			case WhereToGo.Card3: addedResource = ResourceType.SpendingOnCard3; break;
+			case WhereToGo.Card4: addedResource = ResourceType.SpendingOnCard4; break;
+			case WhereToGo.Clay: addedResource = ResourceType.SpendingOnClay; break;
+			case WhereToGo.Field: addedResource = ResourceType.SpendingOnFields; break;
+			case WhereToGo.Food: addedResource = ResourceType.SpendingOnFood; break;
+			case WhereToGo.Forest: addedResource = ResourceType.SpendingOnForest; break;
+			case WhereToGo.Gold: addedResource = ResourceType.SpendingOnGold; break;
+			case WhereToGo.House1: addedResource = ResourceType.SpendingOnBuilding1; break;
+			case WhereToGo.House2: addedResource = ResourceType.SpendingOnBuilding2; break;
+			case WhereToGo.House3: addedResource = ResourceType.SpendingOnBuilding3; break;
+			case WhereToGo.House4: addedResource = ResourceType.SpendingOnBuilding4; break;
+			case WhereToGo.Housing: addedResource = ResourceType.SpendingOnHousing; break;
+			case WhereToGo.Instrument: addedResource = ResourceType.SpendingOnInstruments; break;
+			default:
+				Debug.LogError ("WTF");
+				addedResource = ResourceType.Forest;
+				break;
+		}
+		OnAfterDecision(trainingModel, ModelChangeType.WhereToGoSelected, new Dictionary<ResourceType, int>() { {addedResource, 1} });
+	}
+	public void OnAfterHumansCountSelected() {
+		PlayerModelTrainingDump stateAfter = GetDump (GetPlayer (_game));
+		PlayerModelTrainingDump delta = ModelChangeEvent.GetDelta (_beforeState, stateAfter);
+		ResourceType removedResource;
+		if (delta.GetCount (ResourceType.SpentOnCard1) > 0)
+			removedResource = ResourceType.SpendingOnCard1;
+		else if (delta.GetCount (ResourceType.SpentOnCard2) > 0)
+			removedResource = ResourceType.SpendingOnCard2;
+		else if (delta.GetCount (ResourceType.SpentOnCard3) > 0)
+			removedResource = ResourceType.SpendingOnCard3;
+		else if (delta.GetCount (ResourceType.SpentOnCard4) > 0)
+			removedResource = ResourceType.SpendingOnCard4;
+		else if (delta.GetCount (ResourceType.SpentOnClay) > 0)
+			removedResource = ResourceType.SpendingOnClay;
+		else if (delta.GetCount (ResourceType.SpentOnFields) > 0)
+			removedResource = ResourceType.SpendingOnFields;
+		else if (delta.GetCount (ResourceType.SpentOnForest) > 0)
+			removedResource = ResourceType.SpendingOnForest;
+		else if (delta.GetCount (ResourceType.SpentOnGold) > 0)
+			removedResource = ResourceType.SpendingOnGold;
+		else if (delta.GetCount (ResourceType.SpentOnBuilding1) > 0)
+			removedResource = ResourceType.SpendingOnBuilding1;
+		else if (delta.GetCount (ResourceType.SpentOnBuilding2) > 0)
+			removedResource = ResourceType.SpendingOnBuilding2;
+		else if (delta.GetCount (ResourceType.SpentOnBuilding3) > 0)
+			removedResource = ResourceType.SpendingOnBuilding3;
+		else if (delta.GetCount (ResourceType.SpentOnBuilding4) > 0)
+			removedResource = ResourceType.SpendingOnBuilding4;
+		else if (delta.GetCount (ResourceType.SpentOnHousing) > 0)
+			removedResource = ResourceType.SpendingOnHousing;
+		else if (delta.GetCount (ResourceType.SpentOnInstruments) > 0)
+			removedResource = ResourceType.SpendingOnInstruments;
+		else {
+			Debug.LogError ("WTF");
+			removedResource = ResourceType.AvailableHumans;
+		}
+
+		OnAfterModelChange(ModelChangeType.SetSpentHumans, new Dictionary<ResourceType, int>() { {removedResource, -1} });
+	}
+	private void AddLinkEventsForRenewableResources(ResourceType renewableSource, ResourceType renewableDest, int startSourceCount, PlayerModelTrainingDump stateAfterStartTurn, ModelChangeType changeType) {
+		List<ModelChangeEvent> renewableSourceAddingEvents = GetEventsWithResourceChange(renewableSource, true);
+		int sourceCount = stateAfterStartTurn.GetCount (renewableSource);
+		int linkedCount = Mathf.Max(0, sourceCount - startSourceCount); 
+		if (linkedCount>0) {
+			stateAfterStartTurn.ChangeCount(renewableDest, -linkedCount); // Remove human from start turn.
+			PlayerModelTrainingDump currState = stateAfterStartTurn.Clone ();
+			for (int i = startSourceCount; i < sourceCount; i++) {			
+				// Create model change linked to renewableSource gaining turn.
+				PlayerModelTrainingDump nextState = currState.Clone();
+				nextState.ChangeCount (renewableDest, 1);
+				GameProxyEvent addingRenewableResourceEvent = new GameProxyEvent (renewableSourceAddingEvents [i - startSourceCount], currState, nextState, changeType);
+				_events.Add (addingRenewableResourceEvent);
+				currState = nextState;
+			}
+		}
+	}
+	public void OnReceived2ResFromCard() {
+		OnAfterModelChange(ModelChangeType.ReceiveAny2ResFromCard, new Dictionary<ResourceType, int>() { {ResourceType.Any2ResourcesFromCard, -1} });
+	}
+	public void OnAfterResourceDicesRolled(int dotsSum) {
+		OnAfterModelChange(ModelChangeType.ApplyGoToMining, new Dictionary<ResourceType, int>() { {ResourceType.DicePoints, dotsSum} });
+	}
+	public void OnAfterInstrumentsApplied(TrainingDecisionModel trainingModel, int instrumentsAdded) {
+		OnAfterDecision(trainingModel, ModelChangeType.ApplyingInstruments, new Dictionary<ResourceType, int>() { {ResourceType.DicePoints, instrumentsAdded} });
+	}
+	public void OnAfterResourcesMined() {
+		PlayerModel player = GetPlayer (_game);
+		OnAfterModelChange(ModelChangeType.ResourcesMining, new Dictionary<ResourceType, int>() { {ResourceType.DicePoints, _beforeState.GetCount(ResourceType.DicePoints)} });
+	}
+	public void OnHumanRemovedFromCard(int cardSlotInd) {
+		PlayerModel player = GetPlayer (_game);
+		ResourceType res;
+		switch (cardSlotInd) {
+			default:
+			case 0: res = ResourceType.SpendingOnCard1; break;
+			case 1: res = ResourceType.SpendingOnCard2; break;
+			case 2: res = ResourceType.SpendingOnCard3; break;
+			case 3: res = ResourceType.SpendingOnCard4; break;
+		}
+		OnAfterModelChange(ModelChangeType.ApplyGoToCard, new Dictionary<ResourceType, int>() { {res, -1} });
+	}
+	public void OnAfterCardBought(int cardSlotInd, CardToBuild card) {
+		OnHumanRemovedFromCard (cardSlotInd);
+		ModelChangeEvent cardBuyEvent = _events [_events.Count - 1];
+
+		if (card.TopFeature == TopCardFeature.RandomForEveryone)
+			cardBuyEvent.StateAfter.ChangeCount (ResourceType.Charity, 1);
+
+		if (card.TopFeature == TopCardFeature.Score)
+			cardBuyEvent.StateAfter.ChangeCount (ResourceType.Score, card.TopFeatureParam);
+
+		if (card.TopFeature == TopCardFeature.ResourceAny)
+			cardBuyEvent.StateAfter.ChangeCount (ResourceType.Any2ResourcesFromCard, 1);
+
+		if (card.TopFeature == TopCardFeature.OneCardMore)
+			cardBuyEvent.StateAfter.ChangeCount (ResourceType.OneCardBottomMore, 1);
+
+		cardBuyEvent.UpdateDelta ();
+	}
+	public void OnAfterCharityReceived(TrainingDecisionModel trainingModel, bool own) {
+		ModelChangeType type = own ? ModelChangeType.BonusFromOwnCharity : ModelChangeType.BonusFromOthersCharity;
+		OnAfterDecision (trainingModel, type, new Dictionary<ResourceType, int> (){ { ResourceType.Charity, -1 } });
+	}
+	public void OnAfterCardFromCardApplied() {
+		OnAfterModelChange (ModelChangeType.ApplyCardFromOtherCard, new Dictionary<ResourceType, int> (){ { ResourceType.OneCardBottomMore, -1 }});
+	}
+
+	public void OnHumanRemovedFromHouse(int houseSlotInd) {
+		PlayerModel player = GetPlayer (_game);
+		ResourceType res;
+		switch (houseSlotInd) {
+			default:
+			case 0: res = ResourceType.SpendingOnBuilding1; break;
+			case 1: res = ResourceType.SpendingOnBuilding2; break;
+			case 2: res = ResourceType.SpendingOnBuilding3; break;
+			case 3: res = ResourceType.SpendingOnBuilding4; break;
+		}
+		OnAfterModelChange(ModelChangeType.ApplyGoToHouse, new Dictionary<ResourceType, int>() { {res, -1} });
+	}
+	public void OnAfterHouseBought(int houseSlotInd, List<Resource> spentResources) {
+		int scoreFromResources = 0;
+		foreach (var res in spentResources)
+			scoreFromResources += Game.GetResourceCost (res);
+		OnHumanRemovedFromHouse (houseSlotInd);
+		ModelChangeEvent houseBuyEvent = _events [_events.Count - 1];
+
+		houseBuyEvent.StateAfter.ChangeCount (ResourceType.Score, scoreFromResources);
+
+		houseBuyEvent.UpdateDelta ();
+	}
+	public void OnAfterFeeding(TrainingDecisionModel trainingModel, bool hungry) {
+		Dictionary<ResourceType, int> additionalResources = null;
+		if (!hungry) {
+			int scoreToAdd = 10;
+			additionalResources = new Dictionary<ResourceType, int> (){{ ResourceType.Score, scoreToAdd } };
+		}
+		OnAfterDecision (trainingModel, ModelChangeType.Feeding, additionalResources);
 	}
 	private PlayerModelTrainingDump GetDump(PlayerModel player) {
 		PlayerModelTrainingDump res = new PlayerModelTrainingDump ();
@@ -273,133 +388,39 @@ public class GameTrainingController {
 		 */
 	}
 	void FindEventCauses(int eventInd) {
-		List<List<GameEvent>> causes = new List<List<GameEvent>> ();
-		GameDecizionEvent decision;
-		WhereToGo target;
-		ModelChangeEvent currEvent = _events [eventInd] as ModelChangeEvent;
-		if (currEvent == null) {
-			decision = _events [eventInd] as GameDecizionEvent;
-			// Decisions have circular cause.
-			causes.Add(new List<GameEvent>(){ decision });
-		} else {			
-			switch (currEvent.Type) {
-			case ModelChangeType.AnyResourcesFromCard:
-			case ModelChangeType.ApplyCardGivenByCard:
-			case ModelChangeType.ResourcesFromCard:
-				// Cause is going on that card decision.
-				ModelChangeEvent prevApplyCard = GetClosestPastEvent (eventInd, (ModelChangeEvent gotoCardEvent) => {
-					if (gotoCardEvent.Type != ModelChangeType.ApplyGoToCard)
-						return false;
-					return currEvent.CardHouseInd == gotoCardEvent.CardHouseInd;
-				});
-				if (prevApplyCard == null)
-					Debug.LogError ("Apply card not found");
-				causes.Add(new List<GameEvent>(){ prevApplyCard });
-				break;
-			case ModelChangeType.ApplyGoToCard:
-			case ModelChangeType.ApplyGoToFields:
-			case ModelChangeType.ApplyGoToHouse:
-			case ModelChangeType.ApplyGoToHousing:
-			case ModelChangeType.ApplyGoToInstruments:
-				// Cause is prev decision where to go.
-				target = GetTarget(currEvent.Type, currEvent.CardHouseInd);
-				decision = GetPrevDecision (eventInd, DecisionType.SelectWhereToGo, (int)target);
-				if (decision == null)
-					Debug.LogError ("where to go not found");
-				causes.Add(new List<GameEvent>(){ decision });
-				break;
-			case ModelChangeType.BonusFromOthersCharity:
-				// Cause is charity selection.
-				decision = GetPrevDecision (eventInd, DecisionType.SelectCharity, -1);
-				if (decision == null)
-					Debug.LogError ("charity selection not found");
-				causes.Add(new List<GameEvent>(){ decision });
-				break;
-			case ModelChangeType.BonusFromOwnCharity:
-				// Cause is charity selection and where to go selection on charity.
-				decision = GetPrevDecision (eventInd, DecisionType.SelectCharity, -1);
-				if (decision == null)
-					Debug.LogError ("charity selection not found");
-				target = GetTarget(currEvent.Type, currEvent.CardHouseInd);
-				GameDecizionEvent decisionWhereToGo = GetPrevDecision (eventInd, DecisionType.SelectWhereToGo, (int)target);
-				if (decision == null)
-					Debug.LogError ("where to go not found");
-				causes.Add(new List<GameEvent>(){ decision, decisionWhereToGo });
-				break;
-			case ModelChangeType.Feeding:
-				//  Cause is curr turn selection on leaving hungry and all turns that give fields.
-				decision = GetPrevCurrTurnDecision (eventInd, DecisionType.SelectLeaveHungry, -1);
-				// TODO: Add giving fields.
-				if (decision != null)
-					causes.Add(new List<GameEvent>(){ decision });
-				break;
-			case ModelChangeType.ResourcesMining:
-				// Causes are decisions where to go, spending humans, using instruments.
-				GameDecizionEvent humansCountDecision = GetPrevDecision (eventInd, DecisionType.SelectUsedHumans, -1, (GameDecizionEvent currSpentHumansDesicion)=>{					
-					if (currEvent.Delta.GetCount(ResourceType.SpentOnFood)!=0)
-						return currEvent.Delta.GetCount(ResourceType.SpentOnFood)!=0;
-					if (currEvent.Delta.GetCount(ResourceType.SpentOnForest)!=0)
-						return currEvent.Delta.GetCount(ResourceType.SpentOnForest)!=0;
-					if (currEvent.Delta.GetCount(ResourceType.SpentOnClay)!=0)
-						return currEvent.Delta.GetCount(ResourceType.SpentOnClay)!=0;
-					if (currEvent.Delta.GetCount(ResourceType.SpentOnStone)!=0)
-						return currEvent.Delta.GetCount(ResourceType.SpentOnStone)!=0;
-					if (currEvent.Delta.GetCount(ResourceType.SpentOnGold)!=0)
-						return currEvent.Delta.GetCount(ResourceType.SpentOnGold)!=0;
-					return false;
-				});
-				GameDecizionEvent whereToGoDecision = GetPrevDecision(humansCountDecision);
-				if (whereToGoDecision == null)
-					Debug.LogError ("where to go not found");
-				GameDecizionEvent instrumentsDecision = GetNextDecision(humansCountDecision);
-				if (instrumentsDecision == null)
-					Debug.LogError ("instruments found");
-				causes.Add(new List<GameEvent>(){ whereToGoDecision, humansCountDecision, instrumentsDecision });
-				break;
-			case ModelChangeType.SetSpentHumans:
-				// Cause is prev decision - where to go.
-				GameDecizionEvent whereToGoDecision2 = GetPrevDecision(humansCountDecision);
-				if (whereToGoDecision2 == null)
-					Debug.LogError ("where to go not found");
-				causes.Add(new List<GameEvent>(){ whereToGoDecision, humansCountDecision });
-				break;
-			}
+		List<List<ModelChangeEvent>> causes = new List<List<ModelChangeEvent>> ();
 
-			// TODO: Add turns that gave resources.
-		}
-		// TODO: Add turns that add to next turns humans and instruments.
-		// TODO: Calc weights and fill _events [eventInd].Causes
 	}
-	private WhereToGo  GetTarget(ModelChangeType type, int cardHouseInd) {
+	/*private WhereToGo GetTarget(ModelChangeType type, int cardHouseInd) {
 		switch (type) {
-		case ModelChangeType.BonusFromOwnCharity:
-		case ModelChangeType.ApplyGoToCard:
-			switch (cardHouseInd) {
-				default:
-				case 0:	return WhereToGo.Card1;
-				case 1:	return WhereToGo.Card2;
-				case 2:	return WhereToGo.Card3;
-				case 3:	return WhereToGo.Card4;
-			}
-			break;
-		case ModelChangeType.ApplyGoToFields:
-			return WhereToGo.Field;
-			break;
-		case ModelChangeType.ApplyGoToHouse:
-			switch (cardHouseInd) {
-				default:
-				case 0:	return WhereToGo.House1;
-				case 1:	return WhereToGo.House2;
-				case 2:	return WhereToGo.House3;
-				case 3:	return WhereToGo.House4;
-			}
-			break;
-		case ModelChangeType.ApplyGoToHousing:
-			return WhereToGo.Housing;
-			break;
-		case ModelChangeType.ApplyGoToInstruments:
-			return WhereToGo.Instrument;
-			break;
+			case ModelChangeType.BonusFromOwnCharity:
+			case ModelChangeType.ApplyGoToCard:
+				switch (cardHouseInd) {
+					default:
+					case 0:	return WhereToGo.Card1;
+					case 1:	return WhereToGo.Card2;
+					case 2:	return WhereToGo.Card3;
+					case 3:	return WhereToGo.Card4;
+				}
+				break;
+			case ModelChangeType.ApplyGoToFields:
+				return WhereToGo.Field;
+				break;
+			case ModelChangeType.ApplyGoToHouse:
+				switch (cardHouseInd) {
+					default:
+					case 0:	return WhereToGo.House1;
+					case 1:	return WhereToGo.House2;
+					case 2:	return WhereToGo.House3;
+					case 3:	return WhereToGo.House4;
+				}
+				break;
+			case ModelChangeType.ApplyGoToHousing:
+				return WhereToGo.Housing;
+				break;
+			case ModelChangeType.ApplyGoToInstruments:
+				return WhereToGo.Instrument;
+				break;
 		}
-	}
+	}*/
 }

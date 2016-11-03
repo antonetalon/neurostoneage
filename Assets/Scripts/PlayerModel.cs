@@ -461,7 +461,13 @@ public class PlayerModel {
 				//case TopCardFeature.ResourceRandomStone: break;
 				//case TopCardFeature.ResourceRandomGold: break;
 				}
-			}
+			} 
+			if (card.TopFeature == TopCardFeature.ResourceRandomForest)
+				SpentOnForest = card.TopFeatureParam;
+			if (card.TopFeature == TopCardFeature.ResourceRandomStone)
+				SpentOnStone = card.TopFeatureParam;
+			if (card.TopFeature == TopCardFeature.ResourceRandomGold)
+				SpentOnGold = card.TopFeatureParam;
 		} else {
 			if (!card.TopUsed)
 				card.UseTop ();
