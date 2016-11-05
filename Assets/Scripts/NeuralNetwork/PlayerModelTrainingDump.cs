@@ -27,6 +27,15 @@ class PlayerModelTrainingDump {
 			clone.Resources[item.Key] = item.Value;
 		return clone;
 	}
+	public bool IsEmpty {
+		get {
+			foreach (var item in Resources) {
+				if (item.Value != 0)
+					return false;
+			}
+			return true;
+		}
+	}
 	public override string ToString ()
 	{
 		StringBuilder sb = new StringBuilder ();

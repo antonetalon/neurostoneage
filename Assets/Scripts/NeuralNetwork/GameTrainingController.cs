@@ -69,9 +69,17 @@ public class GameTrainingController {
 		{ModelChangeType.ApplyCardFromOtherCard, new List<ResourceType>(){ ResourceType.OneCardBottomMore }},
 		{ModelChangeType.Feeding, new List<ResourceType>(){ResourceType.Food, ResourceType.UnspentFields, ResourceType.Forest, ResourceType.Clay, ResourceType.Stone, ResourceType.Gold }}
 	};
+	private static List<ResourceType> externalResourcesList = new List<ResourceType>() { ResourceType.Charity, ResourceType.DicePoints, ResourceType.Any2ResourcesFromCard, 
+		ResourceType.Score, ResourceType.OneCardBottomMore, ResourceType.SpendingOnHousing, ResourceType.SpendingOnFields, ResourceType.SpendingOnInstruments, 
+		ResourceType.SpendingOnFood, ResourceType.SpendingOnForest, ResourceType.SpendingOnClay, ResourceType.SpendingOnStone, ResourceType.SpendingOnGold, 
+		ResourceType.SpendingOnBuilding1, ResourceType.SpendingOnBuilding2, ResourceType.SpendingOnBuilding3, ResourceType.SpendingOnBuilding4, 
+		ResourceType.SpendingOnCard1, ResourceType.SpendingOnCard2, ResourceType.SpendingOnCard3, ResourceType.SpendingOnCard4};
+
 	private List<ModelChangeEvent> GetEventsWithResourceChange(ResourceType res, bool incOrDec) {
 		List<ModelChangeEvent> resChangeEvents = new List<ModelChangeEvent> ();
 		for (int i = 0; i < _events.Count; i++) {
+			if (_events [i].Type == ModelChangeType.StartGame)
+				continue; // Do not rely on start game in any case.
 			int delta = _events [i].Delta.GetCount (res);
 			if ((delta > 0 && incOrDec) || (delta < 0 && !incOrDec))
 				resChangeEvents.Add (_events [i]);
@@ -98,13 +106,21 @@ public class GameTrainingController {
 	}
 	private PlayerModelTrainingDump _beforeState;
 	public void OnBeforeModelChange() {	
-		PlayerModel player = GetPlayer (_game);
-		if (player != null)
-			_beforeState = GetDump (player);
-		else
-			_beforeState = new PlayerModelTrainingDump ();
+		if (_events.Count > 0)
+			_beforeState = _events [_events.Count - 1].StateAfter.Clone ();
+		else {
+			PlayerModel player = GetPlayer (_game);
+			if (player != null)
+				_beforeState = GetDump (player);
+			else
+				_beforeState = new PlayerModelTrainingDump ();
+		}
 	}
 	public void OnAfterModelChange(ModelChangeType type, Dictionary<ResourceType, int> additionalResourceChanges = null) {
+		OnAfterModelChangePrivate (type, additionalResourceChanges);
+		CheckLastEventsConsistency (1);
+	}
+	private void OnAfterModelChangePrivate(ModelChangeType type, Dictionary<ResourceType, int> additionalResourceChanges = null) {
 		PlayerModel player = GetPlayer (_game);	
 		PlayerModelTrainingDump stateAfter = GetDump (player);
 		if (additionalResourceChanges != null) {
@@ -115,6 +131,10 @@ public class GameTrainingController {
 		_events.Add (modelChange);
 	}
 	public void OnAfterDecision(TrainingDecisionModel trainingModel, ModelChangeType type, Dictionary<ResourceType, int> additionalResourceChanges = null) {
+		OnAfterDecisionPrivate (trainingModel, type, additionalResourceChanges);
+		CheckLastEventsConsistency (1);
+	}
+	private void OnAfterDecisionPrivate(TrainingDecisionModel trainingModel, ModelChangeType type, Dictionary<ResourceType, int> additionalResourceChanges = null) {
 		PlayerModel player = GetPlayer (_game);	
 		PlayerModelTrainingDump stateAfter = GetDump (player);
 		if (additionalResourceChanges != null) {
@@ -125,20 +145,49 @@ public class GameTrainingController {
 		_events.Add (decision);
 		_trainingModels.Add (trainingModel);
 	}
+	private void CheckLastEventsConsistency(int count) {
+		for (int i = _events.Count - count; i < _events.Count; i++)
+			CheckEventConsistency (i);
+	}
+	private void CheckEventConsistency (int i) {
+		if (PlayerInd != 0)
+			return; // Check only human player.
+		// Checking that on start of curr event model was the same as at the end of prev.
+		PlayerModelTrainingDump endPrevEvent = null;
+		if (i > 0) {
+			endPrevEvent = _events [i - 1].StateAfter;
+			//Debug.LogFormat ("After {0}-th turn {1}", i - 1, endPrevEvent.ToString ());
+		}
+
+		PlayerModelTrainingDump startCurrEvent = _events[i].StateBefore;
+		//Debug.LogFormat ("Before {0}-th turn {1}", i, startCurrEvent.ToString());
+
+		if (endPrevEvent == null)
+			return;
+		PlayerModelTrainingDump delta = ModelChangeEvent.GetDelta (endPrevEvent, startCurrEvent);
+		if (!delta.IsEmpty)
+			Debug.LogFormat ("NON-NULL DELTA = {0}", delta.ToString());
+
+		Debug.LogFormat ("event[{0}] type = {2} delta = {1}", i, _events[i].Delta.ToString(), _events[i].Type);
+	}
 	public void OnAfterStartTurn() {
 		PlayerModel player = GetPlayer (_game);	
 		// Other turn start.
-		OnAfterModelChange(ModelChangeType.StartRound);
+		OnAfterModelChangePrivate(ModelChangeType.StartRound);
 		ModelChangeEvent startTurnChange = _events [_events.Count - 1];
 		PlayerModelTrainingDump stateAfterStartTurn = startTurnChange.StateAfter;
+		int removedAvailableHumans = RemoveRenewableResource(ResourceType.HumansCount, ResourceType.AvailableHumans, 5, stateAfterStartTurn);
+		int removedUnspentFields = RemoveRenewableResource(ResourceType.Fields, ResourceType.UnspentFields, 0, stateAfterStartTurn);
+		int removedAvailableInstruments = RemoveRenewableResource(ResourceType.Instruments, ResourceType.InstrumentsAvailable, 0, stateAfterStartTurn);
 		// Add humans from turns.
-		AddLinkEventsForRenewableResources(ResourceType.HumansCount, ResourceType.AvailableHumans, 5, stateAfterStartTurn, ModelChangeType.AddHumansFromHousing);
+		AddLinkEventsForRenewableResources(ResourceType.HumansCount, ResourceType.AvailableHumans, 5, ModelChangeType.AddHumansFromHousing, removedAvailableHumans);
 		// Add unspent fields.
-		AddLinkEventsForRenewableResources(ResourceType.Fields, ResourceType.UnspentFields, 0, stateAfterStartTurn, ModelChangeType.AddUnspentFields);
+		AddLinkEventsForRenewableResources(ResourceType.Fields, ResourceType.UnspentFields, 0, ModelChangeType.AddUnspentFields, removedUnspentFields);
 		// Add instruments from turns.
-		AddLinkEventsForRenewableResources(ResourceType.Instruments, ResourceType.InstrumentsAvailable, 0, stateAfterStartTurn, ModelChangeType.AddAvailableInstruments);
+		AddLinkEventsForRenewableResources(ResourceType.Instruments, ResourceType.InstrumentsAvailable, 0, ModelChangeType.AddAvailableInstruments, removedAvailableInstruments);
 		// stateAfterStartTurn changed, need to update start turn event.
 		startTurnChange.UpdateDelta ();
+		CheckLastEventsConsistency (1+player.HumansCount-5+player.FieldsCount+player.InstrumentsCountSlot1+player.InstrumentsCountSlot2+player.InstrumentsCountSlot3);
 	}
 	public void OnAfterWhereToGoSelected(TrainingDecisionModel trainingModel, WhereToGo target) {
 		ResourceType addedResource;
@@ -147,10 +196,11 @@ public class GameTrainingController {
 			case WhereToGo.Card2: addedResource = ResourceType.SpendingOnCard2; break;
 			case WhereToGo.Card3: addedResource = ResourceType.SpendingOnCard3; break;
 			case WhereToGo.Card4: addedResource = ResourceType.SpendingOnCard4; break;
-			case WhereToGo.Clay: addedResource = ResourceType.SpendingOnClay; break;
 			case WhereToGo.Field: addedResource = ResourceType.SpendingOnFields; break;
 			case WhereToGo.Food: addedResource = ResourceType.SpendingOnFood; break;
 			case WhereToGo.Forest: addedResource = ResourceType.SpendingOnForest; break;
+			case WhereToGo.Clay: addedResource = ResourceType.SpendingOnClay; break;
+			case WhereToGo.Stone: addedResource = ResourceType.SpendingOnStone; break;
 			case WhereToGo.Gold: addedResource = ResourceType.SpendingOnGold; break;
 			case WhereToGo.House1: addedResource = ResourceType.SpendingOnBuilding1; break;
 			case WhereToGo.House2: addedResource = ResourceType.SpendingOnBuilding2; break;
@@ -163,7 +213,8 @@ public class GameTrainingController {
 				addedResource = ResourceType.Forest;
 				break;
 		}
-		OnAfterDecision(trainingModel, ModelChangeType.WhereToGoSelected, new Dictionary<ResourceType, int>() { {addedResource, 1} });
+		OnAfterDecisionPrivate(trainingModel, ModelChangeType.WhereToGoSelected, new Dictionary<ResourceType, int>() { {addedResource, 1} });
+		CheckLastEventsConsistency (1);
 	}
 	public void OnAfterHumansCountSelected() {
 		PlayerModelTrainingDump stateAfter = GetDump (GetPlayer (_game));
@@ -176,13 +227,17 @@ public class GameTrainingController {
 		else if (delta.GetCount (ResourceType.SpentOnCard3) > 0)
 			removedResource = ResourceType.SpendingOnCard3;
 		else if (delta.GetCount (ResourceType.SpentOnCard4) > 0)
-			removedResource = ResourceType.SpendingOnCard4;
-		else if (delta.GetCount (ResourceType.SpentOnClay) > 0)
-			removedResource = ResourceType.SpendingOnClay;
+			removedResource = ResourceType.SpendingOnCard4;		
 		else if (delta.GetCount (ResourceType.SpentOnFields) > 0)
 			removedResource = ResourceType.SpendingOnFields;
+		else if (delta.GetCount (ResourceType.SpentOnFood) > 0)
+			removedResource = ResourceType.SpendingOnFood;
 		else if (delta.GetCount (ResourceType.SpentOnForest) > 0)
 			removedResource = ResourceType.SpendingOnForest;
+		else if (delta.GetCount (ResourceType.SpentOnClay) > 0)
+			removedResource = ResourceType.SpendingOnClay;
+		else if (delta.GetCount (ResourceType.SpentOnStone) > 0)
+			removedResource = ResourceType.SpendingOnStone;
 		else if (delta.GetCount (ResourceType.SpentOnGold) > 0)
 			removedResource = ResourceType.SpendingOnGold;
 		else if (delta.GetCount (ResourceType.SpentOnBuilding1) > 0)
@@ -202,15 +257,22 @@ public class GameTrainingController {
 			removedResource = ResourceType.AvailableHumans;
 		}
 
-		OnAfterModelChange(ModelChangeType.SetSpentHumans, new Dictionary<ResourceType, int>() { {removedResource, -1} });
+		OnAfterModelChangePrivate(ModelChangeType.SetSpentHumans, new Dictionary<ResourceType, int>() { {removedResource, -1} });
+		CheckLastEventsConsistency (1);
 	}
-	private void AddLinkEventsForRenewableResources(ResourceType renewableSource, ResourceType renewableDest, int startSourceCount, PlayerModelTrainingDump stateAfterStartTurn, ModelChangeType changeType) {
-		List<ModelChangeEvent> renewableSourceAddingEvents = GetEventsWithResourceChange(renewableSource, true);
+	private int RemoveRenewableResource(ResourceType renewableSource, ResourceType renewableDest, int startSourceCount, PlayerModelTrainingDump stateAfterStartTurn) {
 		int sourceCount = stateAfterStartTurn.GetCount (renewableSource);
 		int linkedCount = Mathf.Max(0, sourceCount - startSourceCount); 
-		if (linkedCount>0) {
+		if (linkedCount>0)
 			stateAfterStartTurn.ChangeCount(renewableDest, -linkedCount); // Remove human from start turn.
-			PlayerModelTrainingDump currState = stateAfterStartTurn.Clone ();
+		return linkedCount;
+	}
+	private void AddLinkEventsForRenewableResources(ResourceType renewableSource, ResourceType renewableDest, int startSourceCount, ModelChangeType changeType, int linkedCount) {
+		List<ModelChangeEvent> renewableSourceAddingEvents = GetEventsWithResourceChange(renewableSource, true);
+		PlayerModelTrainingDump prevState = _events[_events.Count-1].StateAfter;
+		int sourceCount = prevState.GetCount (renewableSource);
+		if (linkedCount>0) {
+			PlayerModelTrainingDump currState = prevState.Clone ();
 			for (int i = startSourceCount; i < sourceCount; i++) {			
 				// Create model change linked to renewableSource gaining turn.
 				PlayerModelTrainingDump nextState = currState.Clone();
@@ -222,19 +284,27 @@ public class GameTrainingController {
 		}
 	}
 	public void OnReceived2ResFromCard() {
-		OnAfterModelChange(ModelChangeType.ReceiveAny2ResFromCard, new Dictionary<ResourceType, int>() { {ResourceType.Any2ResourcesFromCard, -1} });
+		OnAfterModelChangePrivate(ModelChangeType.ReceiveAny2ResFromCard, new Dictionary<ResourceType, int>() { {ResourceType.Any2ResourcesFromCard, -1} });
+		CheckLastEventsConsistency (1);
 	}
 	public void OnAfterResourceDicesRolled(int dotsSum) {
-		OnAfterModelChange(ModelChangeType.ApplyGoToMining, new Dictionary<ResourceType, int>() { {ResourceType.DicePoints, dotsSum} });
+		OnAfterModelChangePrivate(ModelChangeType.ApplyGoToMining, new Dictionary<ResourceType, int>() { {ResourceType.DicePoints, dotsSum} });
+		CheckLastEventsConsistency (1);
 	}
 	public void OnAfterInstrumentsApplied(TrainingDecisionModel trainingModel, int instrumentsAdded) {
-		OnAfterDecision(trainingModel, ModelChangeType.ApplyingInstruments, new Dictionary<ResourceType, int>() { {ResourceType.DicePoints, instrumentsAdded} });
+		OnAfterDecisionPrivate(trainingModel, ModelChangeType.ApplyingInstruments, new Dictionary<ResourceType, int>() { {ResourceType.DicePoints, instrumentsAdded} });
+		CheckLastEventsConsistency (1);
 	}
 	public void OnAfterResourcesMined() {
 		PlayerModel player = GetPlayer (_game);
-		OnAfterModelChange(ModelChangeType.ResourcesMining, new Dictionary<ResourceType, int>() { {ResourceType.DicePoints, _beforeState.GetCount(ResourceType.DicePoints)} });
+		OnAfterModelChangePrivate(ModelChangeType.ResourcesMining, new Dictionary<ResourceType, int>() { {ResourceType.DicePoints, _beforeState.GetCount(ResourceType.DicePoints)} });
+		CheckLastEventsConsistency (1);
 	}
 	public void OnHumanRemovedFromCard(int cardSlotInd) {
+		OnHumanRemovedFromCardPrivate (cardSlotInd);
+		CheckLastEventsConsistency (1);
+	}
+	public void OnHumanRemovedFromCardPrivate(int cardSlotInd) {
 		PlayerModel player = GetPlayer (_game);
 		ResourceType res;
 		switch (cardSlotInd) {
@@ -244,10 +314,10 @@ public class GameTrainingController {
 			case 2: res = ResourceType.SpendingOnCard3; break;
 			case 3: res = ResourceType.SpendingOnCard4; break;
 		}
-		OnAfterModelChange(ModelChangeType.ApplyGoToCard, new Dictionary<ResourceType, int>() { {res, -1} });
+		OnAfterModelChangePrivate(ModelChangeType.ApplyGoToCard, new Dictionary<ResourceType, int>() { {res, -1} });
 	}
 	public void OnAfterCardBought(int cardSlotInd, CardToBuild card) {
-		OnHumanRemovedFromCard (cardSlotInd);
+		OnHumanRemovedFromCardPrivate (cardSlotInd);
 		ModelChangeEvent cardBuyEvent = _events [_events.Count - 1];
 
 		if (card.TopFeature == TopCardFeature.RandomForEveryone)
@@ -263,13 +333,16 @@ public class GameTrainingController {
 			cardBuyEvent.StateAfter.ChangeCount (ResourceType.OneCardBottomMore, 1);
 
 		cardBuyEvent.UpdateDelta ();
+		CheckLastEventsConsistency (1);
 	}
 	public void OnAfterCharityReceived(TrainingDecisionModel trainingModel, bool own) {
 		ModelChangeType type = own ? ModelChangeType.BonusFromOwnCharity : ModelChangeType.BonusFromOthersCharity;
-		OnAfterDecision (trainingModel, type, new Dictionary<ResourceType, int> (){ { ResourceType.Charity, -1 } });
+		OnAfterDecisionPrivate (trainingModel, type, new Dictionary<ResourceType, int> (){ { ResourceType.Charity, -1 } });
+		CheckLastEventsConsistency (1);
 	}
 	public void OnAfterCardFromCardApplied() {
-		OnAfterModelChange (ModelChangeType.ApplyCardFromOtherCard, new Dictionary<ResourceType, int> (){ { ResourceType.OneCardBottomMore, -1 }});
+		OnAfterModelChangePrivate (ModelChangeType.ApplyCardFromOtherCard, new Dictionary<ResourceType, int> (){ { ResourceType.OneCardBottomMore, -1 }});
+		CheckLastEventsConsistency (1);
 	}
 
 	public void OnHumanRemovedFromHouse(int houseSlotInd) {
@@ -282,7 +355,8 @@ public class GameTrainingController {
 			case 2: res = ResourceType.SpendingOnBuilding3; break;
 			case 3: res = ResourceType.SpendingOnBuilding4; break;
 		}
-		OnAfterModelChange(ModelChangeType.ApplyGoToHouse, new Dictionary<ResourceType, int>() { {res, -1} });
+		OnAfterModelChangePrivate(ModelChangeType.ApplyGoToHouse, new Dictionary<ResourceType, int>() { {res, -1} });
+		CheckLastEventsConsistency (1);
 	}
 	public void OnAfterHouseBought(int houseSlotInd, List<Resource> spentResources) {
 		int scoreFromResources = 0;
@@ -294,6 +368,7 @@ public class GameTrainingController {
 		houseBuyEvent.StateAfter.ChangeCount (ResourceType.Score, scoreFromResources);
 
 		houseBuyEvent.UpdateDelta ();
+		CheckLastEventsConsistency (1);
 	}
 	public void OnAfterFeeding(TrainingDecisionModel trainingModel, bool hungry) {
 		Dictionary<ResourceType, int> additionalResources = null;
@@ -301,7 +376,8 @@ public class GameTrainingController {
 			int scoreToAdd = 10;
 			additionalResources = new Dictionary<ResourceType, int> (){{ ResourceType.Score, scoreToAdd } };
 		}
-		OnAfterDecision (trainingModel, ModelChangeType.Feeding, additionalResources);
+		OnAfterDecisionPrivate (trainingModel, ModelChangeType.Feeding, additionalResources);
+		CheckLastEventsConsistency (1);
 	}
 	private PlayerModelTrainingDump GetDump(PlayerModel player) {
 		PlayerModelTrainingDump res = new PlayerModelTrainingDump ();
@@ -340,6 +416,11 @@ public class GameTrainingController {
 		res.Add (ResourceType.SciencesIn1stLine, player.GetSciencesCount(0));
 		res.Add (ResourceType.SciencesIn2ndLine, player.GetSciencesCount(1));
 		res.Add (ResourceType.UnspentFields, player.UnSpentFields);
+		if (_events.Count > 0) {
+			PlayerModelTrainingDump prevDump = _events [_events.Count - 1].StateAfter;
+			foreach (var externalRes in externalResourcesList)
+				res.Add (externalRes, prevDump.GetCount (externalRes));
+		}
 		return res;
 	}
 
