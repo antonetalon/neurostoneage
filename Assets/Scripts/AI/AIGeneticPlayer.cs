@@ -88,7 +88,7 @@ public class AIGeneticPlayer:Player {
 		int min = game.GetMinHumansCountFor (whereToGo);
 		int freePlacesCount = game.GetAvailableHumansCountFor (whereToGo);
 		max = Mathf.Min (max, freePlacesCount);
-		max = Mathf.Min (max, _model.UnspentHumanCount);
+		max = Mathf.Min (max, _model.AvailableHumans);
 		if (max <= min) {
 			onComplete (min);
 			return;

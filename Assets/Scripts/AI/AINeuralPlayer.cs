@@ -301,7 +301,7 @@ public class AINeuralPlayer:Player {
 		int min = game.GetMinHumansCountFor (whereToGo);
 		int freePlacesCount = game.GetAvailableHumansCountFor (whereToGo);
 		max = Mathf.Min (max, freePlacesCount);
-		max = Mathf.Min (max, player.UnspentHumanCount);
+		max = Mathf.Min (max, player.AvailableHumans);
 
 		List<int> optionInds = new List<int> ();
 		for (int j = min; j <= max; j++)

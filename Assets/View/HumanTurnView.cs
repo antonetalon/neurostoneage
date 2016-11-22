@@ -165,7 +165,7 @@ public class HumanTurnView : MonoBehaviour {
 		SelectedHumansCount = -1;
 		CompositionRoot.Instance.ExecuteInMainThread (() => {
 			_selectHumansCount.SetActive (true);
-			int maxHumans = Mathf.Min (game.GetAvailableHumansCountFor (target), player.UnspentHumanCount);
+			int maxHumans = Mathf.Min (game.GetAvailableHumansCountFor (target), player.AvailableHumans);
 			for (int i = 0; i < _humans.Count; i++) {
 				_humans [i].gameObject.SetActive (i < maxHumans);
 				_humans [i].sprite = _playerSprites [(int)color];

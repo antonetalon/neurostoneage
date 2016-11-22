@@ -304,7 +304,7 @@ public class Game {
 		get {
 			int count = 0;
 			foreach (var player in PlayerModels)
-				count += player.UnspentHumanCount;
+				count += player.AvailableHumans;
 			return count;
 		}
 	}
@@ -391,7 +391,7 @@ public class Game {
 				break;
 		}
 
-		if (GetAvailableHumansCountFor (target) > 0 && GetMinHumansCountFor (target) <= player.UnspentHumanCount && player.GetSpentHumansCountFor(target)==0)
+		if (GetAvailableHumansCountFor (target) > 0 && GetMinHumansCountFor (target) <= player.AvailableHumans && player.GetSpentHumansCountFor(target)==0)
 			targets.Add (target);
 	}
 	public int GetMaxHumansCountFor(WhereToGo target) {
@@ -548,7 +548,7 @@ public class Game {
 						case WhereToGo.Instrument: model.GoToInstruments (); break;
 						case WhereToGo.Housing: model.GoToHousing (); break;
 					}
-					TrainingControllers [currPlayerInd].OnAfterHumansCountSelected ();
+					TrainingControllers [currPlayerInd].OnAfterHumansCountSelected (target);
 					SetChanged ();
 				}
 			}
@@ -932,6 +932,7 @@ public class Game {
 		int randFromDices = rand;
 
 		TrainingControllers [currPlayerInd].OnBeforeModelChange ();
+		model.OnResourceDicesRolled (target);
 		TrainingControllers [currPlayerInd].OnAfterResourceDicesRolled (randFromDices);
 
 		TrainingControllers[currPlayerInd].OnBeforeModelChange();

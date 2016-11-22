@@ -31,7 +31,7 @@ public class PlayerView : MonoBehaviour {
 
 	public void UpdateView(PlayerModel player) {
 		for (int i = 0; i < _humans.Count; i++)
-			_humans [i].gameObject.SetActive (i<player.UnspentHumanCount);
+			_humans [i].gameObject.SetActive (i<player.AvailableHumans);
 		_humansMultiplier.text = player.HumansMultiplier.ToString ();
 		_instruments [0].text = player.InstrumentsCountSlot1.ToString ();
 		_instruments [1].text = player.InstrumentsCountSlot2.ToString ();

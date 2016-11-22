@@ -31,7 +31,6 @@ public class PlayerModel {
 	public int SpentOnCard2 { get; private set; }
 	public int SpentOnCard3 { get; private set; }
 	public int SpentOnCard4 { get; private set; }
-	public int WastedOnEndOfTurn { get; private set; }
 	public int UnSpentFields { get; private set; }
 
 	public int GetSpentOnCard(int cardInd) {
@@ -91,13 +90,7 @@ public class PlayerModel {
 		}
 	}
 
-	public int UnspentHumanCount {
-		get {
-			return HumansCount - SpentOnHousing - SpentOnFields - SpentOnInstruments - SpentOnFood - SpentOnForest
-			- SpentOnClay - SpentOnStone - SpentOnGold - SpentOnBuilding1 - SpentOnBuilding2 - SpentOnBuilding3
-				- SpentOnBuilding4 - SpentOnCard1 - SpentOnCard2 - SpentOnCard3 - SpentOnCard4 - WastedOnEndOfTurn;
-		}
-	}
+	public int AvailableHumans { get; private set; }
 
 	public int FieldsCount { get; private set; }
 	public int InstrumentsCountSlot1 { get; private set; }
@@ -261,58 +254,74 @@ public class PlayerModel {
 		SpentOnCard2 = 0;
 		SpentOnCard3 = 0;
 		SpentOnCard4 = 0;
-		WastedOnEndOfTurn = 0;
+		AvailableHumans = HumansCount;
 		UnSpentFields = FieldsCount;
 	}
 
 	#region Selecting where to go - turn phase 1.
 	public void GoToHousing() {
 		SpentOnHousing = 2;
+		AvailableHumans -= 2;
 	}
 	public void GoToFields() {
 		SpentOnFields = 1;
+		AvailableHumans -= 1;
 	}
 	public void GoToInstruments() {
 		SpentOnInstruments = 1;
+		AvailableHumans -= 1;
 	}
 	public void GoToFood(int count) {
 		SpentOnFood+=count;
+		AvailableHumans -= count;
 	}
 	public void GoToForest(int count) {
 		SpentOnForest+=count;
+		AvailableHumans -= count;
 	}
 	public void GoToClay(int count) {
 		SpentOnClay+=count;
+		AvailableHumans -= count;
 	}
 	public void GoToStone(int count) {
 		SpentOnStone+=count;
+		AvailableHumans -= count;
 	}
 	public void GoToGold(int count) {
 		SpentOnGold+=count;
+		AvailableHumans -= count;
 	}
 	public void GoToBuilding1() {
 		SpentOnBuilding1++;
+		AvailableHumans--;
 	}
 	public void GoToBuilding2() {
 		SpentOnBuilding2++;
+		AvailableHumans--;
 	}
 	public void GoToBuilding3() {
 		SpentOnBuilding3++;
+		AvailableHumans--;
 	}
 	public void GoToBuilding4() {
 		SpentOnBuilding4++;
+		AvailableHumans--;
 	}
 	public void GoToCard1() {
 		SpentOnCard1++;
+		AvailableHumans--;
 	}
 	public void GoToCard2() {
 		SpentOnCard2++;
+		AvailableHumans--;
 	}
 	public void GoToCard3() {
 		SpentOnCard3++;
+		AvailableHumans--;
 	}
 	public void GoToCard4() {
 		SpentOnCard4++;
+		AvailableHumans--;
 	}
 	#endregion
 
@@ -334,40 +343,14 @@ public class PlayerModel {
 		SpentOnInstruments = 0;
 		AddInstrument ();
 	}
-	private void ApplyGoToFood(int pointsSum) {
-		if (SpentOnFood == 0)
-			return;
-		SpentOnFood = 0;
-		int inc = pointsSum / Config.PointsPerFood;
-		Food += inc;
-	}
-	public void ApplyGoToForest(int pointsSum) {
-		if (SpentOnForest == 0)
-			return;
-		SpentOnForest = 0;
-		int inc = pointsSum / Config.PointsPerForest;
-		Forest += inc;
-	}
-	public void ApplyGoToClay(int pointsSum) {
-		if (SpentOnClay == 0)
-			return;
-		SpentOnClay = 0;
-		int inc = pointsSum / Config.PointsPerClay;
-		Clay += inc;
-	}
-	public void ApplyGoToStone(int pointsSum) {
-		if (SpentOnStone == 0)
-			return;
-		SpentOnStone = 0;
-		int inc = pointsSum / Config.PointsPerStone;
-		Stone += inc;
-	}
-	public void ApplyGoToGold(int pointsSum) {
-		if (SpentOnGold == 0)
-			return;
-		SpentOnGold = 0;
-		int inc = pointsSum / Config.PointsPerGold;
-		Gold += inc;
+	public void OnResourceDicesRolled(WhereToGo target) {
+		switch (target) {
+			case WhereToGo.Food: SpentOnFood = 0; break;
+			case WhereToGo.Forest: SpentOnForest = 0; break;
+			case WhereToGo.Clay: SpentOnClay = 0; break;
+			case WhereToGo.Stone: SpentOnStone = 0; break;
+			case WhereToGo.Gold: SpentOnGold = 0; break;
+		}
 	}
 	public void ApplyGoToBuilding(int buildingInd, List<Resource> spentResources) {
 		if (GetSpentOnHouse(buildingInd) == 0)
@@ -396,7 +379,7 @@ public class PlayerModel {
 		AddCard (card, true);
 	}
 	public void ApplyEndTurn() {
-		WastedOnEndOfTurn = UnspentHumanCount;
+		AvailableHumans = 0;
 		InstrumentsSlot1Used = true;
 		InstrumentsSlot2Used = true;
 		InstrumentsSlot3Used = true;
@@ -546,6 +529,7 @@ public class PlayerModel {
 	public void AddField() {
 		FieldsCount++;
 		Score += FieldsMultiplier;
+		UnSpentFields++;
 	}
 	private void AddInstrumentsMultiplier() {
 		InstrumentsMultiplier++;

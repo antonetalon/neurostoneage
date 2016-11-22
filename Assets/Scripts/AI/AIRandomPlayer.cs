@@ -17,7 +17,7 @@ public class AIRandomPlayer:Player {
 		int min = game.GetMinHumansCountFor (whereToGo);
 		int freePlacesCount = game.GetAvailableHumansCountFor (whereToGo);
 		int maxTotal = Mathf.Min (max, freePlacesCount);
-		maxTotal = Mathf.Min (maxTotal, _model.UnspentHumanCount);
+		maxTotal = Mathf.Min (maxTotal, _model.AvailableHumans);
 		if (maxTotal < min) {
 			onComplete (0);
 			return;
