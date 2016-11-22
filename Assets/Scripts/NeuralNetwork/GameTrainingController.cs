@@ -329,6 +329,7 @@ public class GameTrainingController {
 		foreach (var res in spentResources)
 			scoreFromResources += Game.GetResourceCost (res);
 		//OnHumanRemovedFromHouse (houseSlotInd);
+		OnAfterModelChangePrivate(ModelChangeType.ApplyGoToHouse);
 		ModelChangeEvent houseBuyEvent = _events [_events.Count - 1];
 
 		houseBuyEvent.StateAfter.ChangeCount (ResourceType.Score, scoreFromResources);
@@ -402,6 +403,21 @@ public class GameTrainingController {
 		for (int eventInd = 0; eventInd < _events.Count; eventInd++) {
 			FindEventCauses (eventInd);
 		}
+		// Log Events with causes.
+		sb = new StringBuilder("Event causes:\n");
+		for (int eventInd = 0; eventInd < _events.Count; eventInd++) {
+			sb.AppendFormat ("{0}-th event, type={1}", eventInd, _events [eventInd].Type);
+			if (_events [eventInd].Causes.Count == 0)
+				sb.AppendLine (" has no causes");
+			else {
+				sb.Append (", causes = (");
+				foreach (var item in _events [eventInd].Causes)
+					sb.AppendFormat ("{0}, {1}-th event, mass={2:0.00}, ", item.Key.Type, _events.IndexOf(item.Key), item.Value);
+				sb.Append (")");
+			}
+			sb.AppendLine ();
+		}
+		Debug.Log (sb.ToString());
 		// Trainsitive closure for causality matrix.
 		// Give score values to events.
 		// Calc score values for each turn.
@@ -435,8 +451,51 @@ public class GameTrainingController {
 		 */
 	}
 	void FindEventCauses(int eventInd) {
-		List<List<ModelChangeEvent>> causes = new List<List<ModelChangeEvent>> ();
-
+		List<int> causeInds = new List<int> ();
+		List<ResourceType> requiredResources = new List<ResourceType> ();
+		ModelChangeEvent currEvent = _events [eventInd];
+		foreach (ResourceType res in Enum.GetValues(typeof(ResourceType))) {
+			int requiredCount = -currEvent.Delta.GetCount (res);
+			for (int i=0; i<requiredCount;i++)
+				requiredResources.Add (res);
+		}
+		foreach (ResourceType requiredRes in requiredResources) {
+			bool causeFound = false;
+			for (int i = 0; i < eventInd; i++) {
+				if (_events [i].Delta.GetCount (requiredRes) <= 0)
+					continue;
+				// i-th event gives requiredRes to current.
+				currEvent.Delta.Add (requiredRes, 1);
+				_events [i].Delta.Add (requiredRes, -1);
+				causeInds.Add (i);
+				causeFound = true;
+				break;
+			}
+			if (!causeFound)
+				Debug.Log ("WTF");
+		}
+		if (currEvent is GameDecizionEvent)
+			causeInds.Add (eventInd); // Decisions are not part of previous actions, they are causality sources.
+		if (causeInds.Count == 0)
+			causeInds.Add (eventInd); // Actions without any other cause considered self-caused.
+		
+		// Find cause weights.
+		currEvent.Causes = new Dictionary<ModelChangeEvent, float>();
+		for (int i = 0; i < causeInds.Count; i++) {
+			int duplicates = 1;
+			for (int j = causeInds.Count-1; j > i; j--) {
+				if (causeInds [i] == causeInds [j]) {
+					duplicates++;
+					causeInds.RemoveAt (j);
+				}
+			}
+			currEvent.Causes.Add (_events [causeInds[i]], duplicates);
+		}
+		float sum = 0;
+		foreach (float weight in currEvent.Causes.Values)
+			sum += weight;
+		for (int causeInd = 0;causeInd<causeInds.Count;causeInd++)
+			currEvent.Causes [_events[causeInds[causeInd]]] /= sum;
 	}
 	/*private WhereToGo GetTarget(ModelChangeType type, int cardHouseInd) {
 		switch (type) {

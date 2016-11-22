@@ -173,7 +173,7 @@ public class Game {
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.ResourceConstFood, 7, BottomCardFeature.Science, Science.Pot));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.ResourceConstFood, 4, BottomCardFeature.HouseMultiplier, 1));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.OneCardMore, 0, BottomCardFeature.Science, Science.Book));
-		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.ResourceConstClay, 1, BottomCardFeature.HumanMultiplier, 2));
+		/*_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.ResourceConstClay, 1, BottomCardFeature.HumanMultiplier, 2));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.RandomForEveryone, 0, BottomCardFeature.Science, Science.Car));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.ResourceConstStone, 2, BottomCardFeature.Science, Science.Car));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.RandomForEveryone, 0, BottomCardFeature.Science, Science.Book));
@@ -181,7 +181,7 @@ public class Game {
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.ResourceConstFood, 5, BottomCardFeature.Science, Science.Grass));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.RandomForEveryone, 0, BottomCardFeature.Science, Science.Pot));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.ResourceRandomGold, 2, BottomCardFeature.Science, Science.Statue));
-		/*_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.InstrumentsForever, 1, BottomCardFeature.Science, Science.Statue));
+		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.InstrumentsForever, 1, BottomCardFeature.Science, Science.Statue));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.RandomForEveryone, 0, BottomCardFeature.HouseMultiplier, 2));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.InstrumentsOnce, 3, BottomCardFeature.InstrumentsMultiplier, 1));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.InstrumentsOnce, 2, BottomCardFeature.InstrumentsMultiplier, 2));
