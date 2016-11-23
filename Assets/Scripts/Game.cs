@@ -548,7 +548,7 @@ public class Game {
 						case WhereToGo.Instrument: model.GoToInstruments (); break;
 						case WhereToGo.Housing: model.GoToHousing (); break;
 					}
-					TrainingControllers [currPlayerInd].OnAfterHumansCountSelected (target);
+					TrainingControllers [currPlayerInd].OnAfterHumansCountSelected (trainingModelUsedHumans, target);
 					SetChanged ();
 				}
 			}

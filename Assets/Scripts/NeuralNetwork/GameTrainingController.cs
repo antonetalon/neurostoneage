@@ -236,9 +236,13 @@ public class GameTrainingController {
 		OnAfterDecisionPrivate(trainingModel, ModelChangeType.WhereToGoSelected, new Dictionary<ResourceType, int>() { {addedResource, 1} });
 		CheckLastEventsConsistency (1);
 	}
-	public void OnAfterHumansCountSelected(WhereToGo target) {
+	public void OnAfterHumansCountSelected(TrainingDecisionModel trainingModel, WhereToGo target) {
 		ResourceType removedResource = GetSpendingOnWhereToGo (target);
-		OnAfterModelChangePrivate(ModelChangeType.SetSpentHumans, new Dictionary<ResourceType, int>() { {removedResource, -1} });
+		var resourceChange = new Dictionary<ResourceType, int> () { { removedResource, -1 } };
+		if (target == WhereToGo.Food || target == WhereToGo.Forest || target == WhereToGo.Clay || target == WhereToGo.Stone || target == WhereToGo.Gold)
+			OnAfterDecisionPrivate(trainingModel, ModelChangeType.SetSpentHumans, resourceChange);
+		else
+			OnAfterModelChangePrivate(ModelChangeType.SetSpentHumans, resourceChange);
 		CheckLastEventsConsistency (1);
 	}
 	private int RemoveRenewableResource(ResourceType renewableSource, ResourceType renewableDest, int startSourceCount, PlayerModelTrainingDump stateAfterStartTurn) {
@@ -403,22 +407,28 @@ public class GameTrainingController {
 		for (int eventInd = 0; eventInd < _events.Count; eventInd++) {
 			FindEventCauses (eventInd);
 		}
-		// Log Events with causes.
-		sb = new StringBuilder("Event causes:\n");
-		for (int eventInd = 0; eventInd < _events.Count; eventInd++) {
-			sb.AppendFormat ("{0}-th event, type={1}", eventInd, _events [eventInd].Type);
-			if (_events [eventInd].Causes.Count == 0)
-				sb.AppendLine (" has no causes");
-			else {
-				sb.Append (", causes = (");
-				foreach (var item in _events [eventInd].Causes)
-					sb.AppendFormat ("{0}, {1}-th event, mass={2:0.00}, ", item.Key.Type, _events.IndexOf(item.Key), item.Value);
-				sb.Append (")");
-			}
-			sb.AppendLine ();
-		}
-		Debug.Log (sb.ToString());
+		LogEventsWithCauses();
 		// Trainsitive closure for causality matrix.
+		for (int eventInd = 0; eventInd < _events.Count; eventInd++) {
+			ModelChangeEvent[] causesArray = new ModelChangeEvent[_events [eventInd].Causes.Keys.Count];
+			_events [eventInd].Causes.Keys.CopyTo (causesArray, 0);
+			for (int causeIndInCauses = 0; causeIndInCauses < causesArray.Length; causeIndInCauses++) {
+				ModelChangeEvent currCause = causesArray [causeIndInCauses];
+				int causeInd = _events.IndexOf (currCause);
+				if (causeInd == eventInd)
+					continue; // No transitiveness.
+				float weightToTransit = _events[eventInd].Causes[currCause];
+				_events[eventInd].Causes.Remove(currCause);
+				foreach (var causeOfCauseItem in currCause.Causes) {
+					float currWeight = causeOfCauseItem.Value * weightToTransit;
+					if (_events [eventInd].Causes.ContainsKey (causeOfCauseItem.Key))
+						_events [eventInd].Causes [causeOfCauseItem.Key] += currWeight;
+					else
+						_events [eventInd].Causes.Add(causeOfCauseItem.Key, currWeight);
+				}
+			}
+		}
+		LogEventsWithCauses();
 		// Give score values to events.
 		// Calc score values for each turn.
 		// Fill training model rewards.
@@ -450,10 +460,33 @@ public class GameTrainingController {
 			trainingModel.RewardPercent = rewards[trainingModel.PlayerInd];
 		 */
 	}
+	private void LogEventsWithCauses() {
+		StringBuilder sb = new StringBuilder("Event causes:\n");
+		for (int eventInd = 0; eventInd < _events.Count; eventInd++) {
+			sb.AppendFormat ("{0}-th event, type={1}", eventInd, _events [eventInd].Type);
+			if (_events [eventInd].Causes.Count == 0)
+				sb.AppendLine (" has no causes");
+			else {
+				sb.Append (", causes = (");
+				foreach (var item in _events [eventInd].Causes)
+					sb.AppendFormat ("{0}, {1}-th event, mass={2:0.00}, ", item.Key.Type, _events.IndexOf(item.Key), item.Value);
+				sb.Append (")");
+			}
+			sb.AppendLine ();
+		}
+		Debug.Log (sb.ToString());
+	}
 	void FindEventCauses(int eventInd) {
+		ModelChangeEvent currEvent = _events [eventInd];
+		currEvent.Causes = new Dictionary<ModelChangeEvent, float>();
+		if (currEvent is GameProxyEvent) {
+			GameProxyEvent proxyEvent = currEvent as GameProxyEvent;
+			currEvent.Causes.Add (proxyEvent.Cause, 1);
+			return;
+		}
+
 		List<int> causeInds = new List<int> ();
 		List<ResourceType> requiredResources = new List<ResourceType> ();
-		ModelChangeEvent currEvent = _events [eventInd];
 		foreach (ResourceType res in Enum.GetValues(typeof(ResourceType))) {
 			int requiredCount = -currEvent.Delta.GetCount (res);
 			for (int i=0; i<requiredCount;i++)
@@ -467,7 +500,8 @@ public class GameTrainingController {
 				// i-th event gives requiredRes to current.
 				currEvent.Delta.Add (requiredRes, 1);
 				_events [i].Delta.Add (requiredRes, -1);
-				causeInds.Add (i);
+				if (i!=0 && _events [i].Type != ModelChangeType.StartRound) // Start game and round is not a cause.
+					causeInds.Add (i);
 				causeFound = true;
 				break;
 			}
@@ -480,7 +514,6 @@ public class GameTrainingController {
 			causeInds.Add (eventInd); // Actions without any other cause considered self-caused.
 		
 		// Find cause weights.
-		currEvent.Causes = new Dictionary<ModelChangeEvent, float>();
 		for (int i = 0; i < causeInds.Count; i++) {
 			int duplicates = 1;
 			for (int j = causeInds.Count-1; j > i; j--) {
