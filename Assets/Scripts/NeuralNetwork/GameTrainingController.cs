@@ -407,7 +407,7 @@ public class GameTrainingController {
 		for (int eventInd = 0; eventInd < _events.Count; eventInd++) {
 			FindEventCauses (eventInd);
 		}
-		LogEventsWithCauses();
+		LogEventsWithCauses("Causes calced");
 		// Trainsitive closure for causality matrix.
 		for (int eventInd = 0; eventInd < _events.Count; eventInd++) {
 			ModelChangeEvent[] causesArray = new ModelChangeEvent[_events [eventInd].Causes.Keys.Count];
@@ -428,42 +428,113 @@ public class GameTrainingController {
 				}
 			}
 		}
-		LogEventsWithCauses();
+		LogEventsWithCauses("Transitive causes calced");
 		// Give score values to events.
-		// Calc score values for each turn.
-		// Fill training model rewards.
-
-
-		/*
-		 // Fill rewards.
-		float[] rewards = new float[4];
-		int maxScore = int.MinValue;
-		for (int i = 0; i < Players.Count; i++) {
-			if (Players [i].Model.Score>maxScore)
-				maxScore = Players [i].Model.Score;
+		PlayerModel model = GetPlayer(_game);
+		foreach (ModelChangeEvent currEvent in _events) {
+			int score = currEvent.Delta.GetCount (ResourceType.Score);
+			currEvent.ScoreValue = score; // Score from houses(resources), top card features, feeding.
 		}
-		if (maxScore != 0) {
-			for (int i = 0; i < Players.Count; i++) {
-				rewards [i] = Players [i].Model.Score / (float)maxScore;
-				const float winnerThreshold = 0.9f;
-				rewards [i] -= winnerThreshold;
-				if (rewards [i] > 0)
-					rewards [i] *= 1 / (1 - winnerThreshold);
-				else
-					rewards [i] *= 1 / winnerThreshold;
+		Dictionary<ResourceType, float> resourceScoreValues = new Dictionary<ResourceType, float>();
+		// Score from science line 1 and 2.
+		int scienceScoreRow1 = model.GetScienceScore(0);
+		resourceScoreValues.Add (ResourceType.SciencesIn1stLine, scienceScoreRow1);
+		int scienceScoreRow2 = model.GetScienceScore(1);
+		resourceScoreValues.Add (ResourceType.SciencesIn2ndLine, scienceScoreRow2);
+		// Score from field multipliers.
+		float scoreFromFieldMultipliers = model.FieldsMultiplier*model.FieldsCount;
+		resourceScoreValues.Add (ResourceType.Fields, scoreFromFieldMultipliers * 0.5f);
+		resourceScoreValues.Add (ResourceType.FieldsMultiplier, scoreFromFieldMultipliers * 0.5f);
+		// Score from human multipliers.
+		float scoreFromHumanMultipliers = model.HumansMultiplier*model.HumansCount;
+		resourceScoreValues.Add (ResourceType.HumansCount, scoreFromHumanMultipliers * 0.5f);
+		resourceScoreValues.Add (ResourceType.HumanMultiplier, scoreFromHumanMultipliers * 0.5f);
+		// Score from house multipliers.
+		float scoreFromHouseMultipliers = model.HouseMultiplier*model.Houses.Count;
+		resourceScoreValues.Add (ResourceType.HousesCount, scoreFromHouseMultipliers * 0.5f);
+		resourceScoreValues.Add (ResourceType.HousesMultiplier, scoreFromHouseMultipliers * 0.5f);
+		// Score from instrument multipliers.
+		float scoreFromInstrumentsMultipliers = model.InstrumentsMultiplier*(model.InstrumentsCountSlot1+model.InstrumentsCountSlot2+model.InstrumentsCountSlot3);
+		resourceScoreValues.Add (ResourceType.Instruments, scoreFromInstrumentsMultipliers * 0.5f);
+		resourceScoreValues.Add (ResourceType.InstrumentsMultiplier, scoreFromInstrumentsMultipliers * 0.5f);
+		// Score from resources.
+		resourceScoreValues.Add (ResourceType.Forest, model.Forest);
+		resourceScoreValues.Add (ResourceType.Clay, model.Clay);
+		resourceScoreValues.Add (ResourceType.Stone, model.Stone);
+		resourceScoreValues.Add (ResourceType.Gold, model.Gold);
+		// Add all scores to corresponding turns.
+		Dictionary<ResourceType, int> resourceCounts = new Dictionary<ResourceType, int>();
+		foreach (var item in resourceScoreValues) {
+			int count = 0;
+			foreach (ModelChangeEvent currEvent in _events) {
+				count += currEvent.Delta.GetCount (item.Key);
 			}
-		} else {
-			for (int i = 0; i < Players.Count; i++)
-				rewards [i] = 0;
+			resourceCounts.Add (item.Key, count);
 		}
-		foreach (var trainingModel in TrainingModels)
-			trainingModel.RewardPercent = rewards[trainingModel.PlayerInd];
-		 */
+		foreach (ModelChangeEvent currEvent in _events) {
+			foreach (var item in resourceScoreValues) {
+				int resInc = currEvent.Delta.GetCount (item.Key);
+				if (resInc>0)
+					currEvent.ScoreValue += resInc / (float)resourceCounts[item.Key] * item.Value;
+			}
+		}
+		LogEventsWithCauses("Score values given");
+		// Calc score values for each turn.
+		foreach (ModelChangeEvent currEvent in _events) {
+			float score = currEvent.ScoreValue;
+			currEvent.ScoreValue = 0;
+			foreach (var causeItem in currEvent.Causes)
+				causeItem.Key.ScoreValue += causeItem.Value * score;
+		}
+		LogEventsWithCauses("Score values distributed");
+		// Fill training model rewards.
+		int decisionsCount = 0;
+		float scoreFromDecisions = 0;
+		foreach (ModelChangeEvent currEvent in _events) {
+			GameDecizionEvent decision = currEvent as GameDecizionEvent;
+			if (decision == null)
+				continue;
+			decisionsCount++;
+			scoreFromDecisions += decision.ScoreValue;
+		}
+
+		int maxScore = int.MinValue;
+		for (int i = 0; i < _game.Players.Count; i++) {
+			if (_game.Players [i].Model.Score>maxScore)
+				maxScore = _game.Players [i].Model.Score;
+		}
+		float averageDecisionScore = scoreFromDecisions / decisionsCount;
+		float rewardScoreMul = model.Score/(float)maxScore / averageDecisionScore;
+		if (float.IsNaN (rewardScoreMul))
+			rewardScoreMul = 0;
+		foreach (ModelChangeEvent currEvent in _events) {
+			GameDecizionEvent decision = currEvent as GameDecizionEvent;
+			if (decision == null)
+				continue;
+			decision.DecisionTraining.RewardPercent = decision.ScoreValue * rewardScoreMul;
+		}
+
+		sb = new StringBuilder ("All training outputs = \n");
+		foreach (TrainingDecisionModel training in _trainingModels) {
+			switch (training.Type) {
+			case DecisionType.SelectCharity: sb.AppendFormat ("{0:0.00}, charity selected {1}\n", training.RewardPercent, training.Output); break;
+			case DecisionType.SelectInstruments: sb.AppendFormat ("{0:0.00}, instruments selected {1}\n", training.RewardPercent, training.Output); break;
+			case DecisionType.SelectLeaveHungry: sb.AppendFormat ("{0:0.00}, leave hungry selected {1}\n", training.RewardPercent, training.Output); break;
+			case DecisionType.SelectUsedHumans: sb.AppendFormat ("{0:0.00}, used humans selected {1}\n", training.RewardPercent, training.Output+1); break;
+			case DecisionType.SelectWhereToGo: sb.AppendFormat ("{0:0.00}, where to go selected {1}\n", training.RewardPercent, (WhereToGo)(training.Output+1)); break;
+			}
+
+		}
+		Debug.Log (sb.ToString());
 	}
-	private void LogEventsWithCauses() {
-		StringBuilder sb = new StringBuilder("Event causes:\n");
+	private void LogEventsWithCauses(string title) {
+		StringBuilder sb = new StringBuilder(title + ":\n");
 		for (int eventInd = 0; eventInd < _events.Count; eventInd++) {
-			sb.AppendFormat ("{0}-th event, type={1}", eventInd, _events [eventInd].Type);
+			string typeString = _events [eventInd].Type.ToString();
+			GameDecizionEvent decision = _events [eventInd] as GameDecizionEvent;
+			if (decision != null && decision.Type == ModelChangeType.WhereToGoSelected)
+				typeString += ", " + ((WhereToGo)(decision.DecisionTraining.Output+1)).ToString ();
+			sb.AppendFormat ("{0}-th event, type={1}, Score={2:0.00}", eventInd, typeString, _events [eventInd].ScoreValue);
 			if (_events [eventInd].Causes.Count == 0)
 				sb.AppendLine (" has no causes");
 			else {
@@ -500,8 +571,8 @@ public class GameTrainingController {
 				// i-th event gives requiredRes to current.
 				currEvent.Delta.Add (requiredRes, 1);
 				_events [i].Delta.Add (requiredRes, -1);
-				if (i!=0 && _events [i].Type != ModelChangeType.StartRound) // Start game and round is not a cause.
-					causeInds.Add (i);
+				//if (i!=0 && _events [i].Type != ModelChangeType.StartRound) // Start game and round is not a cause.
+				causeInds.Add (i);
 				causeFound = true;
 				break;
 			}

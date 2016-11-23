@@ -173,7 +173,7 @@ public class Game {
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.ResourceConstFood, 7, BottomCardFeature.Science, Science.Pot));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.ResourceConstFood, 4, BottomCardFeature.HouseMultiplier, 1));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.OneCardMore, 0, BottomCardFeature.Science, Science.Book));
-		/*_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.ResourceConstClay, 1, BottomCardFeature.HumanMultiplier, 2));
+		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.ResourceConstClay, 1, BottomCardFeature.HumanMultiplier, 2));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.RandomForEveryone, 0, BottomCardFeature.Science, Science.Car));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.ResourceConstStone, 2, BottomCardFeature.Science, Science.Car));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.RandomForEveryone, 0, BottomCardFeature.Science, Science.Book));
@@ -203,7 +203,7 @@ public class Game {
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.RandomForEveryone, 0, BottomCardFeature.Science, Science.Clock));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.RandomForEveryone, 0, BottomCardFeature.HouseMultiplier, 1));
 		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.Score, 3, BottomCardFeature.HouseMultiplier, 3));
-		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.ResourceConstFood, 2, BottomCardFeature.HouseMultiplier, 2));*/
+		_cardsInHeap.Add (new CardToBuild(_cardsInHeap.Count, TopCardFeature.ResourceConstFood, 2, BottomCardFeature.HouseMultiplier, 2));
 		Utils.Shuffle<CardToBuild> (_cardsInHeap);
 
 		SetChanged ();

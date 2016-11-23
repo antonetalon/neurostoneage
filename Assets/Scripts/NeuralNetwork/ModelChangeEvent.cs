@@ -5,7 +5,7 @@ using System;
 using System.Text;
 
 class ModelChangeEvent {
-	public int ScoreValue;
+	public float ScoreValue;
 	public Dictionary<ModelChangeEvent, float> Causes = new Dictionary<ModelChangeEvent, float>();
 
 	public PlayerModelTrainingDump StateBefore;
