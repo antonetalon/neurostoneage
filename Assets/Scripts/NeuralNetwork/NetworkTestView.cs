@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Threading;
 using System.IO;
+using System.Text;
 
 public class NetworkTestView : MonoBehaviour {
 
@@ -164,6 +165,127 @@ public class NetworkTestView : MonoBehaviour {
 		_trainingModels.Clear ();
 		InitTrainingViews ();
 		UpdateView ();
+	}
+
+	public void OnTestPressed() {
+		StringBuilder sb = new StringBuilder ();
+		// Find go to food wanting with 0 food.
+		NeuralNetwork decider = _brain.GetDecider (DecisionType.SelectWhereToGo);
+		int[] inputs = GetWhereToGoInputs (0);
+		double[] outputs = decider.Think (inputs);
+		sb.AppendLine ("0 food wanting = " + outputs[3].ToString());
+		// Find go to food wanting with 1000 food.
+		inputs = GetWhereToGoInputs (1000);
+		outputs = decider.Think (inputs);
+		sb.AppendLine ("1000 food wanting = " + outputs[3].ToString());
+		// Train.
+		_whereToGoTrainingView.Train(()=>{
+			// Find go to food wanting with 0 food.
+			decider = _brain.GetDecider (DecisionType.SelectWhereToGo);
+			inputs = GetWhereToGoInputs (0);
+			outputs = decider.Think (inputs);
+			sb.AppendLine ("0 food wanting = " + outputs[3].ToString());
+			// Find go to food wanting with 1000 food.
+			inputs = GetWhereToGoInputs (1000);
+			outputs = decider.Think (inputs);
+			sb.AppendLine ("1000 food wanting = " + outputs[3].ToString());
+		});
+	}
+
+
+	private static int[] GetWhereToGoInputs(int food) {
+		int[] inputs = new int[81];
+		int i = 0;
+		inputs [i] = 0;i++;//game.TurnInd; i++;
+		inputs [i] = food;i++;//player.Food; i++;
+		inputs [i] = 0;i++;//player.Forest; i++;
+		inputs [i] = 0;i++;//player.Stone; i++;
+		inputs [i] = 0;i++;//player.Gold; i++;
+		inputs [i] = 0;i++;//Indicator(Game.EnoughResourcesForBuilding (game, player, 0)); i++;
+		inputs [i] = 0;i++;//Indicator(Game.EnoughResourcesForBuilding (game, player, 1)); i++;
+		inputs [i] = 0;i++;//Indicator(Game.EnoughResourcesForBuilding (game, player, 2)); i++;
+		inputs [i] = 0;i++;//Indicator(Game.EnoughResourcesForBuilding (game, player, 3)); i++;
+		inputs [i] = 5;i++;//player.HumansCount; i++;
+		inputs [i] = 0;i++;//player.FieldsCount; i++;
+		inputs [i] = 0;i++;//player.InstrumentsCountSlot1+player.InstrumentsCountSlot2+player.InstrumentsCountSlot3; i++;
+		inputs [i] = 1;i++;//player.HouseMultiplier; i++;
+		inputs [i] = 1;i++;//player.FieldsMultiplier; i++;
+		inputs [i] = 1;i++;//player.InstrumentsMultiplier; i++;
+		inputs [i] = 0;i++;//player.GetScienceScore(0); i++;
+		inputs [i] = 100;i++;//player.Score; i++;
+
+		// Card i not owned science exists.
+		inputs [i] = 0;i++;//Indicator( cards [0].BottomFeature == BottomCardFeature.Science && player.ScienceExists ((Science)cards [0].BottomFeatureParam, 0) ); i++;
+		inputs [i] = 0;i++;//Indicator( cards [1].BottomFeature == BottomCardFeature.Science && player.ScienceExists ((Science)cards [1].BottomFeatureParam, 0) ); i++;
+		inputs [i] = 0;i++;//Indicator( cards [2].BottomFeature == BottomCardFeature.Science && player.ScienceExists ((Science)cards [2].BottomFeatureParam, 0) ); i++;
+		inputs [i] = 0;i++;//Indicator( cards [3].BottomFeature == BottomCardFeature.Science && player.ScienceExists ((Science)cards [3].BottomFeatureParam, 0) ); i++;
+		// Card i science score addition for row 0.
+		inputs [i] = 0;i++;//inputs [i-4]>0.5f?player.GetSciencesCount(0)*player.GetSciencesCount(0):0; i++;
+		inputs [i] = 0;i++;//inputs [i-4]>0.5f?player.GetSciencesCount(0)*player.GetSciencesCount(0):0; i++;
+		inputs [i] = 0;i++;//inputs [i-4]>0.5f?player.GetSciencesCount(0)*player.GetSciencesCount(0):0; i++;
+		inputs [i] = 0;i++;//inputs [i-4]>0.5f?player.GetSciencesCount(0)*player.GetSciencesCount(0):0; i++;
+		// Card i houses, fields, humans, instruments multipliers.
+		inputs [i] = 0;i++;//cards[0].BottomFeature == BottomCardFeature.FieldMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = 0;i++;//cards[0].BottomFeature == BottomCardFeature.HouseMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = 0;i++;//cards[0].BottomFeature == BottomCardFeature.HumanMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = 0;i++;//cards[0].BottomFeature == BottomCardFeature.InstrumentsMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = 0;i++;//cards[1].BottomFeature == BottomCardFeature.FieldMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = 0;i++;//cards[1].BottomFeature == BottomCardFeature.HouseMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = 0;i++;//cards[1].BottomFeature == BottomCardFeature.HumanMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = 0;i++;//cards[1].BottomFeature == BottomCardFeature.InstrumentsMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = 0;i++;//cards[2].BottomFeature == BottomCardFeature.FieldMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = 0;i++;//cards[2].BottomFeature == BottomCardFeature.HouseMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = 0;i++;//cards[2].BottomFeature == BottomCardFeature.HumanMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = 0;i++;//cards[2].BottomFeature == BottomCardFeature.InstrumentsMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = 0;i++;//cards[3].BottomFeature == BottomCardFeature.FieldMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = 0;i++;//cards[3].BottomFeature == BottomCardFeature.HouseMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = 0;i++;//cards[3].BottomFeature == BottomCardFeature.HumanMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		inputs [i] = 0;i++;//cards[3].BottomFeature == BottomCardFeature.InstrumentsMultiplier ? cards[0].BottomFeatureParam : 0; i++;
+		// Card i has charity.
+		inputs [i] = 0;i++;//Indicator( cards[0].TopFeature == TopCardFeature.RandomForEveryone ); i++;
+		inputs [i] = 0;i++;//Indicator( cards[1].TopFeature == TopCardFeature.RandomForEveryone ); i++;
+		inputs [i] = 0;i++;//Indicator( cards[2].TopFeature == TopCardFeature.RandomForEveryone ); i++;
+		inputs [i] = 0;i++;//Indicator( cards[3].TopFeature == TopCardFeature.RandomForEveryone ); i++;
+		// Card i forest, clay, stone, gold amount - random and const aggregated.
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[0],Resource.Food); i++;
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[0],Resource.Forest); i++;
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[0],Resource.Clay); i++;
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[0],Resource.Stone); i++;
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[0],Resource.Gold); i++;
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[1],Resource.Food); i++;
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[1],Resource.Forest); i++;
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[1],Resource.Clay); i++;
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[1],Resource.Stone); i++;
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[1],Resource.Gold); i++;
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[2],Resource.Food); i++;
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[2],Resource.Forest); i++;
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[2],Resource.Clay); i++;
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[2],Resource.Stone); i++;
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[2],Resource.Gold); i++;
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[3],Resource.Food); i++;
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[3],Resource.Forest); i++;
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[3],Resource.Clay); i++;
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[3],Resource.Stone); i++;
+		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[3],Resource.Gold); i++;
+		// Card i instruments and once instruments.
+		inputs [i] = 0;i++;//cards[0].TopFeature == TopCardFeature.InstrumentsForever? 1:0; i++;
+		inputs [i] = 0;i++;//cards[0].TopFeature == TopCardFeature.InstrumentsOnce? cards[0].TopFeatureParam:0; i++;
+		inputs [i] = 0;i++;//cards[1].TopFeature == TopCardFeature.InstrumentsForever? 1:0; i++;
+		inputs [i] = 0;i++;//cards[1].TopFeature == TopCardFeature.InstrumentsOnce? cards[1].TopFeatureParam:0; i++;
+		inputs [i] = 0;i++;//cards[2].TopFeature == TopCardFeature.InstrumentsForever? 1:0; i++;
+		inputs [i] = 0;i++;//cards[2].TopFeature == TopCardFeature.InstrumentsOnce? cards[2].TopFeatureParam:0; i++;
+		inputs [i] = 0;i++;//cards[3].TopFeature == TopCardFeature.InstrumentsForever? 1:0; i++;
+		inputs [i] = 0;i++;//cards[3].TopFeature == TopCardFeature.InstrumentsOnce? cards[3].TopFeatureParam:0; i++;
+		// House i min, max score.
+		inputs [i] = 0;i++;//GetHouseMaxScore(game.GetHouse(0)); i++;
+		inputs [i] = 0;i++;//GetHouseMinScore(game.GetHouse(0)); i++;
+		inputs [i] = 0;i++;//GetHouseMaxScore(game.GetHouse(1)); i++;
+		inputs [i] = 0;i++;//GetHouseMinScore(game.GetHouse(1)); i++;
+		inputs [i] = 0;i++;//GetHouseMaxScore(game.GetHouse(2)); i++;
+		inputs [i] = 0;i++;//GetHouseMinScore(game.GetHouse(2)); i++;
+		inputs [i] = 0;i++;//GetHouseMaxScore(game.GetHouse(3)); i++;
+		inputs [i] = 0;i++;//GetHouseMinScore(game.GetHouse(3)); i++;
+		return inputs;
 	}
 }
 

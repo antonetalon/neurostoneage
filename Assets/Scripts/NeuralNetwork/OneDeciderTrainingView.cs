@@ -25,6 +25,9 @@ public class OneDeciderTrainingView : MonoBehaviour {
 		UpdateView ();
 	}
 	public void OnTrainPressed() {
+		Train (null);
+	}
+	public void Train(System.Action onFinished) {
 		int loopsCount = int.Parse (_loopsCountInput.text);
 		if (loopsCount <= 0)
 			return;
@@ -37,6 +40,8 @@ public class OneDeciderTrainingView : MonoBehaviour {
 			}
 			CompositionRoot.Instance.ExecuteInMainThread (() => {
 				_view.UpdateView ();
+				if (onFinished!=null)
+					onFinished();
 			});
 		}));
 		thread.Start ();
