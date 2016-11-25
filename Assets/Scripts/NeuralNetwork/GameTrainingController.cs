@@ -512,6 +512,8 @@ public class GameTrainingController {
 			if (decision == null)
 				continue;
 			decision.DecisionTraining.RewardPercent = decision.ScoreValue * rewardScoreMul;
+			if (decision.DecisionTraining.RewardPercent < 0)
+				Debug.Log ("WTF");
 		}
 
 		sb = new StringBuilder ("All training outputs = \n");

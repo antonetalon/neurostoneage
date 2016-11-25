@@ -116,8 +116,7 @@ public class OneDeciderTrainingView : MonoBehaviour {
 		int positiveSuccessesCount = 0;
 		int negativeSuccessesCount = 0;
 		GetSuccessfullTrainingsCount (_type,ref positiveTrainingCount,ref negativeTrainingCount,ref positiveSuccessesCount,ref negativeSuccessesCount);
-		const float ratio = NeuralPlayerTrainerController.WinToLooseImportancyRatio;
-		return (positiveSuccessesCount*ratio + negativeSuccessesCount) / (float)(positiveTrainingCount*ratio + negativeTrainingCount);
+		return (positiveSuccessesCount + negativeSuccessesCount) / (float)(positiveTrainingCount + negativeTrainingCount);
 	}
 
 	public void UpdateView() {
@@ -141,7 +140,7 @@ public class OneDeciderTrainingView : MonoBehaviour {
 		foreach (TrainingDecisionModel model in _trainingModels) {
 			if (model.Type != type)
 				continue;
-			bool isPositiveTraining = model.RewardPercent > 0;
+			bool isPositiveTraining = model.RewardPercent >= 0;
 			if (inputs==null)
 				inputs = new double[model.Inputs.Length];
 			for (int i = 0; i < inputs.Length; i++)

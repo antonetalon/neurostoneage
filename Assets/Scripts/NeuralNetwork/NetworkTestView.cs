@@ -160,17 +160,10 @@ public class NetworkTestView : MonoBehaviour {
 	}
 
 	private float _prevProgress;
-	public void OnTrainAllPressed() {
-		_prevProgress = 0;
-		NeuralPlayerTrainerController.Train (100, _trainingModels, 0.05f, _brain, (progress) => {
-			if (progress>_prevProgress+0.01f) {
-				_prevProgress = progress;
-				CompositionRoot.Instance.ExecuteInMainThread (() => {
-					UpdateProgress((int)(progress*1000), 1000);
-					UpdateView();
-				});
-			}
-		});
+	public void OnCleanTrainingPressed() {
+		_trainingModels.Clear ();
+		InitTrainingViews ();
+		UpdateView ();
 	}
 }
 

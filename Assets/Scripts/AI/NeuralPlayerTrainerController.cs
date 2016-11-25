@@ -40,7 +40,6 @@ public class NeuralPlayerTrainerController {
 				continue;
 
 			int output = training.Output;
-			float reward = training.RewardPercent;
 			string options = "";
 			foreach (var option in training.Options)
 				options += option.ToString()+";";
@@ -49,8 +48,6 @@ public class NeuralPlayerTrainerController {
 			//if ((existingOutput == training.Output) == (training.RewardPercent > 0))
 			//	continue;
 			float nu = training.RewardPercent*speed;
-			if (nu < 0)
-				nu *= 1/(float)WinToLooseImportancyRatio;
 			double[] idealOutputs = new double[decider.OutputLength];
 			for (int optionInd = 0; optionInd < idealOutputs.Length; optionInd++) {
 				if (optionInd == training.Output)
@@ -61,5 +58,4 @@ public class NeuralPlayerTrainerController {
 			decider.Train (training.Inputs, idealOutputs, training.Options, nu);
 		}
 	}
-	public const float WinToLooseImportancyRatio = 4;
 }
