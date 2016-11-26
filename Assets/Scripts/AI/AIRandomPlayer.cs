@@ -46,7 +46,7 @@ public class AIRandomPlayer:Player {
 		}
 	}
 	public override void ChooseItemToReceiveFromCharityCard (Game game, List<int> randoms, Action<int> onComplete) {
-		int ind = Game.RandomRange (0, 5);
+		int ind = randoms[Game.RandomRange (0, randoms.Count)];
 		onComplete (ind);
 	}
 	public override void GetUsedInstrumentSlotInd (Game game, Resource receivedReceource, int points, OnInstrumentsToUseSelected onComplete) {
@@ -77,18 +77,31 @@ public class AIRandomPlayer:Player {
 			options.Add (Resource.Stone);
 		for (int i = 0; i < _model.Gold; i++)
 			options.Add (Resource.Gold);
+		int forestCount = 0;
 		foreach (Resource res in alreadySelectedResources) {
 			int ind = options.IndexOf (res);
 			options.RemoveAt (ind);
+			if (res == Resource.Forest)
+				forestCount++;
 		}
+
 		int index = Game.RandomRange(0, options.Count);
+
+
+		if (options [index] == Resource.Forest && _model.Forest < forestCount + 1)
+			Debug.Log ("WTF");
 		onComplete (options [index]);
 	}
 	public override void BuildHouse (Game game, int houseInd, Action<bool> onComplete) {
 		onComplete (GetRandomBool ());
 	}
 	public override void GetUsedResourceForHouseBuilding (Game game, HouseToBuild house, List<Resource> options, List<Resource> spendResources, Action<Resource> onComplete) {
-		onComplete (options [Game.RandomRange (0, options.Count)]);
+		Resource res;
+		if (options.Count > 0)
+			res = options [Game.RandomRange (0, options.Count)];
+		else
+			res = Resource.None;
+		onComplete (res);
 	}
 	public override void LeaveHungry (Game game, int eatenResources, Action<bool> onComplete) {
 		onComplete (GetRandomBool ());

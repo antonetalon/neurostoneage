@@ -651,6 +651,13 @@ public class Game {
 						currPlayer.GetUsedResourceForCardBuilding (this, GetAvailableCard(cardInd), spendResources, (Resource resource) => {
 							spendResources.Add(resource);
 							processEnded2 = true;
+							int forest = model.Forest;
+							foreach (Resource res in spendResources) {
+								if (res == Resource.Forest)
+									forest--;
+							}
+							if (forest<0)
+								Debug.Log("WTF");
 						});
 						while (!processEnded2)
 							System.Threading.Thread.Sleep (1000);
@@ -681,14 +688,15 @@ public class Game {
 							Player currPlayer2 = Players [randomBonusPlayerInd];
 							PlayerModel model2 = PlayerModels [randomBonusPlayerInd];
 							int selectedOption = -1;
+							var optionInds = AINeuralPlayer.GetOptionInds (DecisionType.SelectCharity, this, model2, options, -1, Resource.None, WhereToGo.None);
 
 							TrainingDecisionModel trainingModel = new TrainingDecisionModel (DecisionType.SelectCharity, 
 								AINeuralPlayer.GetInputs (DecisionType.SelectCharity, this, model2, Resource.None, WhereToGo.None),
-								AINeuralPlayer.GetOptionInds(DecisionType.SelectCharity, this, model2, options, -1, Resource.None, WhereToGo.None), randomBonusPlayerInd);
+								optionInds, randomBonusPlayerInd);
 							
 							currPlayer2.ChooseItemToReceiveFromCharityCard (this, options, (int option) => {
 								selectedOption = option;
-								if (!AINeuralPlayer.GetOptionInds(DecisionType.SelectCharity, this, model2, options, -1, Resource.None, WhereToGo.None).Contains (option))
+								if (!optionInds.Contains (option))
 									Debug.Log ("WTF");
 							});
 							while (selectedOption==-1)
@@ -909,8 +917,8 @@ public class Game {
 		for (int i = 0; i < 4; i++)
 			TrainingControllers [i].OnEndGame ();
 		
-			
-		onEnded ();
+		if (onEnded!=null)
+			onEnded ();
 	}
 
 	private void MineResourceIfHumansSpent(WhereToGo target, int currPlayerInd) {

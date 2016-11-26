@@ -30,21 +30,22 @@ public class GameTrainingController {
 		{ModelChangeType.ApplyGoToCard, new List<ResourceType>(){ ResourceType.InstrumentsOnce, ResourceType.Charity, ResourceType.Score, 
 				ResourceType.SpentOnForest, ResourceType.SpentOnClay, ResourceType.SpentOnStone, ResourceType.SpentOnGold,
 				ResourceType.Food,ResourceType.Forest, ResourceType.Clay, ResourceType.Stone, ResourceType.Gold,
-				ResourceType.HumanMultiplier, ResourceType.InstrumentsMultiplier, ResourceType.HousesMultiplier, ResourceType.HousesMultiplier, 
-				ResourceType.SciencesIn1stLine, ResourceType.SciencesIn2ndLine, ResourceType.Any2ResourcesFromCard, ResourceType.OneCardBottomMore }},
+				ResourceType.HumanMultiplier, ResourceType.InstrumentsMultiplier, ResourceType.HousesMultiplier, ResourceType.FieldsMultiplier, 
+				ResourceType.SciencesIn1stLine, ResourceType.SciencesIn2ndLine, ResourceType.Any2ResourcesFromCard, ResourceType.OneCardBottomMore, 
+				ResourceType.Fields, ResourceType.UnspentFields, ResourceType.Instruments }},
 		{ModelChangeType.ApplyingInstruments, new List<ResourceType>(){ResourceType.DicePoints}},
 		{ModelChangeType.ResourcesMining, new List<ResourceType>(){ ResourceType.Food, ResourceType.Forest, ResourceType.Clay, ResourceType.Stone, ResourceType.Gold}},
 		{ModelChangeType.ReceiveAny2ResFromCard, new List<ResourceType>(){ ResourceType.Forest, ResourceType.Clay, ResourceType.Stone, ResourceType.Gold, ResourceType.Food }},
 		{ModelChangeType.BonusFromOwnCharity, new List<ResourceType>(){ResourceType.Forest, ResourceType.Clay, ResourceType.Stone, ResourceType.Gold, ResourceType.Instruments, ResourceType.Fields, ResourceType.UnspentFields }},
 		{ModelChangeType.BonusFromOthersCharity, new List<ResourceType>(){ ResourceType.Forest, ResourceType.Clay, ResourceType.Stone, ResourceType.Gold, ResourceType.Instruments, ResourceType.Fields, ResourceType.UnspentFields }},
-		{ModelChangeType.ApplyCardFromOtherCard, new List<ResourceType>(){ ResourceType.HumanMultiplier, ResourceType.InstrumentsMultiplier, ResourceType.HousesMultiplier, ResourceType.HousesMultiplier, 
+		{ModelChangeType.ApplyCardFromOtherCard, new List<ResourceType>(){ ResourceType.HumanMultiplier, ResourceType.InstrumentsMultiplier, ResourceType.HousesMultiplier, ResourceType.FieldsMultiplier, 
 				ResourceType.SciencesIn1stLine, ResourceType.SciencesIn2ndLine }},
 		{ModelChangeType.Feeding, new List<ResourceType>(){ ResourceType.Score}}
 	};
 	private static Dictionary<ModelChangeType, List<ResourceType>> AllowedDecs = new Dictionary<ModelChangeType, List<ResourceType>>() {
 		{ModelChangeType.StartGame, new List<ResourceType>(){/*its ok*/ }},
 		{ModelChangeType.StartRound, new List<ResourceType>(){/*its ok*/ }},
-		{ModelChangeType.EndTurn, new List<ResourceType>(){ ResourceType.AvailableHumans, ResourceType.InstrumentsAvailable }},
+		{ModelChangeType.EndTurn, new List<ResourceType>(){ ResourceType.AvailableHumans, ResourceType.InstrumentsAvailable, ResourceType.UnspentFields }},
 		{ModelChangeType.AddHumansFromHousing, new List<ResourceType>(){/*its ok*/ }},
 		{ModelChangeType.AddAvailableInstruments, new List<ResourceType>(){/*its ok*/ }},
 		{ModelChangeType.AddUnspentFields, new List<ResourceType>(){/*its ok*/ }},
@@ -59,13 +60,13 @@ public class GameTrainingController {
 		{ModelChangeType.ApplyGoToHouse, new List<ResourceType>(){ ResourceType.Forest, ResourceType.Clay, ResourceType.Stone, ResourceType.Gold, ResourceType.SpentOnBuilding1, 
 				ResourceType.SpentOnBuilding2, ResourceType.SpentOnBuilding3, ResourceType.SpentOnBuilding4 }},
 		{ModelChangeType.ApplyGoToCard, new List<ResourceType>(){ ResourceType.Forest, ResourceType.Clay, ResourceType.Stone, ResourceType.Gold, 
-				ResourceType.SpentOnCard1, ResourceType.SpentOnCard2, ResourceType.SpentOnCard3, ResourceType.SpentOnCard4 }},
+				ResourceType.SpentOnCard1, ResourceType.SpentOnCard2, ResourceType.SpentOnCard3, ResourceType.SpentOnCard4, ResourceType.InstrumentsAvailable }},
 		{ModelChangeType.ApplyGoToMining, new List<ResourceType>(){ ResourceType.SpentOnFood, ResourceType.SpentOnForest, ResourceType.SpentOnClay, ResourceType.SpentOnStone, ResourceType.SpentOnGold }},
 		{ModelChangeType.ApplyingInstruments, new List<ResourceType>(){ ResourceType.InstrumentsAvailable, ResourceType.InstrumentsOnce }},
 		{ModelChangeType.ResourcesMining, new List<ResourceType>(){ ResourceType.DicePoints }},
 		{ModelChangeType.ReceiveAny2ResFromCard, new List<ResourceType>(){ ResourceType.Any2ResourcesFromCard }},
-		{ModelChangeType.BonusFromOwnCharity, new List<ResourceType>(){ ResourceType.Charity }},
-		{ModelChangeType.BonusFromOthersCharity, new List<ResourceType>(){/*its ok*/ }},
+		{ModelChangeType.BonusFromOwnCharity, new List<ResourceType>(){ ResourceType.Charity, ResourceType.InstrumentsAvailable }},
+		{ModelChangeType.BonusFromOthersCharity, new List<ResourceType>(){ ResourceType.InstrumentsAvailable }},
 		{ModelChangeType.ApplyCardFromOtherCard, new List<ResourceType>(){ ResourceType.OneCardBottomMore }},
 		{ModelChangeType.Feeding, new List<ResourceType>(){ResourceType.Food, ResourceType.UnspentFields, ResourceType.Forest, ResourceType.Clay, ResourceType.Stone, ResourceType.Gold }}
 	};
@@ -127,6 +128,10 @@ public class GameTrainingController {
 			foreach (var item in additionalResourceChanges)
 				stateAfter.ChangeCount (item.Key, item.Value);
 		}
+		foreach (ResourceType res in Enum.GetValues(typeof(ResourceType))) {
+			if (stateAfter.GetCount (res) < 0)
+				Debug.Log ("WTF");
+		}
 		ModelChangeEvent modelChange = new ModelChangeEvent (_beforeState, stateAfter, type);
 		_events.Add (modelChange);
 	}
@@ -167,7 +172,7 @@ public class GameTrainingController {
 		if (!delta.IsEmpty)
 			Debug.LogFormat ("NON-NULL DELTA = {0}", delta.ToString());
 
-		Debug.LogFormat ("event[{0}] type = {2} delta = {1}", i, _events[i].Delta.ToString(), _events[i].Type);
+//		Debug.LogFormat ("event[{0}] type = {2} delta = {1}", i, _events[i].Delta.ToString(), _events[i].Type);
 
 		List<ResourceType> addedRes = new List<ResourceType> ();
 		List<ResourceType> removedRes = new List<ResourceType> ();
@@ -397,17 +402,17 @@ public class GameTrainingController {
 
 	public void OnEndGame() {
 
-		StringBuilder sb = new StringBuilder ("Training controller log start\n");
+		/*StringBuilder sb = new StringBuilder ("Training controller log start\n");
 		sb.AppendFormat("Player ind = {0}\n", PlayerInd);
 		foreach (var gameEvent in _events)
 			sb.Append (gameEvent.GetString (_events));
 		sb.AppendLine ("Training controller log end");
-		Debug.Log (sb.ToString());
+		Debug.Log (sb.ToString());*/
 		// Calc game events causes.
 		for (int eventInd = 0; eventInd < _events.Count; eventInd++) {
 			FindEventCauses (eventInd);
 		}
-		LogEventsWithCauses("Causes calced");
+		//LogEventsWithCauses("Causes calced");
 		// Trainsitive closure for causality matrix.
 		for (int eventInd = 0; eventInd < _events.Count; eventInd++) {
 			ModelChangeEvent[] causesArray = new ModelChangeEvent[_events [eventInd].Causes.Keys.Count];
@@ -428,7 +433,7 @@ public class GameTrainingController {
 				}
 			}
 		}
-		LogEventsWithCauses("Transitive causes calced");
+		//LogEventsWithCauses("Transitive causes calced");
 		// Give score values to events.
 		PlayerModel model = GetPlayer(_game);
 		foreach (ModelChangeEvent currEvent in _events) {
@@ -472,51 +477,40 @@ public class GameTrainingController {
 			resourceCounts.Add (item.Key, count);
 		}
 		foreach (ModelChangeEvent currEvent in _events) {
+			if (float.IsNaN (currEvent.ScoreValue))
+				Debug.Log ("WTF");
 			foreach (var item in resourceScoreValues) {
 				int resInc = currEvent.Delta.GetCount (item.Key);
 				if (resInc>0)
 					currEvent.ScoreValue += resInc / (float)resourceCounts[item.Key] * item.Value;
+				if (float.IsNaN (currEvent.ScoreValue))
+					Debug.Log ("WTF");
 			}
 		}
-		LogEventsWithCauses("Score values given");
-		// Calc score values for each turn.
+		//LogEventsWithCauses("Score values given");
+		// Distribute score values for each turn considering causation.
 		foreach (ModelChangeEvent currEvent in _events) {
 			float score = currEvent.ScoreValue;
 			currEvent.ScoreValue = 0;
-			foreach (var causeItem in currEvent.Causes)
+			foreach (var causeItem in currEvent.Causes) {
 				causeItem.Key.ScoreValue += causeItem.Value * score;
+				if (float.IsNaN (score) || float.IsNaN (causeItem.Value))
+					Debug.Log ("WTF");
+			}
 		}
-		LogEventsWithCauses("Score values distributed");
+		//LogEventsWithCauses("Score values distributed");
 		// Fill training model rewards.
-		int decisionsCount = 0;
-		float scoreFromDecisions = 0;
-		foreach (ModelChangeEvent currEvent in _events) {
-			GameDecizionEvent decision = currEvent as GameDecizionEvent;
-			if (decision == null)
-				continue;
-			decisionsCount++;
-			scoreFromDecisions += decision.ScoreValue;
-		}
 
-		int maxScore = int.MinValue;
-		for (int i = 0; i < _game.Players.Count; i++) {
-			if (_game.Players [i].Model.Score>maxScore)
-				maxScore = _game.Players [i].Model.Score;
-		}
-		float averageDecisionScore = scoreFromDecisions / decisionsCount;
-		float rewardScoreMul = model.Score/(float)maxScore / averageDecisionScore;
-		if (float.IsNaN (rewardScoreMul))
-			rewardScoreMul = 0;
 		foreach (ModelChangeEvent currEvent in _events) {
 			GameDecizionEvent decision = currEvent as GameDecizionEvent;
 			if (decision == null)
 				continue;
-			decision.DecisionTraining.RewardPercent = decision.ScoreValue * rewardScoreMul;
+			decision.DecisionTraining.RewardPercent = decision.ScoreValue;
 			if (decision.DecisionTraining.RewardPercent < 0)
 				Debug.Log ("WTF");
 		}
 
-		sb = new StringBuilder ("All training outputs = \n");
+		/*sb = new StringBuilder ("All training outputs = \n");
 		foreach (TrainingDecisionModel training in _trainingModels) {
 			switch (training.Type) {
 			case DecisionType.SelectCharity: sb.AppendFormat ("{0:0.00}, charity selected {1}\n", training.RewardPercent, training.Output); break;
@@ -527,7 +521,7 @@ public class GameTrainingController {
 			}
 
 		}
-		Debug.Log (sb.ToString());
+		Debug.Log (sb.ToString());*/
 	}
 	private void LogEventsWithCauses(string title) {
 		StringBuilder sb = new StringBuilder(title + ":\n");
@@ -603,36 +597,4 @@ public class GameTrainingController {
 		for (int causeInd = 0;causeInd<causeInds.Count;causeInd++)
 			currEvent.Causes [_events[causeInds[causeInd]]] /= sum;
 	}
-	/*private WhereToGo GetTarget(ModelChangeType type, int cardHouseInd) {
-		switch (type) {
-			case ModelChangeType.BonusFromOwnCharity:
-			case ModelChangeType.ApplyGoToCard:
-				switch (cardHouseInd) {
-					default:
-					case 0:	return WhereToGo.Card1;
-					case 1:	return WhereToGo.Card2;
-					case 2:	return WhereToGo.Card3;
-					case 3:	return WhereToGo.Card4;
-				}
-				break;
-			case ModelChangeType.ApplyGoToFields:
-				return WhereToGo.Field;
-				break;
-			case ModelChangeType.ApplyGoToHouse:
-				switch (cardHouseInd) {
-					default:
-					case 0:	return WhereToGo.House1;
-					case 1:	return WhereToGo.House2;
-					case 2:	return WhereToGo.House3;
-					case 3:	return WhereToGo.House4;
-				}
-				break;
-			case ModelChangeType.ApplyGoToHousing:
-				return WhereToGo.Housing;
-				break;
-			case ModelChangeType.ApplyGoToInstruments:
-				return WhereToGo.Instrument;
-				break;
-		}
-	}*/
 }

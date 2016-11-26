@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.IO;
 using System.Text;
+using System;
 
 public class NetworkTestView : MonoBehaviour {
 
@@ -24,44 +25,7 @@ public class NetworkTestView : MonoBehaviour {
 		_view.texture = _texture;
 		_progressParent.SetActive (false);
 	}
-	
-	// Update is called once per frame
-	void Update () {
-		SavePtIfPressed (0);
-		SavePtIfPressed (1);
-	}
 
-	struct IntVec {
-		public int X,Y;
-	}
-	List<IntVec> GoodPts = new List<IntVec>();
-	List<IntVec> BadPts = new List<IntVec>();
-	void SavePtIfPressed(int mouseButton) {
-		if (!Input.GetMouseButtonUp (mouseButton))
-			return;
-		Vector2 localPoint;
-		if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_view.rectTransform, Input.mousePosition, Camera.main, out localPoint))
-			return;		
-		localPoint.x *= Width / _view.rectTransform.rect.width;
-		localPoint.y *= Height / _view.rectTransform.rect.height;
-		if (Mathf.Abs (localPoint.x) > Width / 2 || Mathf.Abs (localPoint.y) > Height / 2)
-			return;
-		localPoint += new Vector2 (Width / 2, Height / 2);
-
-		IntVec pt = new IntVec ();
-		pt.X = Mathf.RoundToInt (localPoint.x);
-		pt.Y = Height - 1 - Mathf.RoundToInt (localPoint.y);
-		Color col;
-		if (mouseButton == 0) {
-			GoodPts.Add (pt);
-			col = Color.green;
-		} else {
-			BadPts.Add (pt);
-			col = Color.red;
-		}
-		_texture.SetPixel (pt.X, Height - pt.Y - 1, col);
-		_texture.Apply ();
-	}
 
 	AINeuralPlayer _brain;
 	int _trainingsCount;
@@ -75,7 +39,6 @@ public class NetworkTestView : MonoBehaviour {
 		_brain = new AINeuralPlayer();
 		_trainingsCount = 0;
 		Debug.Log ("Created ai");
-		InitTrainingViews ();
 	}
 	const string FilePath = "SavedTraining";
 	public void SaveTraining() {
@@ -94,7 +57,6 @@ public class NetworkTestView : MonoBehaviour {
 			_trainingModels = (List<TrainingDecisionModel>)binaryFormatter.Deserialize(stream);
 			_brain = (AINeuralPlayer)binaryFormatter.Deserialize (stream);
 		}
-		InitTrainingViews ();
 		UpdateView ();
 		Debug.Log ("Training loaded");
 	}
@@ -118,34 +80,142 @@ public class NetworkTestView : MonoBehaviour {
 					foreach (var trainingModel in trainingController.TrainingModels)
 						_trainingModels.Add(trainingModel);
 				}
+				UpdateView();
 			});
 		});}));
 		thread.Start ();
+	}
+
+	[SerializeField] Dropdown _decisionSelector;
+	public void OnTrainPressed() {
+		int count = int.Parse (_gamesCountLabel.text);
+		DecisionType decision = (DecisionType)(_decisionSelector.value+1);
+		Train (count, decision, null);
+	}
+	private void Train(int loopsCount, DecisionType decisionType, System.Action onFinished) {
+		const float speed = 0.5f;
+		Thread thread = new Thread (new ThreadStart(()=>{
+			for (int loopInd = 0; loopInd < loopsCount; loopInd++) {
+				UpdateProgress (loopInd+1, loopsCount);
+				NeuralPlayerTrainerController.DoTrainingLoop(decisionType, _trainingModels, speed, _brain);
+			}
+			CompositionRoot.Instance.ExecuteInMainThread (() => {
+				UpdateView ();
+				if (onFinished!=null)
+					onFinished();
+			});
+		}));
+		thread.Start ();
+	}
+
+	[SerializeField] Text _gamesCountLabel;
+	public void PlayWithAIAndAddTraining() {
+		int count = int.Parse (_gamesCountLabel.text);
+
+		List<Player> players = new List<Player> () {
+			_brain,
+			_brain.Clone(),
+			_brain.Clone(),
+			_brain.Clone()
+		};
+		Game game = new Game (players);
+		Thread thread = new Thread (new ThreadStart(()=>{
+			for (int i=0;i<count;i++) {
+				bool matchEnded = false;
+				game.Play (()=>{
+					foreach (var trainingController in game.TrainingControllers) {
+						foreach (var trainingModel in trainingController.TrainingModels)
+							_trainingModels.Add(trainingModel);
+					}
+					matchEnded = true;
+				});
+				while (!matchEnded)
+					System.Threading.Thread.Sleep (100);
+			}
+			CompositionRoot.Instance.ExecuteInMainThread(()=>{
+				Debug.Log(count.ToString() + " AI matches ended");
+				UpdateView();
+			});
+		}));
+		thread.Start ();
+	}
+
+	[SerializeField] Text _successLabel;
+	public void OnCalcSuccessPressed() {
+		int count = int.Parse (_gamesCountLabel.text);
+
+		List<Player> players = new List<Player> () {
+			_brain,
+			_brain.Clone(),
+			_brain.Clone(),
+			_brain.Clone()
+		};
+
+		Thread thread = new Thread (new ThreadStart(()=>{
+
+			List<DecisionType> decisions = new List<DecisionType>() { DecisionType.SelectWhereToGo, DecisionType.SelectUsedHumans, DecisionType.SelectInstruments, DecisionType.SelectCharity, DecisionType.SelectLeaveHungry };
+
+			Dictionary<DecisionType, float> sumRewards = new Dictionary<DecisionType, float>();
+			Dictionary<DecisionType, int> countRewards = new Dictionary<DecisionType, int>();
+
+			foreach (var decision in decisions) {
+				sumRewards.Add(decision, 0);
+				countRewards.Add(decision, 0);
+			}
+
+			System.Random rand = new System.Random();
+
+			for (int i=0;i<count;i++) {
+				UpdateProgress(i,count);
+				players.Clear();
+				for (int playerInd=0;playerInd<4;playerInd++) {
+					Player player;
+					if (rand.NextDouble()>0.5)
+						player = _brain.Clone();
+					else
+						player = new AIRandomPlayer();
+					players.Add(player);
+				}
+				Game game = new Game (players);
+				game.Play (null);
+				foreach (var trainingController in game.TrainingControllers) {
+					for (int ind = 0;ind<4;ind++) {
+						if (players[ind] is AINeuralPlayer) {
+							var trainingModel = trainingController.TrainingModels[ind];
+							sumRewards[trainingModel.Type] += trainingModel.RewardPercent;
+							countRewards[trainingModel.Type]++;
+						}
+					}
+				}
+			}
+			UpdateProgress(count,count);
+
+			Dictionary<DecisionType, float> meanRewards = new Dictionary<DecisionType, float>();
+			foreach (var decision in decisions)
+				meanRewards.Add(decision, sumRewards[decision]/(float)countRewards[decision]);
+			
+			CompositionRoot.Instance.ExecuteInMainThread(()=>{
+				Debug.Log("Success calced");
+				_successLabel.text = string.Format("wheretogo = {0:#0.##}\n humans count = {1:#0.##}\n instruments = {2:#0.##}\n charity = {3:#0.##}\n hungry = {4:#0.##}\n",
+					meanRewards[DecisionType.SelectWhereToGo], meanRewards[DecisionType.SelectUsedHumans],
+					meanRewards[DecisionType.SelectInstruments], meanRewards[DecisionType.SelectCharity], meanRewards[DecisionType.SelectLeaveHungry]);
+				UpdateView();
+			});
+		}));
+		thread.Start ();
+	}
+
+	public void OnCleanTrainingPressed() {
+		_trainingModels.Clear ();
+		UpdateView ();
 	}
 	#endregion
 
 	List<TrainingDecisionModel> _trainingModels = new List<TrainingDecisionModel>();
 
 	[SerializeField] Text _trainingModelsCount;
-	[SerializeField] OneDeciderTrainingView _whereToGoTrainingView;
-	[SerializeField] OneDeciderTrainingView _usedHumansTrainingView;
-	[SerializeField] OneDeciderTrainingView _charityTrainingView;
-	[SerializeField] OneDeciderTrainingView _instrumentsTrainingView;
-	[SerializeField] OneDeciderTrainingView _hungryTrainingView;
-	void InitTrainingViews() {
-		_whereToGoTrainingView.Init (DecisionType.SelectWhereToGo, _trainingModels, _brain);
-		_usedHumansTrainingView.Init (DecisionType.SelectUsedHumans, _trainingModels, _brain);
-		_charityTrainingView.Init (DecisionType.SelectCharity, _trainingModels, _brain);
-		_instrumentsTrainingView.Init (DecisionType.SelectInstruments, _trainingModels, _brain);
-		_hungryTrainingView.Init (DecisionType.SelectLeaveHungry, _trainingModels, _brain);
-	}
 	public void UpdateView() {
 		_trainingModelsCount.text = _trainingModels.Count.ToString ();
-		_whereToGoTrainingView.UpdateView ();
-		_usedHumansTrainingView.UpdateView ();
-		_charityTrainingView.UpdateView ();
-		_instrumentsTrainingView.UpdateView ();
-		_hungryTrainingView.UpdateView ();
 	}
 
 	[SerializeField] GameObject _progressParent;
@@ -156,136 +226,11 @@ public class NetworkTestView : MonoBehaviour {
 			_progressParent.SetActive (completedCount < totalCount);
 			float progress = completedCount / (float)totalCount;
 			_progress.value = progress;
-			_progressText.text = string.Format ("{0}/{1}={2}", completedCount, totalCount, progress);
-		});
-	}
-
-	private float _prevProgress;
-	public void OnCleanTrainingPressed() {
-		_trainingModels.Clear ();
-		InitTrainingViews ();
-		UpdateView ();
-	}
-
-	public void OnTestPressed() {
-		StringBuilder sb = new StringBuilder ();
-		// Find go to food wanting with 0 food.
-		NeuralNetwork decider = _brain.GetDecider (DecisionType.SelectWhereToGo);
-		int[] inputs = GetWhereToGoInputs (0);
-		double[] outputs = decider.Think (inputs);
-		sb.AppendLine ("0 food wanting = " + outputs[3].ToString());
-		// Find go to food wanting with 1000 food.
-		inputs = GetWhereToGoInputs (1000);
-		outputs = decider.Think (inputs);
-		sb.AppendLine ("1000 food wanting = " + outputs[3].ToString());
-		// Train.
-		_whereToGoTrainingView.Train(()=>{
-			// Find go to food wanting with 0 food.
-			decider = _brain.GetDecider (DecisionType.SelectWhereToGo);
-			inputs = GetWhereToGoInputs (0);
-			outputs = decider.Think (inputs);
-			sb.AppendLine ("0 food wanting = " + outputs[3].ToString());
-			// Find go to food wanting with 1000 food.
-			inputs = GetWhereToGoInputs (1000);
-			outputs = decider.Think (inputs);
-			sb.AppendLine ("1000 food wanting = " + outputs[3].ToString());
+			_progressText.text = string.Format ("{0}/{1}={2:00}%", completedCount, totalCount, progress*100);
 		});
 	}
 
 
-	private static int[] GetWhereToGoInputs(int food) {
-		int[] inputs = new int[81];
-		int i = 0;
-		inputs [i] = 0;i++;//game.TurnInd; i++;
-		inputs [i] = food;i++;//player.Food; i++;
-		inputs [i] = 0;i++;//player.Forest; i++;
-		inputs [i] = 0;i++;//player.Stone; i++;
-		inputs [i] = 0;i++;//player.Gold; i++;
-		inputs [i] = 0;i++;//Indicator(Game.EnoughResourcesForBuilding (game, player, 0)); i++;
-		inputs [i] = 0;i++;//Indicator(Game.EnoughResourcesForBuilding (game, player, 1)); i++;
-		inputs [i] = 0;i++;//Indicator(Game.EnoughResourcesForBuilding (game, player, 2)); i++;
-		inputs [i] = 0;i++;//Indicator(Game.EnoughResourcesForBuilding (game, player, 3)); i++;
-		inputs [i] = 5;i++;//player.HumansCount; i++;
-		inputs [i] = 0;i++;//player.FieldsCount; i++;
-		inputs [i] = 0;i++;//player.InstrumentsCountSlot1+player.InstrumentsCountSlot2+player.InstrumentsCountSlot3; i++;
-		inputs [i] = 1;i++;//player.HouseMultiplier; i++;
-		inputs [i] = 1;i++;//player.FieldsMultiplier; i++;
-		inputs [i] = 1;i++;//player.InstrumentsMultiplier; i++;
-		inputs [i] = 0;i++;//player.GetScienceScore(0); i++;
-		inputs [i] = 100;i++;//player.Score; i++;
 
-		// Card i not owned science exists.
-		inputs [i] = 0;i++;//Indicator( cards [0].BottomFeature == BottomCardFeature.Science && player.ScienceExists ((Science)cards [0].BottomFeatureParam, 0) ); i++;
-		inputs [i] = 0;i++;//Indicator( cards [1].BottomFeature == BottomCardFeature.Science && player.ScienceExists ((Science)cards [1].BottomFeatureParam, 0) ); i++;
-		inputs [i] = 0;i++;//Indicator( cards [2].BottomFeature == BottomCardFeature.Science && player.ScienceExists ((Science)cards [2].BottomFeatureParam, 0) ); i++;
-		inputs [i] = 0;i++;//Indicator( cards [3].BottomFeature == BottomCardFeature.Science && player.ScienceExists ((Science)cards [3].BottomFeatureParam, 0) ); i++;
-		// Card i science score addition for row 0.
-		inputs [i] = 0;i++;//inputs [i-4]>0.5f?player.GetSciencesCount(0)*player.GetSciencesCount(0):0; i++;
-		inputs [i] = 0;i++;//inputs [i-4]>0.5f?player.GetSciencesCount(0)*player.GetSciencesCount(0):0; i++;
-		inputs [i] = 0;i++;//inputs [i-4]>0.5f?player.GetSciencesCount(0)*player.GetSciencesCount(0):0; i++;
-		inputs [i] = 0;i++;//inputs [i-4]>0.5f?player.GetSciencesCount(0)*player.GetSciencesCount(0):0; i++;
-		// Card i houses, fields, humans, instruments multipliers.
-		inputs [i] = 0;i++;//cards[0].BottomFeature == BottomCardFeature.FieldMultiplier ? cards[0].BottomFeatureParam : 0; i++;
-		inputs [i] = 0;i++;//cards[0].BottomFeature == BottomCardFeature.HouseMultiplier ? cards[0].BottomFeatureParam : 0; i++;
-		inputs [i] = 0;i++;//cards[0].BottomFeature == BottomCardFeature.HumanMultiplier ? cards[0].BottomFeatureParam : 0; i++;
-		inputs [i] = 0;i++;//cards[0].BottomFeature == BottomCardFeature.InstrumentsMultiplier ? cards[0].BottomFeatureParam : 0; i++;
-		inputs [i] = 0;i++;//cards[1].BottomFeature == BottomCardFeature.FieldMultiplier ? cards[0].BottomFeatureParam : 0; i++;
-		inputs [i] = 0;i++;//cards[1].BottomFeature == BottomCardFeature.HouseMultiplier ? cards[0].BottomFeatureParam : 0; i++;
-		inputs [i] = 0;i++;//cards[1].BottomFeature == BottomCardFeature.HumanMultiplier ? cards[0].BottomFeatureParam : 0; i++;
-		inputs [i] = 0;i++;//cards[1].BottomFeature == BottomCardFeature.InstrumentsMultiplier ? cards[0].BottomFeatureParam : 0; i++;
-		inputs [i] = 0;i++;//cards[2].BottomFeature == BottomCardFeature.FieldMultiplier ? cards[0].BottomFeatureParam : 0; i++;
-		inputs [i] = 0;i++;//cards[2].BottomFeature == BottomCardFeature.HouseMultiplier ? cards[0].BottomFeatureParam : 0; i++;
-		inputs [i] = 0;i++;//cards[2].BottomFeature == BottomCardFeature.HumanMultiplier ? cards[0].BottomFeatureParam : 0; i++;
-		inputs [i] = 0;i++;//cards[2].BottomFeature == BottomCardFeature.InstrumentsMultiplier ? cards[0].BottomFeatureParam : 0; i++;
-		inputs [i] = 0;i++;//cards[3].BottomFeature == BottomCardFeature.FieldMultiplier ? cards[0].BottomFeatureParam : 0; i++;
-		inputs [i] = 0;i++;//cards[3].BottomFeature == BottomCardFeature.HouseMultiplier ? cards[0].BottomFeatureParam : 0; i++;
-		inputs [i] = 0;i++;//cards[3].BottomFeature == BottomCardFeature.HumanMultiplier ? cards[0].BottomFeatureParam : 0; i++;
-		inputs [i] = 0;i++;//cards[3].BottomFeature == BottomCardFeature.InstrumentsMultiplier ? cards[0].BottomFeatureParam : 0; i++;
-		// Card i has charity.
-		inputs [i] = 0;i++;//Indicator( cards[0].TopFeature == TopCardFeature.RandomForEveryone ); i++;
-		inputs [i] = 0;i++;//Indicator( cards[1].TopFeature == TopCardFeature.RandomForEveryone ); i++;
-		inputs [i] = 0;i++;//Indicator( cards[2].TopFeature == TopCardFeature.RandomForEveryone ); i++;
-		inputs [i] = 0;i++;//Indicator( cards[3].TopFeature == TopCardFeature.RandomForEveryone ); i++;
-		// Card i forest, clay, stone, gold amount - random and const aggregated.
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[0],Resource.Food); i++;
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[0],Resource.Forest); i++;
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[0],Resource.Clay); i++;
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[0],Resource.Stone); i++;
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[0],Resource.Gold); i++;
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[1],Resource.Food); i++;
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[1],Resource.Forest); i++;
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[1],Resource.Clay); i++;
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[1],Resource.Stone); i++;
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[1],Resource.Gold); i++;
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[2],Resource.Food); i++;
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[2],Resource.Forest); i++;
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[2],Resource.Clay); i++;
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[2],Resource.Stone); i++;
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[2],Resource.Gold); i++;
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[3],Resource.Food); i++;
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[3],Resource.Forest); i++;
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[3],Resource.Clay); i++;
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[3],Resource.Stone); i++;
-		inputs [i] = 0;i++;//GetResourceExpectedCount(cards[3],Resource.Gold); i++;
-		// Card i instruments and once instruments.
-		inputs [i] = 0;i++;//cards[0].TopFeature == TopCardFeature.InstrumentsForever? 1:0; i++;
-		inputs [i] = 0;i++;//cards[0].TopFeature == TopCardFeature.InstrumentsOnce? cards[0].TopFeatureParam:0; i++;
-		inputs [i] = 0;i++;//cards[1].TopFeature == TopCardFeature.InstrumentsForever? 1:0; i++;
-		inputs [i] = 0;i++;//cards[1].TopFeature == TopCardFeature.InstrumentsOnce? cards[1].TopFeatureParam:0; i++;
-		inputs [i] = 0;i++;//cards[2].TopFeature == TopCardFeature.InstrumentsForever? 1:0; i++;
-		inputs [i] = 0;i++;//cards[2].TopFeature == TopCardFeature.InstrumentsOnce? cards[2].TopFeatureParam:0; i++;
-		inputs [i] = 0;i++;//cards[3].TopFeature == TopCardFeature.InstrumentsForever? 1:0; i++;
-		inputs [i] = 0;i++;//cards[3].TopFeature == TopCardFeature.InstrumentsOnce? cards[3].TopFeatureParam:0; i++;
-		// House i min, max score.
-		inputs [i] = 0;i++;//GetHouseMaxScore(game.GetHouse(0)); i++;
-		inputs [i] = 0;i++;//GetHouseMinScore(game.GetHouse(0)); i++;
-		inputs [i] = 0;i++;//GetHouseMaxScore(game.GetHouse(1)); i++;
-		inputs [i] = 0;i++;//GetHouseMinScore(game.GetHouse(1)); i++;
-		inputs [i] = 0;i++;//GetHouseMaxScore(game.GetHouse(2)); i++;
-		inputs [i] = 0;i++;//GetHouseMinScore(game.GetHouse(2)); i++;
-		inputs [i] = 0;i++;//GetHouseMaxScore(game.GetHouse(3)); i++;
-		inputs [i] = 0;i++;//GetHouseMinScore(game.GetHouse(3)); i++;
-		return inputs;
-	}
 }
 

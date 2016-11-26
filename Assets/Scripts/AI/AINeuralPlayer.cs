@@ -484,14 +484,22 @@ public class AINeuralPlayer:Player {
 	public override void GetUsedResourceForCardBuilding (Game game, CardToBuild card, List<Resource> alreadySelectedResources, Action<Resource> onComplete) {
 		// Drop this decision.
 		int[] remainingResources = Game.GetRemainingResourcesAfterHousesBuilding (game, _model);
+		foreach (Resource res in alreadySelectedResources)
+			remainingResources [(int)res]--;
 		foreach (var res in _resourcesForCardBuilding) {
 			if (remainingResources [(int)res] > 0) {
 				onComplete (res);
 				return;
 			}
 		}
+		remainingResources [(int)Resource.Forest] = _model.Forest;
+		remainingResources [(int)Resource.Clay] = _model.Clay;
+		remainingResources [(int)Resource.Stone] = _model.Stone;
+		remainingResources [(int)Resource.Gold] = _model.Gold;
+		foreach (Resource res in alreadySelectedResources)
+			remainingResources [(int)res]--;
 		foreach (var res in _resourcesForCardBuilding) {
-			if (_model.GetResourceCount(res) > 0) {
+			if (remainingResources [(int)res] > 0) {
 				onComplete (res);
 				return;
 			}
