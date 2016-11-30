@@ -16,7 +16,7 @@ public class AINeuralPlayer:Player {
 		InitInstruments ();
 		InitHungry ();
 	}
-	public AINeuralPlayer Clone() {
+	public override Player Clone() {
 		AINeuralPlayer clone = new AINeuralPlayer ();
 		clone._whereToGoDecider = _whereToGoDecider;
 		clone._getUsedHumansDecider = _getUsedHumansDecider;
@@ -55,6 +55,8 @@ public class AINeuralPlayer:Player {
 				maxAllowedOutputInd = i;
 			}
 		}
+		if (maxAllowedOutputInd == -1)
+			Debug.Log ("hi");
 		return maxAllowedOutputInd;
 	}
 	private int GetDecisionInd(DecisionType type, Game game, PlayerModel player, NeuralNetwork decider, List<int> randoms, int points, Resource receivedRecource, WhereToGo whereToGo) {
@@ -264,6 +266,10 @@ public class AINeuralPlayer:Player {
 		List<int> optionInds = new List<int> ();
 		for (int j = 0; j < options.Count; j++)
 			optionInds.Add ((int)options[j]-1);
+		if (optionInds.Count == 0) {
+			Debug.Log ("hi");
+			options = game.GetAvailableTargets (player);
+		}
 		return optionInds;
 	}
 	NeuralNetwork _whereToGoDecider;

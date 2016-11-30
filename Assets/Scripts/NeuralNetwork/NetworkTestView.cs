@@ -31,8 +31,10 @@ public class NetworkTestView : MonoBehaviour {
 	int _trainingsCount;
 
 	#region Buttons
+	[SerializeField] ComparerView _savedModelsComparer;
 	public void OnSavePlayerPressed() {
-		PlayerSerializer.SavePlayer ("Jorge", _brain);
+		_savedModelsComparer.SavePlayer (_brain, "Jorge");
+		//PlayerSerializer.SavePlayer ("Jorge", _brain);
 	}
 	public void CreateRandomBrainPressed() {
 		//_brain = new NeuralNetwork (new int[4] { 2, 4, 4, 1 });
@@ -208,6 +210,45 @@ public class NetworkTestView : MonoBehaviour {
 	public void OnCleanTrainingPressed() {
 		_trainingModels.Clear ();
 		UpdateView ();
+	}
+
+	public void OnPlayNamedPlayersPressed() {
+		/**const string human = "Human";
+		List<string> names = new List<string> () { "AlanScoreValues", "StueRandom", "Rodriges", human };
+		int[] wins = new int[4];
+		int count = int.Parse (_gamesCountLabel.text);
+
+		List<Player> players = new List<Player> ();
+		foreach (string name in names) {
+			if (name == human)
+				players.Add (new HumanPlayer (_gameView.TurnView));
+			else
+				players.Add(PlayerSerializer.LoadPlayer(name));
+		}
+
+		Thread thread = new Thread (new ThreadStart(()=>{
+
+			for (int i=0;i<count;i++) {
+				UpdateProgress(i,count);
+				Game game = new Game (players);
+				game.Play (null);
+				game.
+			}
+			UpdateProgress(count,count);
+
+			Dictionary<string, int> meanRewards = new Dictionary<DecisionType, float>();
+			foreach (var decision in decisions)
+				meanRewards.Add(decision, sumRewards[decision]/(float)countRewards[decision]);
+
+			CompositionRoot.Instance.ExecuteInMainThread(()=>{
+				Debug.Log("Success calced");
+				_successLabel.text = string.Format("wheretogo = {0:#0.##}\n humans count = {1:#0.##}\n instruments = {2:#0.##}\n charity = {3:#0.##}\n hungry = {4:#0.##}\n",
+					meanRewards[DecisionType.SelectWhereToGo], meanRewards[DecisionType.SelectUsedHumans],
+					meanRewards[DecisionType.SelectInstruments], meanRewards[DecisionType.SelectCharity], meanRewards[DecisionType.SelectLeaveHungry]);
+				UpdateView();
+			});
+		}));
+		thread.Start ();*/
 	}
 	#endregion
 

@@ -32,15 +32,7 @@ public class GameView : MonoBehaviour {
 			if (_game.GetEnded ()) {
 				// Show winner.
 				PlayerModel player = null;
-				int winnerInd = -1;
-				if (_game.PlayerModels [0].Score >= _game.PlayerModels [1].Score && _game.PlayerModels [0].Score >= _game.PlayerModels [2].Score && _game.PlayerModels [0].Score >= _game.PlayerModels [3].Score)
-					winnerInd = 0;
-				else if (_game.PlayerModels [1].Score >= _game.PlayerModels [2].Score && _game.PlayerModels [1].Score >= _game.PlayerModels [3].Score)
-					winnerInd = 1;
-				else if (_game.PlayerModels [2].Score >= _game.PlayerModels [3].Score)
-					winnerInd = 2;
-				else
-					winnerInd = 3;
+				int winnerInd = _game.WinnerInd;
 				player = _game.PlayerModels [winnerInd];
 				TurnView.SelectPlayer (_game, player);
 				_gameEndedParent.SetActive (true);

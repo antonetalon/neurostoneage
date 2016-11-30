@@ -31,4 +31,11 @@ public class Decider {
 		}
 		return mostWantedOption;
 	}
+	public Decider Clone() {
+		Decider clone = new Decider (-1,-1,-1);
+		clone._wanters = new Wanter[_wanters.Length];
+		for (int i = 0; i < _wanters.Length; i++)
+			clone._wanters [i] = _wanters [i].Clone ();
+		return clone;
+	}
 }

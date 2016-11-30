@@ -45,11 +45,15 @@ public abstract class Player {
 	public abstract void BuildHouse (Game game, int houseInd, Action<bool> onComplete);
 	public abstract void GetUsedResourceForHouseBuilding(Game game, HouseToBuild house, List<Resource> options, List<Resource> spendResources, Action<Resource> onComplete);
 	public abstract void LeaveHungry (Game game, int eatenResources, Action<bool> onComplete);
+	public abstract Player Clone ();
 }
 public class HumanPlayer:Player {
 	HumanTurnView _turnView;
 	public HumanPlayer(HumanTurnView turnView) {
 		_turnView = turnView;
+	}
+	public override Player Clone () {
+		return new HumanPlayer (_turnView);
 	}
 	public override void SelectWhereToGo (Game game, Action<WhereToGo> onComplete)
 	{

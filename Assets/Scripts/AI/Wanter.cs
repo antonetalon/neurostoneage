@@ -16,6 +16,22 @@ public class Wanter {
 		_additionalToOutCoefs = new float[additionalNeuronsCount];
 		_additionals = new float[additionalNeuronsCount];
 	}
+	public Wanter Clone() {
+		Wanter clone = new Wanter (-1,-1);
+		clone._inToOutCoefs = new float[_inToOutCoefs.Length];
+		for (int i = 0; i < _inToOutCoefs.Length; i++)
+			clone._inToOutCoefs [i] = _inToOutCoefs [i];
+		for (int i = 0; i < _inToAdditionalCoefs.GetLength(0); i++) {
+			for (int j = 0; j < _inToAdditionalCoefs.GetLength (1); j++)
+				clone._inToAdditionalCoefs [i, j] = _inToAdditionalCoefs [i, j];
+		}
+		for (int i = 0; i < _additionalToOutCoefs.Length; i++)
+			clone._additionalToOutCoefs [i] = _additionalToOutCoefs [i];
+		clone._constWanting = _constWanting;
+		for (int i = 0; i < _additionals.Length; i++)
+			clone._additionals [i] = _additionals [i];
+		return clone;
+	}
 	public void SetRandomValues() {
 		for (int i = 0; i < _inToOutCoefs.Length; i++) {
 			_inToOutCoefs [i] = GetRandomCoef();

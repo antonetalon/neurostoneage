@@ -50,6 +50,19 @@ public class AIGeneticPlayer:Player {
 			return parent2;
 	}
 
+	public override Player Clone ()
+	{
+		AIGeneticPlayer clone = new AIGeneticPlayer ();
+		clone._whereToGoDecider = _whereToGoDecider.Clone ();
+		clone._humansCountDecider = _humansCountDecider.Clone ();
+		clone._useAnyResourceFromTopCardDecider = _useAnyResourceFromTopCardDecider.Clone ();
+		clone._resourceFromTopCardDecider = _resourceFromTopCardDecider.Clone ();
+		clone._resourceFromCharityDecider = _resourceFromCharityDecider.Clone ();
+		clone._resourceFromInstrumentsDecider = _resourceFromInstrumentsDecider.Clone ();
+		clone._leaveHungryDecider = _leaveHungryDecider.Clone ();
+		return clone;
+	}
+
 	const int WhereToGoInputsCount = 17;
 	private Decider _whereToGoDecider;
 	public override void SelectWhereToGo (Game game, Action<WhereToGo> onComplete) {

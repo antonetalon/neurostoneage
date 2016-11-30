@@ -103,6 +103,8 @@ public class Game {
 	public int FirstPlayerInd { get { return TurnInd % Players.Count; } }
 
 	public Game(List<Player> players) {
+
+		WinnerInd = -1;
 		TrainingControllers = new List<GameTrainingController> ();
 		for (int i = 0; i < 4; i++)
 			TrainingControllers.Add (new GameTrainingController (i, this));
@@ -273,6 +275,7 @@ public class Game {
 		SetChanged ();
 	}
 	public bool GetEnded() {
+		WinnerInd = GetMaxScorePlayerInd ();
 		const int MaxTurnsCount = 100;
 		if (TurnInd >= MaxTurnsCount)
 			return true;
@@ -298,7 +301,21 @@ public class Game {
 		if (_houseHeap4.Count == 0)
 			return true;
 		// Otherwise game continues.
+		WinnerInd = -1;
 		return false;
+	}
+	public int WinnerInd { get; private set; }
+	public int GetMaxScorePlayerInd() {
+		int winnerInd = -1;
+		if (PlayerModels [0].Score >= PlayerModels [1].Score && PlayerModels [0].Score >= PlayerModels [2].Score && PlayerModels [0].Score >= PlayerModels [3].Score)
+			winnerInd = 0;
+		else if (PlayerModels [1].Score >= PlayerModels [2].Score && PlayerModels [1].Score >= PlayerModels [3].Score)
+			winnerInd = 1;
+		else if (PlayerModels [2].Score >= PlayerModels [3].Score)
+			winnerInd = 2;
+		else
+			winnerInd = 3;
+		return winnerInd;
 	}
 	private int UnspentHumanCount {
 		get {
@@ -490,9 +507,9 @@ public class Game {
 					WhereToGo target = WhereToGo.None;
 					List<WhereToGo> availableTargets = GetAvailableTargets (model);
 					if (availableTargets.Count > 0) {
-						TrainingDecisionModel trainingModel = new TrainingDecisionModel (DecisionType.SelectWhereToGo, 
-							AINeuralPlayer.GetInputs (DecisionType.SelectWhereToGo, this, model, Resource.None, WhereToGo.None), 
-							AINeuralPlayer.GetOptionInds(DecisionType.SelectWhereToGo, this, model, null, -1, Resource.None, WhereToGo.None), currPlayerInd);
+						int[] inputs = AINeuralPlayer.GetInputs (DecisionType.SelectWhereToGo, this, model, Resource.None, WhereToGo.None);
+						List<int> options = AINeuralPlayer.GetOptionInds (DecisionType.SelectWhereToGo, this, model, null, -1, Resource.None, WhereToGo.None);
+						TrainingDecisionModel trainingModel = new TrainingDecisionModel (DecisionType.SelectWhereToGo, inputs, options, currPlayerInd);
 						currPlayer.SelectWhereToGo (this, (WhereToGo tgt) => {
 							target = tgt;
 						});

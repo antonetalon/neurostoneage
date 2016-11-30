@@ -7,6 +7,9 @@ using System.Collections.Generic;
 public class AIRandomPlayer:Player {
 	public AIRandomPlayer() {
 	}
+	public override Player Clone () {
+		return new AIRandomPlayer ();
+	}
 	public override void SelectWhereToGo (Game game, Action<WhereToGo> onComplete) {
 		List<WhereToGo> options = game.GetAvailableTargets (_model);
 		int ind = Game.RandomRange (0, options.Count);
