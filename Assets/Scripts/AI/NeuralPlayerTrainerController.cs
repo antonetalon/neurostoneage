@@ -45,7 +45,8 @@ public class NeuralPlayerTrainerController {
 			foreach (var option in training.Options)
 				options += option.ToString()+";";
 			NeuralNetwork decider = player.GetDecider (training.Type);
-			int existingOutput = AINeuralPlayer.GetDecisionFromOutputs(decider.Think (training.Inputs), training.Options);
+			double[] outputs = decider.Think (training.Inputs);
+			int existingOutput = AINeuralPlayer.GetDecisionFromOutputs(outputs, training.Options);
 			//if ((existingOutput == training.Output) == (training.RewardPercent > 0))
 			//	continue;
 			float nu = training.RewardPercent*speed;

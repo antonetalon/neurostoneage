@@ -48,6 +48,7 @@ public abstract class Player {
 	public abstract Player Clone ();
 }
 public class HumanPlayer:Player {
+	const int SleepTime = 100;
 	HumanTurnView _turnView;
 	public HumanPlayer(HumanTurnView turnView) {
 		_turnView = turnView;
@@ -60,7 +61,7 @@ public class HumanPlayer:Player {
 		_turnView.SelectPlayer (game, _model);
 		_turnView.ShowWhereToGo (game, _model);
 		while (true) {
-			System.Threading.Thread.Sleep (1000);
+			System.Threading.Thread.Sleep (SleepTime);
 			WhereToGo res = WhereToGo.None;
 			if (_turnView.FieldPressed)
 				res = WhereToGo.Field;
@@ -105,7 +106,7 @@ public class HumanPlayer:Player {
 		_turnView.SelectPlayer (game, _model);
 		_turnView.ShowHumansCount (game, _model, whereToGo, Color);
 		while (true) {
-			System.Threading.Thread.Sleep (1000);
+			System.Threading.Thread.Sleep (SleepTime);
 			if (_turnView.SelectedHumansCount != -1) {
 				onComplete (_turnView.SelectedHumansCount);
 				return;
@@ -119,7 +120,7 @@ public class HumanPlayer:Player {
 		_turnView.SelectPlayer (game, _model);
 		_turnView.ShowSelectAnyResource ();
 		while (true) {
-			System.Threading.Thread.Sleep (1000);
+			System.Threading.Thread.Sleep (SleepTime);
 			if (_turnView.SelectedAnyResourceDontUse || _turnView.SelectedAnyResourceUse) {
 				onComplete (_turnView.SelectedAnyResourceUse);
 				return;
@@ -130,7 +131,7 @@ public class HumanPlayer:Player {
 		_turnView.SelectPlayer (game, _model);
 		_turnView.ShowSelectResource ();
 		while (true) {
-			System.Threading.Thread.Sleep (1000);
+			System.Threading.Thread.Sleep (SleepTime);
 			if (_turnView.SelectedResource != Resource.None) {
 				onComplete (_turnView.SelectedResource);
 				return;
@@ -142,7 +143,7 @@ public class HumanPlayer:Player {
 		_turnView.SelectPlayer (game, _model);
 		_turnView.ShowSelectingItemFromCharityCard(_model, randoms);
 		while (true) {
-			System.Threading.Thread.Sleep (1000);
+			System.Threading.Thread.Sleep (SleepTime);
 			if (_turnView.SelectedItemFromCharityCard!=-1) {
 				onComplete (_turnView.SelectedItemFromCharityCard);
 				return;
@@ -155,7 +156,7 @@ public class HumanPlayer:Player {
 		_turnView.SelectPlayer (game, _model);
 		_turnView.ShowSelectInstruments(_model, receivedReceource, points);
 		while (true) {
-			System.Threading.Thread.Sleep (1000);
+			System.Threading.Thread.Sleep (SleepTime);
 			if (_turnView.SelectingInstrumentsDone) {
 				onComplete (_turnView.InstrumentSlot0Used, _turnView.InstrumentSlot1Used, _turnView.InstrumentSlot2Used, 
 					_turnView.Instrument4OnceUsed, _turnView.Instrument3OnceUsed, _turnView.Instrument2OnceUsed);
@@ -168,7 +169,7 @@ public class HumanPlayer:Player {
 		_turnView.SelectPlayer (game, _model);
 		_turnView.ShowBuildCard(cardInd);
 		while (true) {
-			System.Threading.Thread.Sleep (1000);
+			System.Threading.Thread.Sleep (SleepTime);
 			if (_turnView.SelectingBuildCardDone) {
 				onComplete (_turnView.SelectedBuildCard);
 				return;
@@ -180,7 +181,7 @@ public class HumanPlayer:Player {
 		_turnView.SelectPlayer (game, _model);
 		_turnView.ShowSelectResourceForCard(_model, alreadySelectedResources);
 		while (true) {
-			System.Threading.Thread.Sleep (1000);
+			System.Threading.Thread.Sleep (SleepTime);
 			if (_turnView.SelectedResourceForCardBuilding!=Resource.None) {
 				onComplete (_turnView.SelectedResourceForCardBuilding);
 				return;
@@ -192,7 +193,7 @@ public class HumanPlayer:Player {
 		_turnView.SelectPlayer (game, _model);
 		_turnView.ShowSelectBuildingHouse(houseInd);
 		while (true) {
-			System.Threading.Thread.Sleep (1000);
+			System.Threading.Thread.Sleep (SleepTime);
 			if (_turnView.SelectingBuildHouseDone) {
 				onComplete (_turnView.SelectedToBuildHouse);
 				return;
@@ -204,7 +205,7 @@ public class HumanPlayer:Player {
 		_turnView.SelectPlayer (game, _model);
 		_turnView.ShowSelectResourceForBuildingHouse(house, options, spendResources);
 		while (true) {
-			System.Threading.Thread.Sleep (1000);
+			System.Threading.Thread.Sleep (SleepTime);
 			if (_turnView.ResourceForHouseBuildingSelectionDone) {
 				onComplete (_turnView.SelectedResourceForHouseBuilding);
 				return;
@@ -216,7 +217,7 @@ public class HumanPlayer:Player {
 		_turnView.SelectPlayer (game, _model);
 		_turnView.ShowSelectingLeavingHungry(eatenResources);
 		while (true) {
-			System.Threading.Thread.Sleep (1000);
+			System.Threading.Thread.Sleep (SleepTime);
 			if (_turnView.SelectingLeavingHungryDone) {
 				onComplete (_turnView.SelecedLeaveHungry);
 				return;

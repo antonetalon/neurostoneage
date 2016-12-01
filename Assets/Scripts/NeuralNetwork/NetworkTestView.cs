@@ -28,6 +28,7 @@ public class NetworkTestView : MonoBehaviour {
 
 
 	AINeuralPlayer _brain;
+	AINeuralPlayer _prevBrain;
 	int _trainingsCount;
 
 	#region Buttons
@@ -39,6 +40,7 @@ public class NetworkTestView : MonoBehaviour {
 	public void CreateRandomBrainPressed() {
 		//_brain = new NeuralNetwork (new int[4] { 2, 4, 4, 1 });
 		_brain = new AINeuralPlayer();
+		_prevBrain = (AINeuralPlayer)_brain.Clone ();
 		_trainingsCount = 0;
 		Debug.Log ("Created ai");
 	}
@@ -58,6 +60,7 @@ public class NetworkTestView : MonoBehaviour {
 			var binaryFormatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
 			_trainingModels = (List<TrainingDecisionModel>)binaryFormatter.Deserialize(stream);
 			_brain = (AINeuralPlayer)binaryFormatter.Deserialize (stream);
+			_prevBrain = (AINeuralPlayer)_brain.Clone ();
 		}
 		UpdateView ();
 		Debug.Log ("Training loaded");
@@ -90,12 +93,13 @@ public class NetworkTestView : MonoBehaviour {
 
 	[SerializeField] Dropdown _decisionSelector;
 	public void OnTrainPressed() {
-		int count = int.Parse (_gamesCountLabel.text);
+		int count = int.Parse (_gamesCountInput.text);
 		DecisionType decision = (DecisionType)(_decisionSelector.value+1);
 		Train (count, decision, null);
 	}
 	private void Train(int loopsCount, DecisionType decisionType, System.Action onFinished) {
-		const float speed = 0.5f;
+		_prevBrain = (AINeuralPlayer)_brain.Clone ();
+		float speed = float.Parse (_learningSpeedInput.text);
 		Thread thread = new Thread (new ThreadStart(()=>{
 			for (int loopInd = 0; loopInd < loopsCount; loopInd++) {
 				UpdateProgress (loopInd+1, loopsCount);
@@ -110,9 +114,10 @@ public class NetworkTestView : MonoBehaviour {
 		thread.Start ();
 	}
 
-	[SerializeField] Text _gamesCountLabel;
-	public void PlayWithAIAndAddTraining() {
-		int count = int.Parse (_gamesCountLabel.text);
+	[SerializeField] InputField _gamesCountInput;
+	[SerializeField] InputField _learningSpeedInput;
+	public void OnPlayWithAIAndAddTraining() {
+		int count = int.Parse (_gamesCountInput.text);
 
 		List<Player> players = new List<Player> () {
 			_brain,
@@ -133,6 +138,7 @@ public class NetworkTestView : MonoBehaviour {
 				});
 				while (!matchEnded)
 					System.Threading.Thread.Sleep (100);
+				UpdateProgress(i+1,count);
 			}
 			CompositionRoot.Instance.ExecuteInMainThread(()=>{
 				Debug.Log(count.ToString() + " AI matches ended");
@@ -143,72 +149,66 @@ public class NetworkTestView : MonoBehaviour {
 	}
 
 	[SerializeField] Text _successLabel;
-	public void OnCalcSuccessPressed() {
-		int count = int.Parse (_gamesCountLabel.text);
+	[SerializeField] Text _changeSignLabel;
+	public void OnCalcSuccessPressed () {
+		CalcSuccess ();
+	}
+	private void CalcSuccess() {
 
-		List<Player> players = new List<Player> () {
-			_brain,
-			_brain.Clone(),
-			_brain.Clone(),
-			_brain.Clone()
-		};
+		List<DecisionType> decisions = new List<DecisionType>() { DecisionType.SelectWhereToGo, DecisionType.SelectUsedHumans, DecisionType.SelectInstruments, DecisionType.SelectCharity, DecisionType.SelectLeaveHungry };
 
-		Thread thread = new Thread (new ThreadStart(()=>{
+		Dictionary<DecisionType, float> errors = new Dictionary<DecisionType, float>();
+		Dictionary<DecisionType, int> counts = new Dictionary<DecisionType, int>();
+		Dictionary<DecisionType, int> changeSignCounts = new Dictionary<DecisionType, int>();
 
-			List<DecisionType> decisions = new List<DecisionType>() { DecisionType.SelectWhereToGo, DecisionType.SelectUsedHumans, DecisionType.SelectInstruments, DecisionType.SelectCharity, DecisionType.SelectLeaveHungry };
+		foreach (var decision in decisions) {
+			errors.Add(decision, 0);
+			counts.Add(decision, 0);
+			changeSignCounts.Add (decision, 0);
+		}
 
-			Dictionary<DecisionType, float> sumRewards = new Dictionary<DecisionType, float>();
-			Dictionary<DecisionType, int> countRewards = new Dictionary<DecisionType, int>();
+		foreach (TrainingDecisionModel training in _trainingModels) {			
+			double output = _brain.GetDecider (training.Type).Think (training.Inputs)[training.Output];
+			double prevOutput = _prevBrain.GetDecider (training.Type).Think (training.Inputs)[training.Output];
+			errors[training.Type] += Mathf.Abs( training.RewardPercent - (float)output);
+			counts[training.Type]++;
+			if ((output - training.RewardPercent) * (prevOutput - training.RewardPercent) < 0)
+				changeSignCounts [training.Type]++;
+		}
 
-			foreach (var decision in decisions) {
-				sumRewards.Add(decision, 0);
-				countRewards.Add(decision, 0);
-			}
+		Dictionary<DecisionType, float> meanErrors = new Dictionary<DecisionType, float>();
+		foreach (var decision in decisions)
+			meanErrors.Add(decision, errors[decision]/(float)counts[decision]);
+		
+		Debug.Log("Success calced");
+		_successLabel.text = string.Format("Errors:\nwheretogo = {0:#0.####}\n humans count = {1:#0.####}\n charity = {3:#0.####}\n instruments = {2:#0.####}\n hungry = {4:#0.####}\n",
+			meanErrors[DecisionType.SelectWhereToGo], meanErrors[DecisionType.SelectUsedHumans],
+			meanErrors[DecisionType.SelectInstruments], meanErrors[DecisionType.SelectCharity], meanErrors[DecisionType.SelectLeaveHungry]);
 
-			System.Random rand = new System.Random();
-
-			for (int i=0;i<count;i++) {
-				UpdateProgress(i,count);
-				players.Clear();
-				for (int playerInd=0;playerInd<4;playerInd++) {
-					Player player;
-					if (rand.NextDouble()>0.5)
-						player = _brain.Clone();
-					else
-						player = new AIRandomPlayer();
-					players.Add(player);
-				}
-				Game game = new Game (players);
-				game.Play (null);
-				foreach (var trainingController in game.TrainingControllers) {
-					for (int ind = 0;ind<4;ind++) {
-						if (players[ind] is AINeuralPlayer) {
-							var trainingModel = trainingController.TrainingModels[ind];
-							sumRewards[trainingModel.Type] += trainingModel.RewardPercent;
-							countRewards[trainingModel.Type]++;
-						}
-					}
-				}
-			}
-			UpdateProgress(count,count);
-
-			Dictionary<DecisionType, float> meanRewards = new Dictionary<DecisionType, float>();
-			foreach (var decision in decisions)
-				meanRewards.Add(decision, sumRewards[decision]/(float)countRewards[decision]);
-			
-			CompositionRoot.Instance.ExecuteInMainThread(()=>{
-				Debug.Log("Success calced");
-				_successLabel.text = string.Format("wheretogo = {0:#0.##}\n humans count = {1:#0.##}\n instruments = {2:#0.##}\n charity = {3:#0.##}\n hungry = {4:#0.##}\n",
-					meanRewards[DecisionType.SelectWhereToGo], meanRewards[DecisionType.SelectUsedHumans],
-					meanRewards[DecisionType.SelectInstruments], meanRewards[DecisionType.SelectCharity], meanRewards[DecisionType.SelectLeaveHungry]);
-				UpdateView();
-			});
-		}));
-		thread.Start ();
+		_changeSignLabel.text = string.Format("change signs:\nwheretogo = {0:#0.####}\n humans count = {1:#0.####}\n charity = {3:#0.####}\n instruments = {2:#0.####}\n hungry = {4:#0.####}\n",
+			changeSignCounts[DecisionType.SelectWhereToGo]/(float)counts[DecisionType.SelectWhereToGo], changeSignCounts[DecisionType.SelectUsedHumans]/(float)counts[DecisionType.SelectUsedHumans],
+			changeSignCounts[DecisionType.SelectInstruments]/(float)counts[DecisionType.SelectInstruments], changeSignCounts[DecisionType.SelectCharity]/(float)counts[DecisionType.SelectCharity],
+			changeSignCounts[DecisionType.SelectLeaveHungry]/(float)counts[DecisionType.SelectLeaveHungry]);
 	}
 
 	public void OnCleanTrainingPressed() {
+		/*int ind = -1;
+		for (int i = 0; i < _trainingModels.Count; i++) {
+			if (_trainingModels [i].Type == DecisionType.SelectCharity) {
+				ind = i;
+				break;
+			}
+		}
+		var model = _trainingModels [ind];
 		_trainingModels.Clear ();
+		_trainingModels.Add (model);*/
+
+		_trainingModels.Clear ();
+		UpdateView ();
+	}
+
+	public void OnRevertToPrevPressed() {
+		_brain = (AINeuralPlayer)_prevBrain.Clone ();
 		UpdateView ();
 	}
 
@@ -256,6 +256,7 @@ public class NetworkTestView : MonoBehaviour {
 
 	[SerializeField] Text _trainingModelsCount;
 	public void UpdateView() {
+		CalcSuccess ();
 		_trainingModelsCount.text = _trainingModels.Count.ToString ();
 	}
 

@@ -490,6 +490,7 @@ public class Game {
 	public int GetAvailableHumansCountFor(WhereToGo target) {
 		return GetMaxHumansCountFor (target) - GetSpentHumansCountFor (target);
 	}
+	const int SleepTime = 100;
 	public void Play(System.Action onEnded) {
 		while (!GetEnded ()) {
 			NewTurn ();
@@ -514,7 +515,7 @@ public class Game {
 							target = tgt;
 						});
 						while (target== WhereToGo.None)
-							System.Threading.Thread.Sleep (1000);
+							System.Threading.Thread.Sleep (SleepTime);
 						trainingModel.Output = (int)target - 1;
 						TrainingControllers [currPlayerInd].OnBeforeModelChange ();
 						TrainingControllers [currPlayerInd].OnAfterWhereToGoSelected (trainingModel, target);
@@ -540,7 +541,7 @@ public class Game {
 							count = cnt;
 						});
 						while (count==-1)
-							System.Threading.Thread.Sleep (1000);
+							System.Threading.Thread.Sleep (SleepTime);
 					} else
 						count = maxCount;
 					trainingModelUsedHumans.Output = count - 1;
@@ -586,7 +587,7 @@ public class Game {
 						processEnded = true;
 					});
 					while (!processEnded)
-						System.Threading.Thread.Sleep (1000);
+						System.Threading.Thread.Sleep (SleepTime);
 					if (Logging) {
 						if (selectedToUse)
 							Debug.Log ("Selected to use any resource from card");
@@ -601,14 +602,14 @@ public class Game {
 							resource = res;
 						});
 						while (resource == Resource.None)
-							System.Threading.Thread.Sleep (1000);						
+							System.Threading.Thread.Sleep (SleepTime);						
 						model.AddResource (resource, 1);
 						resource = Resource.None;
 						currPlayer.ChooseResourceToReceiveFromTopCard (this, (Resource res) => {
 							resource = res;
 						});
 						while (resource==Resource.None)
-							System.Threading.Thread.Sleep (1000);
+							System.Threading.Thread.Sleep (SleepTime);
 						if (Logging) Debug.Log ("Selected resource to receive = "+resource.ToString());
 						model.AddResource (resource, 1);
 						model.ApplyAnyResourceFromTopCard ();
@@ -646,7 +647,7 @@ public class Game {
 						processEnded = true;
 					});
 					while (!processEnded)
-						System.Threading.Thread.Sleep (1000);
+						System.Threading.Thread.Sleep (SleepTime);
 					if (Logging) {
 						if (selectedToBuy)
 							Debug.Log ("Selected build card");
@@ -677,7 +678,7 @@ public class Game {
 								Debug.Log("WTF");
 						});
 						while (!processEnded2)
-							System.Threading.Thread.Sleep (1000);
+							System.Threading.Thread.Sleep (SleepTime);
 					}
 
 					if (Logging) {
@@ -717,7 +718,7 @@ public class Game {
 									Debug.Log ("WTF");
 							});
 							while (selectedOption==-1)
-								System.Threading.Thread.Sleep (1000);
+								System.Threading.Thread.Sleep (SleepTime);
 							if (Logging) Debug.LogFormat ("Charity option {0} selected by player {1}", selectedOption, randomBonusPlayerInd);
 
 							trainingModel.Output = selectedOption;
@@ -778,7 +779,7 @@ public class Game {
 						processEnded = true;
 					});
 					while (!processEnded)
-						System.Threading.Thread.Sleep (1000);
+						System.Threading.Thread.Sleep (SleepTime);
 					if (Logging) {
 						if (selectedToBuild)
 							Debug.Log ("Selected build house");
@@ -807,7 +808,7 @@ public class Game {
 								processEnded = true;
 							});
 							while (!processEnded)
-								System.Threading.Thread.Sleep (1000);
+								System.Threading.Thread.Sleep (SleepTime);
 							if (selectedRes == Resource.None)
 								break; // No more resource spending.
 							spentResources.Add(selectedRes);
@@ -879,7 +880,7 @@ public class Game {
 							processEnded = true;
 						});
 						while (!processEnded)
-							System.Threading.Thread.Sleep (1000);
+							System.Threading.Thread.Sleep (SleepTime);
 					}
 				}
 				trainingModel.Output = selectedToLeaveHungry?1:0;
@@ -998,13 +999,13 @@ public class Game {
 				}
 			});
 		while (!processEnded)
-			System.Threading.Thread.Sleep (1000);
+			System.Threading.Thread.Sleep (SleepTime);
 
 		int cost = GetResourceCost (resource);
 		int resourceCountFromDices = randFromDices / cost;
 		int resourceCount = rand / cost;
 		int resourcesFromInstruments = resourceCount - resourceCountFromDices;
-		trainingModel.Output = resourcesFromInstruments;
+		trainingModel.Output = Mathf.Min( 4, resourcesFromInstruments);
 
 		TrainingControllers[currPlayerInd].OnAfterInstrumentsApplied(trainingModel, rand-randFromDices);
 

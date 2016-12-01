@@ -108,20 +108,24 @@ public class NeuralNetwork {
 				for (int neuronInd2 = 0; neuronInd2 < _layerSizes [layerInd-1]+1; neuronInd2++)
 					_neuronInputs[layerInd-1] [neuronInd1] += _weights [layerInd-1] [neuronInd2, neuronInd1] * _neuronOutputs [layerInd - 1][neuronInd2];
 				// Apply activation function.
-				_neuronOutputs[layerInd][neuronInd1] = FAct(_neuronInputs[layerInd-1][neuronInd1]);
+				_neuronOutputs[layerInd][neuronInd1] = FAct(_neuronInputs[layerInd-1][neuronInd1], layerInd);
 			}
 		}
 		return _neuronOutputs [LayersCount - 1];
 	}
 	const float BigNum = 500;
-	private double FAct(double sum) {
+	private double FAct(double sum, int layerInd) {
+		if (layerInd == LayersCount - 1)
+			return sum; // identity func for last layer.
 		if (sum < -BigNum)
 			return 0;
 		if (sum > BigNum)
 			return 1;
 		return 1/(1+Math.Exp(-sum));
 	}
-	private double FActDerivative(double sum) {
+	private double FActDerivative(double sum, int layerInd) {
+		if (layerInd == LayersCount - 1)
+			return 1; // identity func for last layer.
 		if (sum < -BigNum)
 			return 0;
 		if (sum > BigNum)
@@ -158,7 +162,7 @@ public class NeuralNetwork {
 			for (int neuronInd1 = 0; neuronInd1 < _layerSizes [layerInd]; neuronInd1++) {
 				if (layerInd == LayersCount - 1) {
 					if (consideredOutputs == null || consideredOutputs.Contains (neuronInd1))
-						_sigmas [layerInd - 1] [neuronInd1] = FActDerivative (_neuronInputs [layerInd - 1] [neuronInd1]) * (idealOutputs [neuronInd1] - outputs [neuronInd1]);
+						_sigmas [layerInd - 1] [neuronInd1] = FActDerivative (_neuronInputs [layerInd - 1] [neuronInd1], layerInd) * (idealOutputs [neuronInd1] - outputs [neuronInd1]);
 					else
 						_sigmas [layerInd - 1] [neuronInd1] = 0;
 //					if (double.IsNaN (_sigmas [layerInd - 1] [neuronInd1]))
@@ -167,7 +171,7 @@ public class NeuralNetwork {
 					double sum = 0;
 					for (int neuronInd2 = 0; neuronInd2 < _layerSizes [layerInd + 1]; neuronInd2++)
 						sum += _sigmas [layerInd] [neuronInd2] * _weights [layerInd] [neuronInd1, neuronInd2];
-					_sigmas [layerInd-1] [neuronInd1] = FActDerivative (_neuronInputs [layerInd-1] [neuronInd1]) * sum;
+					_sigmas [layerInd-1] [neuronInd1] = FActDerivative (_neuronInputs [layerInd-1] [neuronInd1], layerInd) * sum;
 //					if (double.IsNaN (_sigmas [layerInd - 1] [neuronInd1]))
 //						Debug.Log ("hi");
 				}					

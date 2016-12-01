@@ -18,11 +18,11 @@ public class AINeuralPlayer:Player {
 	}
 	public override Player Clone() {
 		AINeuralPlayer clone = new AINeuralPlayer ();
-		clone._whereToGoDecider = _whereToGoDecider;
-		clone._getUsedHumansDecider = _getUsedHumansDecider;
-		clone._charityDecider = _charityDecider;
-		clone._instrumentsDecider = _instrumentsDecider;
-		clone._hungryDecider = _hungryDecider;
+		clone._whereToGoDecider = _whereToGoDecider.Clone();
+		clone._getUsedHumansDecider = _getUsedHumansDecider.Clone();
+		clone._charityDecider = _charityDecider.Clone();
+		clone._instrumentsDecider = _instrumentsDecider.Clone();
+		clone._hungryDecider = _hungryDecider.Clone();
 		return clone;
 	}
 
