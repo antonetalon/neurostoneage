@@ -519,7 +519,7 @@ public class GameTrainingController {
 				training.RewardPercent *= 2;
 		}
 
-		StringBuilder sb = new StringBuilder ("All training outputs = \n");
+		/*StringBuilder sb = new StringBuilder ("All training outputs = \n");
 		foreach (TrainingDecisionModel training in _trainingModels) {
 			switch (training.Type) {
 			case DecisionType.SelectCharity: sb.AppendFormat ("{0:0.00}, charity selected {1}\n", training.RewardPercent, training.Output); break;
@@ -530,7 +530,7 @@ public class GameTrainingController {
 			}
 
 		}
-		Debug.Log (sb.ToString());
+		Debug.Log (sb.ToString());*/
 	}
 	private void LogEventsWithCauses(string title) {
 		StringBuilder sb = new StringBuilder(title + ":\n");

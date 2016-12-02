@@ -64,6 +64,48 @@ public class NetworkTestView : MonoBehaviour {
 		}
 		UpdateView ();
 		Debug.Log ("Training loaded");
+
+		List<float> cardValuesNoRes = new List<float> ();
+		List<float> cardValuesResPres = new List<float> ();
+		foreach (var training in _trainingModels) {
+			if (training.Type != DecisionType.SelectWhereToGo)
+				continue;
+			WhereToGo target = (WhereToGo)(training.Output+1);
+			if (target != WhereToGo.House1 && target != WhereToGo.House2 && target != WhereToGo.House3 && target != WhereToGo.House4)
+				continue;
+			int ind = training.Output - 3;
+			if (training.Inputs [ind] > 0.5f)
+				cardValuesResPres.Add (training.RewardPercent);
+			else
+				cardValuesNoRes.Add (training.RewardPercent);
+		}
+		StringBuilder sb = new StringBuilder ();
+		sb.AppendFormat ("has res = ");
+		foreach (float val in cardValuesResPres)
+			sb.AppendFormat ("{0:#0.##}, ", val);
+		sb.AppendFormat ("\nno  res = ");
+		foreach (float val in cardValuesNoRes)
+			sb.AppendFormat ("{0:#0.##}, ", val);
+		Debug.Log (sb.ToString());
+
+		/*StringBuilder sb = new StringBuilder ();
+		Dictionary<int, List<float>> values = new Dictionary<int, List<float>> ();
+		foreach (var training in _trainingModels) {
+			if (training.Type != DecisionType.SelectCharity)
+				continue;
+			if (!values.ContainsKey (training.Output))
+				values.Add (training.Output, new List<float> ());
+			values [training.Output].Add (training.RewardPercent);
+		}
+		foreach (var item in values)
+			item.Value.Sort ();
+		foreach (var item in values) {
+			sb.AppendFormat ("{0} has values of\n", item.Key);
+			foreach (float val in item.Value)
+				sb.AppendFormat ("{0:#0.##}, ", val);
+			sb.AppendLine ();
+		}
+		Debug.Log (sb.ToString());*/
 	}
 
 	public void PlayAndAddTraining() {

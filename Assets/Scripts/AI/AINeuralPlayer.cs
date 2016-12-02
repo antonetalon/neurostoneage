@@ -282,7 +282,7 @@ public class AINeuralPlayer:Player {
 
 	#region Get used humans
 	private void InitGetUsedHumans() {
-		_getUsedHumansDecider = new NeuralNetwork (new int[4]{ 9, 6, 6, 7 });
+		_getUsedHumansDecider = new NeuralNetwork (new int[4]{ 9, 6, 6, 10 });
 	}
 	private static int[] GetUsedHumansInputs(Game game, PlayerModel player, WhereToGo whereToGo) {
 		// Can only be resource mining turn.
