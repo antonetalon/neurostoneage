@@ -204,6 +204,7 @@ public class PlayerModel {
 
 	public Color CurrColor { get; private set; }
 	public PlayerModel(Color color) {
+		Score = 5;
 		CurrColor = color;
 		HumansCount = 5;
 		FieldsCount = 0;

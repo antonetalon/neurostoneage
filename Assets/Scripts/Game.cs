@@ -631,7 +631,7 @@ public class Game {
 					TrainingControllers [currPlayerInd].OnBeforeModelChange();
 					CardToBuild card = GetAvailableCard (cardInd);
 
-					int cardPrice = 4 - cardInd;
+					int cardPrice = cardInd+1;
 					int resourcesSum = model.Forest + model.Clay + model.Stone + model.Gold;
 					if (cardPrice > resourcesSum) {
 						model.ApplyGoToCard (false, cardInd, null, card);
