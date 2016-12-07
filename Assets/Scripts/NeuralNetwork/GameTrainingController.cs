@@ -306,8 +306,10 @@ public class GameTrainingController {
 		if (card.TopFeature == TopCardFeature.RandomForEveryone)
 			cardBuyEvent.StateAfter.ChangeCount (ResourceType.Charity, 1);
 
-		if (card.TopFeature == TopCardFeature.Score)
-			cardBuyEvent.StateAfter.ChangeCount (ResourceType.Score, card.TopFeatureParam);
+		if (card.TopFeature == TopCardFeature.Score) {
+			if (UsedScoreSources == ScoreSources.TopCardFeature || UsedScoreSources == ScoreSources.Any)
+				cardBuyEvent.StateAfter.ChangeCount (ResourceType.Score, card.TopFeatureParam);
+		}
 
 		if (card.TopFeature == TopCardFeature.ResourceAny)
 			cardBuyEvent.StateAfter.ChangeCount (ResourceType.Any2ResourcesFromCard, 1);
@@ -341,7 +343,8 @@ public class GameTrainingController {
 		OnAfterModelChangePrivate(ModelChangeType.ApplyGoToHouse);
 		ModelChangeEvent houseBuyEvent = _events [_events.Count - 1];
 
-		houseBuyEvent.StateAfter.ChangeCount (ResourceType.Score, scoreFromResources);
+		if (UsedScoreSources == ScoreSources.Houses || UsedScoreSources == ScoreSources.Any)
+			houseBuyEvent.StateAfter.ChangeCount (ResourceType.Score, scoreFromResources);
 
 		houseBuyEvent.UpdateDelta ();
 		CheckLastEventsConsistency (1);
@@ -349,8 +352,10 @@ public class GameTrainingController {
 	public void OnAfterFeeding(TrainingDecisionModel trainingModel, bool hungry) {
 		Dictionary<ResourceType, int> additionalResources = null;
 		if (!hungry) {
-			int scoreToAdd = 10;
-			additionalResources = new Dictionary<ResourceType, int> (){{ ResourceType.Score, scoreToAdd } };
+			if (UsedScoreSources == ScoreSources.Feeding || UsedScoreSources == ScoreSources.Any) {
+				int scoreToAdd = 10;
+				additionalResources = new Dictionary<ResourceType, int> (){ { ResourceType.Score, scoreToAdd } };
+			}
 		}
 		OnAfterDecisionPrivate (trainingModel, ModelChangeType.Feeding, additionalResources);
 		CheckLastEventsConsistency (1);
@@ -399,7 +404,20 @@ public class GameTrainingController {
 		}
 		return res;
 	}
-
+	enum ScoreSources { 
+		Any,
+		Feeding,
+		Houses,
+		TopCardFeature,
+		ScienceLine1,
+		ScienceLine2,
+		FieldMultiplier,
+		HumanMultiplier,
+		HouseMultiplier,
+		InstrumentMultiplier,
+		Resources
+	}
+	private const ScoreSources UsedScoreSources = ScoreSources.Houses;
 	public void OnEndGame() {
 
 		/*StringBuilder sb = new StringBuilder ("Training controller log start\n");
@@ -413,7 +431,7 @@ public class GameTrainingController {
 			FindEventCauses (eventInd);
 		}
 		//LogEventsWithCauses("Causes calced");
-		// Trainsitive closure for causality matrix.
+		// Transitive closure for causality matrix.
 		for (int eventInd = 0; eventInd < _events.Count; eventInd++) {
 			ModelChangeEvent[] causesArray = new ModelChangeEvent[_events [eventInd].Causes.Keys.Count];
 			_events [eventInd].Causes.Keys.CopyTo (causesArray, 0);
@@ -425,7 +443,7 @@ public class GameTrainingController {
 				float weightToTransit = _events[eventInd].Causes[currCause];
 				_events[eventInd].Causes.Remove(currCause);
 				foreach (var causeOfCauseItem in currCause.Causes) {
-					float currWeight = causeOfCauseItem.Value * weightToTransit;
+					float currWeight = weightToTransit;//causeOfCauseItem.Value * weightToTransit;
 					if (_events [eventInd].Causes.ContainsKey (causeOfCauseItem.Key))
 						_events [eventInd].Causes [causeOfCauseItem.Key] += currWeight;
 					else
@@ -442,31 +460,45 @@ public class GameTrainingController {
 		}
 		Dictionary<ResourceType, float> resourceScoreValues = new Dictionary<ResourceType, float>();
 		// Score from science line 1 and 2.
-		int scienceScoreRow1 = model.GetScienceScore(0);
-		resourceScoreValues.Add (ResourceType.SciencesIn1stLine, scienceScoreRow1);
-		int scienceScoreRow2 = model.GetScienceScore(1);
-		resourceScoreValues.Add (ResourceType.SciencesIn2ndLine, scienceScoreRow2);
+		if (UsedScoreSources == ScoreSources.ScienceLine1 || UsedScoreSources == ScoreSources.Any) {
+			int scienceScoreRow1 = model.GetScienceScore (0);
+			resourceScoreValues.Add (ResourceType.SciencesIn1stLine, scienceScoreRow1);
+		}
+		if (UsedScoreSources == ScoreSources.ScienceLine2 || UsedScoreSources == ScoreSources.Any) {
+			int scienceScoreRow2 = model.GetScienceScore (1);
+			resourceScoreValues.Add (ResourceType.SciencesIn2ndLine, scienceScoreRow2);
+		}
 		// Score from field multipliers.
-		float scoreFromFieldMultipliers = model.FieldsMultiplier*model.FieldsCount;
-		resourceScoreValues.Add (ResourceType.Fields, scoreFromFieldMultipliers * 0.5f);
-		resourceScoreValues.Add (ResourceType.FieldsMultiplier, scoreFromFieldMultipliers * 0.5f);
+		if (UsedScoreSources == ScoreSources.FieldMultiplier || UsedScoreSources == ScoreSources.Any) {
+			float scoreFromFieldMultipliers = model.FieldsMultiplier * model.FieldsCount;
+			resourceScoreValues.Add (ResourceType.Fields, scoreFromFieldMultipliers * 0.5f);
+			resourceScoreValues.Add (ResourceType.FieldsMultiplier, scoreFromFieldMultipliers * 0.5f);
+		}
 		// Score from human multipliers.
-		float scoreFromHumanMultipliers = model.HumansMultiplier*model.HumansCount;
-		resourceScoreValues.Add (ResourceType.HumansCount, scoreFromHumanMultipliers * 0.5f);
-		resourceScoreValues.Add (ResourceType.HumanMultiplier, scoreFromHumanMultipliers * 0.5f);
+		if (UsedScoreSources == ScoreSources.HumanMultiplier || UsedScoreSources == ScoreSources.Any) {
+			float scoreFromHumanMultipliers = model.HumansMultiplier * model.HumansCount;
+			resourceScoreValues.Add (ResourceType.HumansCount, scoreFromHumanMultipliers * 0.5f);
+			resourceScoreValues.Add (ResourceType.HumanMultiplier, scoreFromHumanMultipliers * 0.5f);
+		}
 		// Score from house multipliers.
-		float scoreFromHouseMultipliers = model.HouseMultiplier*model.Houses.Count;
-		resourceScoreValues.Add (ResourceType.HousesCount, scoreFromHouseMultipliers * 0.5f);
-		resourceScoreValues.Add (ResourceType.HousesMultiplier, scoreFromHouseMultipliers * 0.5f);
+		if (UsedScoreSources == ScoreSources.HouseMultiplier || UsedScoreSources == ScoreSources.Any) {
+			float scoreFromHouseMultipliers = model.HouseMultiplier * model.Houses.Count;
+			resourceScoreValues.Add (ResourceType.HousesCount, scoreFromHouseMultipliers * 0.5f);
+			resourceScoreValues.Add (ResourceType.HousesMultiplier, scoreFromHouseMultipliers * 0.5f);
+		}
 		// Score from instrument multipliers.
-		float scoreFromInstrumentsMultipliers = model.InstrumentsMultiplier*(model.InstrumentsCountSlot1+model.InstrumentsCountSlot2+model.InstrumentsCountSlot3);
-		resourceScoreValues.Add (ResourceType.Instruments, scoreFromInstrumentsMultipliers * 0.5f);
-		resourceScoreValues.Add (ResourceType.InstrumentsMultiplier, scoreFromInstrumentsMultipliers * 0.5f);
+		if (UsedScoreSources == ScoreSources.InstrumentMultiplier || UsedScoreSources == ScoreSources.Any) {
+			float scoreFromInstrumentsMultipliers = model.InstrumentsMultiplier * (model.InstrumentsCountSlot1 + model.InstrumentsCountSlot2 + model.InstrumentsCountSlot3);
+			resourceScoreValues.Add (ResourceType.Instruments, scoreFromInstrumentsMultipliers * 0.5f);
+			resourceScoreValues.Add (ResourceType.InstrumentsMultiplier, scoreFromInstrumentsMultipliers * 0.5f);
+		}
 		// Score from resources.
-		resourceScoreValues.Add (ResourceType.Forest, model.Forest);
-		resourceScoreValues.Add (ResourceType.Clay, model.Clay);
-		resourceScoreValues.Add (ResourceType.Stone, model.Stone);
-		resourceScoreValues.Add (ResourceType.Gold, model.Gold);
+		if (UsedScoreSources == ScoreSources.Resources || UsedScoreSources == ScoreSources.Any) {
+			resourceScoreValues.Add (ResourceType.Forest, model.Forest);
+			resourceScoreValues.Add (ResourceType.Clay, model.Clay);
+			resourceScoreValues.Add (ResourceType.Stone, model.Stone);
+			resourceScoreValues.Add (ResourceType.Gold, model.Gold);
+		}
 		// Add all scores to corresponding turns.
 		Dictionary<ResourceType, int> resourceCounts = new Dictionary<ResourceType, int>();
 		foreach (var item in resourceScoreValues) {
@@ -519,7 +551,7 @@ public class GameTrainingController {
 				training.RewardPercent *= 2;
 		}
 
-		/*StringBuilder sb = new StringBuilder ("All training outputs = \n");
+		StringBuilder sb = new StringBuilder ("All training outputs = \n");
 		foreach (TrainingDecisionModel training in _trainingModels) {
 			switch (training.Type) {
 			case DecisionType.SelectCharity: sb.AppendFormat ("{0:0.00}, charity selected {1}\n", training.RewardPercent, training.Output); break;
@@ -530,7 +562,7 @@ public class GameTrainingController {
 			}
 
 		}
-		Debug.Log (sb.ToString());*/
+		Debug.Log (sb.ToString());
 	}
 	private void LogEventsWithCauses(string title) {
 		StringBuilder sb = new StringBuilder(title + ":\n");
