@@ -933,7 +933,7 @@ public class Game {
 		}
 
 		for (int i = 0; i < 4; i++)
-			TrainingControllers [i].OnEndGame ();
+			TrainingControllers [i].OnEndGame (i==WinnerInd);
 		
 		if (onEnded!=null)
 			onEnded ();

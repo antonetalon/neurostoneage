@@ -35,7 +35,6 @@ public class NeuralPlayerTrainerController {
 		progress += currComplexity/totalComplexity;
 	}
 	public static void DoTrainingLoop(DecisionType type, List<TrainingDecisionModel> trainingModels, float speed, AINeuralPlayer player) {
-		List<int> trainedExists = new List<int> ();
 		foreach (var training in trainingModels) {
 			if (type != DecisionType.None && training.Type != type)
 				continue;
@@ -51,14 +50,13 @@ public class NeuralPlayerTrainerController {
 			//	continue;
 			float nu = training.RewardPercent*speed;
 			double[] idealOutputs = new double[decider.OutputLength];
-			trainedExists.Clear ();
 			for (int optionInd = 0; optionInd < idealOutputs.Length; optionInd++) {
-				if (optionInd == training.Output) {
+				if (optionInd == training.Output)
 					idealOutputs [optionInd] = training.RewardPercent;
-					trainedExists.Add (optionInd);
-				}
+				else
+					idealOutputs [optionInd] = 0;
 			}
-			decider.Train (training.Inputs, idealOutputs, trainedExists, nu);
+			decider.Train (training.Inputs, idealOutputs, training.Options, nu);
 		}
 	}
 }

@@ -418,7 +418,12 @@ public class GameTrainingController {
 		Resources
 	}
 	private const ScoreSources UsedScoreSources = ScoreSources.Houses;
-	public void OnEndGame() {
+	public void OnEndGame(bool winner) {
+		foreach (TrainingDecisionModel training in _trainingModels) {
+			training.RewardPercent = winner ? 1 : 0;
+		}
+	}
+	public void OnEndGameOld() {
 
 		/*StringBuilder sb = new StringBuilder ("Training controller log start\n");
 		sb.AppendFormat("Player ind = {0}\n", PlayerInd);
