@@ -8,6 +8,7 @@ public class NeuralNetwork {
 
 	public int LayersCount { get; private set; }
 	private int[] _layerSizes;
+	public int InputLength { get { return _layerSizes [0]; } }
 	public int OutputLength { get { return _layerSizes [_layerSizes.Length - 1]; } }
 	private double[][,] _weights;
 

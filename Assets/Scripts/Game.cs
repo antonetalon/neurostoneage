@@ -276,7 +276,7 @@ public class Game {
 	}
 	public bool GetEnded() {
 		WinnerInd = GetMaxScorePlayerInd ();
-		const int MaxTurnsCount = 100;
+		const int MaxTurnsCount = 16;
 		if (TurnInd >= MaxTurnsCount)
 			return true;
 		// Condition 1 - cant prepare new card set.

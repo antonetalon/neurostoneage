@@ -204,7 +204,9 @@ public class PlayerModel {
 
 	public Color CurrColor { get; private set; }
 	public PlayerModel(Color color) {
-		Score = 5;
+		Score = 0;
+		if (GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.Any || GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.HumanMultiplier)
+			Score += 5;
 		CurrColor = color;
 		HumansCount = 5;
 		FieldsCount = 0;
@@ -330,7 +332,8 @@ public class PlayerModel {
 	public void ApplyGoToHousing() {
 		HumansCount++;
 		SpentOnHousing=0;
-		Score += HumansMultiplier;
+		if (GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.Any || GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.HumanMultiplier)
+			Score += HumansMultiplier;
 	}
 	public void ApplyGoToFields() {
 		if (SpentOnFields == 0)
@@ -364,8 +367,10 @@ public class PlayerModel {
 		BuiltHouse house = new BuiltHouse (spentResources);
 		_houses.Add (house);
 		SubtractResources (spentResources);
-		Score += HouseMultiplier;
-		Score += house.Score;
+		if (GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.Any || GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.HouseMultiplier)
+			Score += HouseMultiplier;
+		if (GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.Any || GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.Houses)
+			Score += house.Score;
 	}
 	public void ApplyGoToCard(bool build, int cardInd, List<Resource> spentResources, CardToBuild card) {
 		if (GetSpentOnCard(cardInd) == 0)
@@ -417,7 +422,8 @@ public class PlayerModel {
 			if (card.TopUsed) {
 				switch (card.TopFeature) {
 				case TopCardFeature.Score:
-					Score += card.TopFeatureParam;
+					if (GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.Any || GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.TopCardFeature)
+						Score += card.TopFeatureParam;
 					break;
 				case TopCardFeature.ResourceConstFood:
 					AddResource (Resource.Food, card.TopFeatureParam);
@@ -489,7 +495,8 @@ public class PlayerModel {
 		}
 		if (neededFood > Food + eatenResources.Count || leaveHungry) {
 			Food = 0;
-			Score -= 10;
+			if (GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.Any || GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.Feeding)
+				Score -= 10;
 			HungryTurnsCount++;
 			return;
 		}
@@ -504,8 +511,10 @@ public class PlayerModel {
 	}
 
 	public void AddResource(Resource res, int delta) {
-		if (res!=Resource.Food)
-			Score += delta;
+		if (res != Resource.Food) {
+			if (GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.Any || GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.Resources)
+				Score += delta;
+		}
 		switch (res) {
 		case Resource.Food: Food+=delta; break;
 		case Resource.Forest: Forest+=delta; break;
@@ -525,28 +534,34 @@ public class PlayerModel {
 			InstrumentsCountSlot1++;
 			InstrumentsSlot1Used = true;
 		}
-		Score += InstrumentsMultiplier;
+		if (GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.Any || GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.InstrumentMultiplier)
+			Score += InstrumentsMultiplier;
 	}
 	public void AddField() {
 		FieldsCount++;
-		Score += FieldsMultiplier;
+		if (GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.Any || GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.FieldMultiplier)
+			Score += FieldsMultiplier;
 		UnSpentFields++;
 	}
 	private void AddInstrumentsMultiplier() {
 		InstrumentsMultiplier++;
-		Score += InstrumentsCountSlot1 + InstrumentsCountSlot2 + InstrumentsCountSlot3;
+		if (GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.Any || GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.InstrumentMultiplier)
+			Score += InstrumentsCountSlot1 + InstrumentsCountSlot2 + InstrumentsCountSlot3;
 	}
 	private void AddHousesMultiplier() {
 		HouseMultiplier++;
-		Score += Houses.Count;
+		if (GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.Any || GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.HouseMultiplier)
+			Score += Houses.Count;
 	}
 	private void AddHumansMultiplier() {
 		HumansMultiplier++;
-		Score += HumansCount;
+		if (GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.Any || GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.HumanMultiplier)
+			Score += HumansCount;
 	}
 	private void AddFieldsMultiplier() {
 		FieldsMultiplier++;
-		Score += FieldsCount;
+		if (GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.Any || GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.FieldMultiplier)
+			Score += FieldsCount;
 	}
 	private void AddScience(Science science) {		
 		_sciencesCount [science]++;
@@ -557,7 +572,8 @@ public class PlayerModel {
 				complectCount++;
 		}
 		int incScore = complectCount * complectCount - (complectCount - 1) * (complectCount - 1);
-		Score += incScore;
+		if (GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.Any || GameTrainingController.UsedScoreSources == GameTrainingController.ScoreSources.Science)
+			Score += incScore;
 	}
 
 	public override string ToString ()

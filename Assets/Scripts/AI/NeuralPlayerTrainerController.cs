@@ -38,7 +38,9 @@ public class NeuralPlayerTrainerController {
 		foreach (var training in trainingModels) {
 			if (type != DecisionType.None && training.Type != type)
 				continue;
-
+			float nu = training.RewardPercent*speed;
+			if (nu < float.Epsilon)
+				continue;
 			int output = training.Output;
 			string options = "";
 			foreach (var option in training.Options)
@@ -48,7 +50,7 @@ public class NeuralPlayerTrainerController {
 			int existingOutput = AINeuralPlayer.GetDecisionFromOutputs(outputs, training.Options);
 			//if ((existingOutput == training.Output) == (training.RewardPercent > 0))
 			//	continue;
-			float nu = training.RewardPercent*speed;
+
 			double[] idealOutputs = new double[decider.OutputLength];
 			for (int optionInd = 0; optionInd < idealOutputs.Length; optionInd++) {
 				if (optionInd == training.Output)

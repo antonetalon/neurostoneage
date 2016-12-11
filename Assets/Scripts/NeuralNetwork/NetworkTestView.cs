@@ -65,7 +65,7 @@ public class NetworkTestView : MonoBehaviour {
 		UpdateView ();
 		Debug.Log ("Training loaded");
 
-		List<float> cardValuesNoRes = new List<float> ();
+		/*List<float> cardValuesNoRes = new List<float> ();
 		List<float> cardValuesResPres = new List<float> ();
 		foreach (var training in _trainingModels) {
 			if (training.Type != DecisionType.SelectWhereToGo)
@@ -86,7 +86,7 @@ public class NetworkTestView : MonoBehaviour {
 		sb.AppendFormat ("\nno  res = ");
 		foreach (float val in cardValuesNoRes)
 			sb.AppendFormat ("{0:#0.##}, ", val);
-		Debug.Log (sb.ToString());
+		Debug.Log (sb.ToString());*/
 
 		/*StringBuilder sb = new StringBuilder ();
 		Dictionary<int, List<float>> values = new Dictionary<int, List<float>> ();
@@ -148,6 +148,7 @@ public class NetworkTestView : MonoBehaviour {
 				NeuralPlayerTrainerController.DoTrainingLoop(decisionType, _trainingModels, speed, _brain);
 			}
 			CompositionRoot.Instance.ExecuteInMainThread (() => {
+				Debug.Log("Training finished");
 				UpdateView ();
 				if (onFinished!=null)
 					onFinished();
@@ -158,9 +159,11 @@ public class NetworkTestView : MonoBehaviour {
 
 	[SerializeField] InputField _gamesCountInput;
 	[SerializeField] InputField _learningSpeedInput;
+	[SerializeField] Text _meanScore;
 	public void OnPlayWithAIAndAddTraining() {
 		int count = int.Parse (_gamesCountInput.text);
-
+		long sumScore = 0;
+		long scoresCount = 0;
 		List<Player> players = new List<Player> () {
 			_brain,
 			_brain.Clone(),
@@ -172,6 +175,10 @@ public class NetworkTestView : MonoBehaviour {
 			for (int i=0;i<count;i++) {
 				bool matchEnded = false;
 				game.Play (()=>{
+					for (int j=0;j<4;j++) {
+						scoresCount++;
+						sumScore += game.PlayerModels[j].Score;
+					}
 					foreach (var trainingController in game.TrainingControllers) {
 						foreach (var trainingModel in trainingController.TrainingModels)
 							_trainingModels.Add(trainingModel);
@@ -185,6 +192,8 @@ public class NetworkTestView : MonoBehaviour {
 			CompositionRoot.Instance.ExecuteInMainThread(()=>{
 				Debug.Log(count.ToString() + " AI matches ended");
 				UpdateView();
+				float meanScore = sumScore/(float)scoresCount;
+				_meanScore.text = meanScore.ToString("###.00");
 			});
 		}));
 		thread.Start ();
@@ -196,7 +205,6 @@ public class NetworkTestView : MonoBehaviour {
 		CalcSuccess ();
 	}
 	private void CalcSuccess() {
-
 		List<DecisionType> decisions = new List<DecisionType>() { DecisionType.SelectWhereToGo, DecisionType.SelectUsedHumans, DecisionType.SelectInstruments, DecisionType.SelectCharity, DecisionType.SelectLeaveHungry };
 
 		Dictionary<DecisionType, float> errors = new Dictionary<DecisionType, float>();
@@ -298,7 +306,7 @@ public class NetworkTestView : MonoBehaviour {
 
 	[SerializeField] Text _trainingModelsCount;
 	public void UpdateView() {
-		CalcSuccess ();
+		//CalcSuccess ();
 		_trainingModelsCount.text = _trainingModels.Count.ToString ();
 	}
 

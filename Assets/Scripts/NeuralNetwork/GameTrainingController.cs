@@ -404,26 +404,25 @@ public class GameTrainingController {
 		}
 		return res;
 	}
-	enum ScoreSources { 
+	public enum ScoreSources { 
 		Any,
 		Feeding,
 		Houses,
 		TopCardFeature,
-		ScienceLine1,
-		ScienceLine2,
+		Science,
 		FieldMultiplier,
 		HumanMultiplier,
 		HouseMultiplier,
 		InstrumentMultiplier,
 		Resources
 	}
-	private const ScoreSources UsedScoreSources = ScoreSources.Houses;
-	public void OnEndGame(bool winner) {
+	public const ScoreSources UsedScoreSources = ScoreSources.Houses;
+	/*public void OnEndGame(bool winner) {
 		foreach (TrainingDecisionModel training in _trainingModels) {
 			training.RewardPercent = winner ? 1 : 0;
 		}
-	}
-	public void OnEndGameOld() {
+	}*/
+	public void OnEndGame(bool winner) {
 
 		/*StringBuilder sb = new StringBuilder ("Training controller log start\n");
 		sb.AppendFormat("Player ind = {0}\n", PlayerInd);
@@ -465,11 +464,11 @@ public class GameTrainingController {
 		}
 		Dictionary<ResourceType, float> resourceScoreValues = new Dictionary<ResourceType, float>();
 		// Score from science line 1 and 2.
-		if (UsedScoreSources == ScoreSources.ScienceLine1 || UsedScoreSources == ScoreSources.Any) {
+		if (UsedScoreSources == ScoreSources.Science || UsedScoreSources == ScoreSources.Any) {
 			int scienceScoreRow1 = model.GetScienceScore (0);
 			resourceScoreValues.Add (ResourceType.SciencesIn1stLine, scienceScoreRow1);
 		}
-		if (UsedScoreSources == ScoreSources.ScienceLine2 || UsedScoreSources == ScoreSources.Any) {
+		if (UsedScoreSources == ScoreSources.Science || UsedScoreSources == ScoreSources.Any) {
 			int scienceScoreRow2 = model.GetScienceScore (1);
 			resourceScoreValues.Add (ResourceType.SciencesIn2ndLine, scienceScoreRow2);
 		}
@@ -542,21 +541,21 @@ public class GameTrainingController {
 			GameDecizionEvent decision = currEvent as GameDecizionEvent;
 			if (decision == null)
 				continue;
-			decision.DecisionTraining.RewardPercent = decision.ScoreValue;
+			decision.DecisionTraining.RewardPercent = decision.ScoreValue<float.Epsilon?0:(winner?1:0.5f);
 			if (decision.DecisionTraining.RewardPercent < 0)
 				Debug.Log ("WTF");
 		}
 
-		// Hack
+		/*// Hack
 		foreach (TrainingDecisionModel training in _trainingModels) {
 			if (training.Type != DecisionType.SelectWhereToGo)
 				continue;
 			WhereToGo output = (WhereToGo)(training.Output+1);
 			if (output == WhereToGo.Food || output == WhereToGo.Forest || output == WhereToGo.Clay || output == WhereToGo.Stone || output == WhereToGo.Gold)
 				training.RewardPercent *= 2;
-		}
+		}*/
 
-		StringBuilder sb = new StringBuilder ("All training outputs = \n");
+		/*StringBuilder sb = new StringBuilder ("All training outputs = \n");
 		foreach (TrainingDecisionModel training in _trainingModels) {
 			switch (training.Type) {
 			case DecisionType.SelectCharity: sb.AppendFormat ("{0:0.00}, charity selected {1}\n", training.RewardPercent, training.Output); break;
@@ -567,7 +566,7 @@ public class GameTrainingController {
 			}
 
 		}
-		Debug.Log (sb.ToString());
+		Debug.Log (sb.ToString());*/
 	}
 	private void LogEventsWithCauses(string title) {
 		StringBuilder sb = new StringBuilder(title + ":\n");
