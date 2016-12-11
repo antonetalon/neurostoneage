@@ -24,7 +24,7 @@ public class TempTests : MonoBehaviour {
 			while (_isTraining) {
 				//System.Threading.Thread.Sleep(100);
 				TrainLoop();
-				if (_loopsCount%20==0)
+				if (_loopsCount%500==0)
 					CalcSuccess();
 			}
 		}));
@@ -39,7 +39,7 @@ public class TempTests : MonoBehaviour {
 		inputs[0] = _rand.Next () % 2;
 		if (inputs [0] > 0.5)
 			output = 0;		
-		_network.Train (inputs, output, null, 0.0005f);
+		_network.Train (inputs, output, null, 0.005f);
 		_loopsCount++;
 		CompositionRoot.Instance.ExecuteInMainThread (() => {
 			_loopsCountLabel.text = _loopsCount.ToString ();
@@ -50,7 +50,7 @@ public class TempTests : MonoBehaviour {
 		int[] inputs = new int[_network.InputLength];
 		int output;
 		double error = 0;
-		int expCount = 1000;
+		int expCount = 5000;
 		for (int i = 0; i < expCount; i++) {
 			for (int j = 1; j < inputs.Length; j++)
 				inputs [j] = _rand.Next () % 100;

@@ -43,19 +43,19 @@ public class NeuralDecisionNetwork {
 				ind = i;
 			}
 		}
-		if (ind == idealOutput)
-			return; // Dont teach anything if output is already correct.
 		const double eps = 0.1f;
-		double gap = max - outputs [idealOutput] + eps;
+		double gap = eps;
+		if (ind != idealOutput)
+			gap += max - outputs [idealOutput];
 		double[] idealOutputs = new double[1];
 		for (int i = 0; i < OutputLength; i++) {
 			if (options != null && !options.Contains (i))
 				continue;
 			if (i == idealOutput) {
-				idealOutputs [0] = 1;//outputs [i] + gap;
+				idealOutputs [0] = outputs [i] + gap;
 				_networks [i].Train (inputs, idealOutputs, null, nu);
 			} else if (outputs [i] > outputs [idealOutput]) {
-				idealOutputs [0] = 0;//outputs [i] - gap;
+				idealOutputs [0] = outputs [i] - gap;
 				_networks [i].Train (inputs, idealOutputs, null, nu);
 			}
 		}
