@@ -416,7 +416,7 @@ public class GameTrainingController {
 		InstrumentMultiplier,
 		Resources
 	}
-	public const ScoreSources UsedScoreSources = ScoreSources.Houses;
+	public const ScoreSources UsedScoreSources = ScoreSources.Any;
 	/*public void OnEndGame(bool winner) {
 		foreach (TrainingDecisionModel training in _trainingModels) {
 			training.RewardPercent = winner ? 1 : 0;
@@ -430,6 +430,8 @@ public class GameTrainingController {
 			sb.Append (gameEvent.GetString (_events));
 		sb.AppendLine ("Training controller log end");
 		Debug.Log (sb.ToString());*/
+
+		/*
 		// Calc game events causes.
 		for (int eventInd = 0; eventInd < _events.Count; eventInd++) {
 			FindEventCauses (eventInd);
@@ -536,12 +538,12 @@ public class GameTrainingController {
 		}
 		//LogEventsWithCauses("Score values distributed");
 		// Fill training model rewards.
-
+		*/
 		foreach (ModelChangeEvent currEvent in _events) {
 			GameDecizionEvent decision = currEvent as GameDecizionEvent;
 			if (decision == null)
 				continue;
-			decision.DecisionTraining.RewardPercent = decision.ScoreValue<float.Epsilon?0:(winner?1:0.5f);
+			decision.DecisionTraining.RewardPercent = winner?1:0.0f;//decision.ScoreValue<float.Epsilon?0:(winner?1:0.5f);
 			if (decision.DecisionTraining.RewardPercent < 0)
 				Debug.Log ("WTF");
 		}

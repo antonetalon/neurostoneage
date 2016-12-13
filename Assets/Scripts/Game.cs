@@ -274,11 +274,14 @@ public class Game {
 		}
 		SetChanged ();
 	}
-	public bool GetEnded() {
+	public bool IsEnded { get; private set; }
+	private void CalcIsEnded() {
 		WinnerInd = GetMaxScorePlayerInd ();
 		const int MaxTurnsCount = 16;
-		if (TurnInd >= MaxTurnsCount)
-			return true;
+		if (TurnInd >= MaxTurnsCount) {
+			IsEnded = true;
+			return;
+		}
 		// Condition 1 - cant prepare new card set.
 		int requiredCards = 0;
 		if (AvailableCardFor1Resource == null)
@@ -289,20 +292,29 @@ public class Game {
 			requiredCards++;
 		if (AvailableCardFor4Resource == null)
 			requiredCards++;
-		if (requiredCards > _cardsInHeap.Count)
-			return true;
+		if (requiredCards > _cardsInHeap.Count) {
+			IsEnded = true;
+			return;
+		}
 		// Condition 2 - no houses in any heap.
-		if (_houseHeap1.Count == 0)
-			return true;
-		if (_houseHeap2.Count == 0)
-			return true;
-		if (_houseHeap3.Count == 0)
-			return true;
-		if (_houseHeap4.Count == 0)
-			return true;
+		if (_houseHeap1.Count == 0) {
+			IsEnded = true;
+			return;
+		}
+		if (_houseHeap2.Count == 0) {
+			IsEnded = true;
+			return;
+		}
+		if (_houseHeap3.Count == 0) {
+			IsEnded = true;
+			return;
+		}
+		if (_houseHeap4.Count == 0) {
+			IsEnded = true;
+			return;
+		}
 		// Otherwise game continues.
 		WinnerInd = -1;
-		return false;
 	}
 	public int WinnerInd { get; private set; }
 	public int GetMaxScorePlayerInd() {
@@ -492,7 +504,8 @@ public class Game {
 	}
 	const int SleepTime = 100;
 	public void Play(System.Action onEnded) {
-		while (!GetEnded ()) {
+		IsEnded = false;
+		while (!IsEnded) {
 			NewTurn ();
 			//if (Logging) 
 			//Debug.Log ("New turn, ind = " + TurnInd.ToString());
@@ -930,6 +943,7 @@ public class Game {
 			}
 			if (OnTurnEnded != null)
 				OnTurnEnded ();
+			CalcIsEnded ();
 		}
 
 		for (int i = 0; i < 4; i++)

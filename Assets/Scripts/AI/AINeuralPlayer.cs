@@ -392,7 +392,7 @@ public class AINeuralPlayer:Player {
 		inputs [i] = player.GetResourceCount(receivedRecource); i++;
 		return inputs;
 	}
-	private static List<int> GetInstrumentsOptionInds(Game game, PlayerModel player, List<int> randoms, int points, Resource receivedRecource) {
+	public static List<int> GetInstrumentsOptionInds(Game game, PlayerModel player, List<int> randoms, int points, Resource receivedRecource) {
 		int availableSlot1Instruments = player.InstrumentsSlot1Used ? 0 : player.InstrumentsCountSlot1;
 		int availableSlot2Instruments = player.InstrumentsSlot2Used ? 0 : player.InstrumentsCountSlot2;
 		int availableSlot3Instruments = player.InstrumentsSlot3Used ? 0 : player.InstrumentsCountSlot3;
@@ -486,13 +486,13 @@ public class AINeuralPlayer:Player {
 		onComplete (true);
 	}
 
-	static List<Resource> _resourcesForCardBuilding = new List<Resource>() { Resource.Forest, Resource.Clay, Resource.Stone, Resource.Gold };
+	public static List<Resource> ResourcesForCardBuilding = new List<Resource>() { Resource.Forest, Resource.Clay, Resource.Stone, Resource.Gold };
 	public override void GetUsedResourceForCardBuilding (Game game, CardToBuild card, List<Resource> alreadySelectedResources, Action<Resource> onComplete) {
 		// Drop this decision.
 		int[] remainingResources = Game.GetRemainingResourcesAfterHousesBuilding (game, _model);
 		foreach (Resource res in alreadySelectedResources)
 			remainingResources [(int)res]--;
-		foreach (var res in _resourcesForCardBuilding) {
+		foreach (var res in ResourcesForCardBuilding) {
 			if (remainingResources [(int)res] > 0) {
 				onComplete (res);
 				return;
@@ -504,7 +504,7 @@ public class AINeuralPlayer:Player {
 		remainingResources [(int)Resource.Gold] = _model.Gold;
 		foreach (Resource res in alreadySelectedResources)
 			remainingResources [(int)res]--;
-		foreach (var res in _resourcesForCardBuilding) {
+		foreach (var res in ResourcesForCardBuilding) {
 			if (remainingResources [(int)res] > 0) {
 				onComplete (res);
 				return;

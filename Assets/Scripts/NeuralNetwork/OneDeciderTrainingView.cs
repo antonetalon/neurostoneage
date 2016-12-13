@@ -6,165 +6,63 @@ using System.Threading;
 
 public class OneDeciderTrainingView : MonoBehaviour {
 	
-	[SerializeField] NetworkTestView _view;
-	[SerializeField] Text _loopsCountInput;
-	[SerializeField] Text _speedInput;
-	[SerializeField] Text _totalLoops;
-	[SerializeField] Text _state;
-	DecisionType _type;
+	[SerializeField] Text _trainingsDataSize;
+	[SerializeField] Text _performedTrainingsCount;
+	[SerializeField] Text _error;
 	List<TrainingDecisionModel> _trainingModels;
-	AINeuralPlayer _player;
-	public void Init(DecisionType type, List<TrainingDecisionModel> trainingModels, AINeuralPlayer player) {
-		_type = type;
+	NeuralDecisionNetwork _decider;
+	public void Init(DecisionType type, List<TrainingDecisionModel> trainingModels, AINeuralPlayer2 player) {
 		_trainingModels = new List<TrainingDecisionModel> ();
 		foreach (var model in trainingModels) {
-			if (model.Type == type || type == DecisionType.None)
+			if (model.Type == type && model.RewardPercent>0.5f)
 				_trainingModels.Add (model);
 		}
-		_player = player;
-		UpdateView ();
+		_trainingsDataSize.text = _trainingModels.Count.ToString ();
+		_decider = player.GetChooserDecider(type);
+		_trainingsCount = 0;
 	}
-	public void OnTrainPressed() {
-		Train (null);
-	}
-	public void Train(System.Action onFinished) {
-		int loopsCount = int.Parse (_loopsCountInput.text);
-		if (loopsCount <= 0)
+	bool _isTraining;
+	int _trainingsCount;
+	public void OnToggleTrainPressed() {
+		_isTraining = !_isTraining;
+		if (!_isTraining)
 			return;
-		//Debug.LogFormat("Training {0} loops started", loopsCount);
-		float speed = float.Parse(_speedInput.text); // 0.5f
+
+		// Train thread.
 		Thread thread = new Thread (new ThreadStart(()=>{
-			for (int loopInd = 0; loopInd < loopsCount; loopInd++) {
-				_view.UpdateProgress (loopInd+1, loopsCount);
-				NeuralPlayerTrainerController.DoTrainingLoop(_type, _trainingModels, speed, _player);
+			while (_isTraining) {
+				TrainingDecisionModel currTraining = _trainingModels[_trainingsCount%_trainingModels.Count];
+				float currSpeed = 0.0005f;//*currTraining.RewardPercent*0.01f;
+				_decider.Train(currTraining.Inputs, currTraining.Output, currTraining.Options, currSpeed);
+				_trainingsCount++;
+				CompositionRoot.Instance.ExecuteInMainThread (() => {
+					_performedTrainingsCount.text = _trainingsCount.ToString();
+				});
 			}
-			CompositionRoot.Instance.ExecuteInMainThread (() => {
-				_view.UpdateView ();
-				if (onFinished!=null)
-					onFinished();
-			});
 		}));
 		thread.Start ();
-		//Debug.LogFormat("Training {0} loops finished", loopsCount);
-	}
-	enum ComparingState { Improved, Still, Degraded }
-	public void OnTrainWhilePossiblePressed() {
-		const int minLoopsCount = 400;
-		const int step = 40;
-		const float minSuccessibilityChange = 0.001f;
-		//Debug.LogFormat("Training {0} loops started", loopsCount);
 
-		Thread thread = new Thread (new ThreadStart(()=>{
-			bool trainingPossible = true;
-			int loopInd = 0;
-			int loopsUntilSuccessCalc = step;
-			float prevSuccess = GetSuccess();
-			float learningSpeed = 0.5f;
-			const float minLearningSpeed = 0.001f;
-			const float maxLearningSpeed = 10;
-			ComparingState prevState = ComparingState.Improved;
-			do {
-				loopInd++;
-				NeuralPlayerTrainerController.DoTrainingLoop(_type, _trainingModels, learningSpeed, _player);
-
-				loopsUntilSuccessCalc--;
-				if (loopsUntilSuccessCalc==0) {
-					loopsUntilSuccessCalc = step;
-					float success = GetSuccess();
-					ComparingState state;
-					if (Mathf.Abs(success-prevSuccess)<minSuccessibilityChange) {
-						// No change.
-						learningSpeed *= 1.2f;
-						state = ComparingState.Still;
-						trainingPossible = false;
-					} else if (success>prevSuccess) {
-						// Improved success.
-						//learningSpeed *= 1.1f;
-						state = ComparingState.Improved;
-					} else {
-						// Success decreased.
-						learningSpeed *= 0.1f;
-						state = ComparingState.Degraded;
-					}
-					if (state == ComparingState.Degraded && prevState == ComparingState.Still)
-						trainingPossible = false;
-					Debug.Log("learning speed = " + learningSpeed.ToString());
-					if (learningSpeed<minLearningSpeed || learningSpeed>maxLearningSpeed)
-						trainingPossible = false;
-					prevSuccess = success;
-					prevState = state;
-				}
-
-				if (loopInd%10==0) {
-					int shownCount = loopInd;
-					CompositionRoot.Instance.ExecuteInMainThread (() => {
-						_totalLoops.text = shownCount.ToString();
-					});
-				}
-
-				if (loopInd<minLoopsCount)
-					trainingPossible = true;
-			} while (trainingPossible);
-				
-			CompositionRoot.Instance.ExecuteInMainThread (() => {
-				_loopsCountInput.text = loopInd.ToString();
-				_view.UpdateView ();
-			});
-		}));
-		thread.Start ();
-		//Debug.LogFormat("Training {0} loops finished", loopsCount);
-	}
-
-	private float GetSuccess() {
-		int positiveTrainingCount = 0;
-		int negativeTrainingCount = 0;
-		int positiveSuccessesCount = 0;
-		int negativeSuccessesCount = 0;
-		GetSuccessfullTrainingsCount (_type,ref positiveTrainingCount,ref negativeTrainingCount,ref positiveSuccessesCount,ref negativeSuccessesCount);
-		return (positiveSuccessesCount + negativeSuccessesCount) / (float)(positiveTrainingCount + negativeTrainingCount);
-	}
-
-	public void UpdateView() {
-		if (_trainingModels.Count == 0) {
-			_state.text = "no data";
-			return;
-		}
-		int positiveTrainingCount = 0;
-		int negativeTrainingCount = 0;
-		int positiveSuccessesCount = 0;
-		int negativeSuccessesCount = 0;
-		GetSuccessfullTrainingsCount (_type,ref positiveTrainingCount,ref negativeTrainingCount,ref positiveSuccessesCount,ref negativeSuccessesCount);
-		_state.text = string.Format ("pos {0}/{1}={2:P}\nneg {3}/{4}={5:P}", 
-			positiveSuccessesCount, positiveTrainingCount, positiveSuccessesCount/(float)positiveTrainingCount,
-			negativeSuccessesCount, negativeTrainingCount, negativeSuccessesCount/(float)negativeTrainingCount);
-	}
-	private void GetSuccessfullTrainingsCount(DecisionType type,
-		ref int positiveTrainingCount,ref int negativeTrainingCount,ref int positiveSuccessesCount,ref int negativeSuccessesCount) {
-		NeuralNetwork decider = _player.GetDecider (type);
-		double[] inputs = null;
-		foreach (TrainingDecisionModel model in _trainingModels) {
-			if (model.Type != type)
-				continue;
-			bool isPositiveTraining = model.RewardPercent >= 0;
-			if (inputs==null)
-				inputs = new double[model.Inputs.Length];
-			for (int i = 0; i < inputs.Length; i++)
-				inputs [i] = model.Inputs [i];
-			double[] outputs = decider.Think (inputs);
-			int selectedInd = AINeuralPlayer.GetDecisionFromOutputs (outputs, model.Options);
-			bool selectionEqualsTrainingTarget = selectedInd == model.Output;
-			bool trainingSuccess = selectionEqualsTrainingTarget == isPositiveTraining;
-			if (isPositiveTraining) {
-				positiveTrainingCount++;
-				if (trainingSuccess)
-					positiveSuccessesCount++;
-			} else {
-				negativeTrainingCount++;
-				if (trainingSuccess)
-					negativeSuccessesCount++;
+		// Calc success thread.
+		Thread thread2 = new Thread (new ThreadStart(()=>{
+			while (_isTraining) {
+				float error = GetError();
+				System.Threading.Thread.Sleep(300);
+				CompositionRoot.Instance.ExecuteInMainThread (() => {
+					_error.text = error.ToString ("00.0000");
+					Debug.Log("success updated, success = " + error.ToString());
+				});
 			}
-		}
+		}));
+		thread2.Start ();
 	}
 
-
+	private float GetError() {
+		NeuralDecisionNetwork decider = _decider.Clone();
+		int successes = 0;
+		for (int i = 0; i < _trainingModels.Count; i++) {
+			if (_trainingModels [i].Output == decider.Think (_trainingModels [i].Inputs, _trainingModels [i].Options))
+				successes++;
+		}
+		return ((_trainingModels.Count - successes) / (float)_trainingModels.Count);
+	}
 }

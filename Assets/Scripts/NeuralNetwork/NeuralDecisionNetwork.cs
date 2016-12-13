@@ -1,7 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
+[Serializable]
 public class NeuralDecisionNetwork {
 	public int InputLength { get { return _networks [0].InputLength; } }
 	public int OutputLength { get { return _networks.Count; } }
@@ -59,5 +61,12 @@ public class NeuralDecisionNetwork {
 				_networks [i].Train (inputs, idealOutputs, null, nu);
 			}
 		}
+	}
+	public NeuralDecisionNetwork Clone() {
+		NeuralDecisionNetwork clone = new NeuralDecisionNetwork (InputLength, OutputLength, new int[1] { 1 });
+		clone._networks.Clear ();
+		for (int i = 0; i < _networks.Count; i++)
+			clone._networks.Add (_networks [i].Clone ());
+		return clone;
 	}
 }

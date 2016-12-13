@@ -29,7 +29,7 @@ public class GameView : MonoBehaviour {
 	}
 	void UpdateWinnerView() {
 		CompositionRoot.Instance.ExecuteInMainThread (() => {
-			if (_game.GetEnded ()) {
+			if (_game.IsEnded) {
 				// Show winner.
 				PlayerModel player = null;
 				int winnerInd = _game.WinnerInd;
