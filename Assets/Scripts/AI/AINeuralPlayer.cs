@@ -2,6 +2,7 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using NeuralStoneAge;
 
 [Serializable]
 public class AINeuralPlayer:Player {
